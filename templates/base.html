@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> {% block title %}{% endblock title %} </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Poppins", "sans-serif"],
+                    },
+                    colors: {
+                        primary: "#26464b",
+                        accent: "#dceeb2",
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+
+<body {% block body_attribute %}{% endblock body_attribute %} class="bg-white overflow-x-hidden font-sans">
+
+
+    {% block content %}
+    
+    {% endblock content %}
+
+    {% block javascript %}
+    {% endblock javascript %}
+</body>
+
+</html>

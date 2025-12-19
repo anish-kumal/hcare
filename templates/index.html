@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home - Health Care{% endblock title %}
+
+{% block content %}
+<section
+    class="relative min-h-[95vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
+    style="
+        background-image: linear-gradient(
+            rgba(36, 82, 88, 0.7),
+            rgba(36, 82, 88, 0.7)
+        ), url('{% static 'images/background.png' %}');">
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+        {% include "navbar.html" %}
+
+        {% if messages %}
+        <div class="mt-4 space-y-2">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg shadow-lg {% if message.tags == 'error' %}bg-red-500 text-white{% elif message.tags == 'success' %}bg-green-500 text-white{% else %}bg-blue-500 text-white{% endif %} animate-fade-in">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="flex flex-col lg:flex-row items-center justify-between flex-1 relative mt-10">
+            <div class="w-full lg:w-[60%] text-white z-10 text-center lg:text-left pt-10 pb-10 lg:pb-20">
+                <h1 class="text-xl md:text-5xl font-bold leading-tight">
+                    Bringing Healthcare<br />
+                    to Your Everystep.<br />
+                    24/7.
+                </h1>
+                <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    Qualified doctors available nation-wide, providing quick and
+                    trusted care at your every step.
+                </p>
+
+                <div class="flex items-center justify-center lg:justify-start gap-6">
+                    <a href="#"
+                        class="bg-accent text-primary px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-1 transition transform duration-200">
+                        Book Appointments
+                    </a>
+                    <a href="#" class="text-white font-bold uppercase tracking-widest text-sm hover:underline">
+                        About Us
+                    </a>
+                </div>
+            </div>
+
+            <div class="w-full lg:w-[40%] flex justify-center lg:justify-end h-full relative items-end">
+                <img src="{% static 'images/girl.png' %}" alt="Doctor"
+                    class="h-[50vh] md:h-[60vh] lg:h-[75vh] object-contain relative z-10" />
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="absolute -bottom-8 md:-bottom-16 lg:-bottom-[120px] left-1/2 -translate-x-1/2 lg:left-auto lg:right-[100px] lg:translate-x-0 z-50 w-[80%] md:w-[500px] lg:w-[650px] max-w-[95vw]">
+        <img src="{% static 'images/ambulance.png' %}" alt="Ambulance Car" class="w-full drop-shadow-2xl" />
+    </div>
+</section>
+
+<section class="relative z-10 bg-white py-20 mt-20 md:mt-40">
+    <div class="max-w-[1300px] mx-auto px-6 md:px-10">
+        <div class="flex flex-col md:flex-row items-center gap-12 md:gap-16">
+            <div class="w-full md:w-1/2">
+                <img src="{% static 'images/image1.png' %}" alt="Medical Team" class="w-full h-auto object-cover shadow-xl rounded-lg" />
+            </div>
+
+            <div class="w-full md:w-1/2 text-center md:text-left">
+                <span
+                    class="inline-block bg-primary text-white text-sm font-semibold px-4 py-2 rounded-full mb-6 tracking-wide">
+                    Trusted Home Care Services
+                </span>
+
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-900 leading-tight mb-6">
+                    AI-Powered Doctor Booking <br class="hidden md:block" />
+                    Across Multiple Hospitals
+                </h2>
+
+                <p class="text-gray-600 text-base md:text-lg leading-relaxed text-justify">
+                    Our system helps patients get fast, reliable care while giving
+                    doctors and hospitals an organized way to handle schedules,
+                    records, and appointments. With medical report handling and smart
+                    AI support, we offer a modern healthcare experience that is
+                    accessible anytime and anywhere.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-10 px-4">
+    <div
+        class="w-full mx-auto bg-primary rounded-tl-[50px] rounded-br-[50px] md:rounded-tl-[150px] md:rounded-br-[150px] overflow-hidden shadow-2xl relative">
+        <div class="flex flex-col md:flex-row items-center justify-between p-8 md:p-16 gap-10">
+            <div class="w-full md:w-1/2 text-white z-10 flex-col flex items-center justify-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-accent mb-8 md:mb-10 text-center md:text-left">
+                    Why choose Health Care?
+                </h2>
+
+                <ul class="space-y-4 md:space-y-6">
+                    <li class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-4 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-base md:text-lg font-light tracking-wide">Online Doctor Booking</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-4 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-base md:text-lg font-light tracking-wide">Smart AI Health Assistant</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-4 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-base md:text-lg font-light tracking-wide">Digital Medical Report Locker</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-4 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-base md:text-lg font-light tracking-wide">Multi-Hospital Access in One
+                            Website</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-4 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-base md:text-lg font-light tracking-wide">User-Friendly Experience</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="w-full md:w-1/2 flex justify-center z-10">
+                <img src="{% static 'images/Group_928.png' %}" alt="Features Graphic"
+                    class="w-full max-w-[300px] md:max-w-md md:h-[300px] object-contain transform hover:scale-105 transition duration-500" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-20 bg-gray-50">
+    <div class="max-w-[1300px] mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                Our Services
+            </h2>
+            <p class="text-gray-500 text-base md:text-lg">
+                Comprehensive Healthcare Services Tailored to your needs
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Cardiology</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 13v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Neurology</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 13c-2.33 0-4.31 1.46-5.11 3.5h10.22c-.8-2.04-2.78-3.5-5.11-3.5zm-5 5H4v-4h3v4zm13 0h-3v-4h3v4z"
+                            opacity=".9" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Pediatrics</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+
+            <!-- Card 4 -->
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Opthalmology</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+
+            <!-- Card 5 -->
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M17 2H7c-1.1 0-2 .9-2 2v3.5c0 1.5.9 2.8 2.2 3.3.5 2.2 2 3.9 4.1 4.1V22h1.4v-7.1c2.1-.2 3.6-1.9 4.1-4.1 1.3-.5 2.2-1.8 2.2-3.3V4c0-1.1-.9-2-2-2zm-6.2 9.5c-.8-.2-1.5-.7-2-1.4-.5.7-1.2 1.2-2 1.4-.2-.8-.3-1.6-.3-2.5V4h4.3v5c0 .9-.1 1.7-.3 2.5zm6.5-2.5c0 .9-.1 1.7-.3 2.5-.8-.2-1.5-.7-2-1.4-.5.7-1.2 1.2-2 1.4-.2-.8-.3-1.6-.3-2.5V4h4.6v5z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Dentistry</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+
+            <!-- Card 6 -->
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C7.58 2 4 5.58 4 10v4h2v6h2v-6h2v6h2v-6h2v6h2v-6h2v-4c0-4.42-3.58-8-8-8zm0 2c3.31 0 6 2.69 6 6h-4v-2h-4v2H6c0-3.31 2.69-6 6-6z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Radiology</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Expert healthcare with advanced diagnosis and treatment options
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include "footer.html" %}
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    // Auto-dismiss success messages after 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('[class*="bg-green-500"], [class*="bg-blue-500"]');
+        messages.forEach(function(message) {
+            setTimeout(function() {
+                message.style.transition = 'opacity 0.5s ease-out';
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 500);
+            }, 3000);
+        });
+    });
+</script>
+{% endblock javascript %}
