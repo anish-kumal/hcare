@@ -15,14 +15,40 @@
         {% include "navbar.html" %}
 
         {% if messages %}
-        <div class="mt-4 space-y-2">
+        <div id="message-container"
+            class="mt-4 space-y-3 flex flex-col items-end absolute top-5 right-6 md:right-5 z-50">
+
             {% for message in messages %}
-            <div class="p-4 rounded-lg shadow-lg {% if message.tags == 'error' %}bg-red-500 text-white{% elif message.tags == 'success' %}bg-green-500 text-white{% else %}bg-blue-500 text-white{% endif %} animate-fade-in">
+            <div
+                class="message-item relative p-4 pr-10 rounded-md shadow transition-opacity duration-500
+                {% if message.tags == 'error' %}
+                    bg-red-100 border border-red-400 text-red-700
+                {% elif message.tags == 'success' %}
+                    bg-green-100 border border-green-400 text-green-700
+                {% elif message.tags == 'warning' %}
+                    bg-yellow-100 border border-yellow-400 text-yellow-700
+                {% else %}
+                    bg-blue-100 border border-blue-400 text-blue-700
+                {% endif %}"
+            >
+
+                <!-- Close Button -->
+                <button
+                    class="absolute top-2 right-2 text-xl font-bold leading-none hover:opacity-70"
+                    onclick="closeMessage(this)"
+                    aria-label="Close"
+                >
+                    &times;
+                </button>
+
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
+
+
+
 
         <div class="flex flex-col lg:flex-row items-center justify-between flex-1 relative mt-10">
             <div class="w-full lg:w-[60%] text-white z-10 text-center lg:text-left pt-10 pb-10 lg:pb-20">
@@ -262,21 +288,25 @@
 
 {% include "footer.html" %}
 {% endblock content %}
-
 {% block javascript %}
 <script>
-    // Auto-dismiss success messages after 3 seconds
-    document.addEventListener('DOMContentLoaded', function() {
-        const messages = document.querySelectorAll('[class*="bg-green-500"], [class*="bg-blue-500"]');
-        messages.forEach(function(message) {
-            setTimeout(function() {
-                message.style.transition = 'opacity 0.5s ease-out';
+    // Manual close
+    function closeMessage(button) {
+        const message = button.parentElement;
+        message.style.opacity = '0';
+        setTimeout(() => message.remove(), 500);
+    }
+
+    // Auto close after 2 seconds
+    document.addEventListener("DOMContentLoaded", function () {
+        const messages = document.querySelectorAll(".message-item");
+        messages.forEach((message) => {
+            setTimeout(() => {
                 message.style.opacity = '0';
-                setTimeout(function() {
-                    message.remove();
-                }, 500);
-            }, 3000);
+                setTimeout(() => message.remove(), 500);
+            }, 2000);
         });
     });
 </script>
+
 {% endblock javascript %}
