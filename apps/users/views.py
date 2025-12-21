@@ -12,7 +12,7 @@ class UserRegisterView(CreateView):
     Class-based view for user registration
     """
     form_class = UserRegistrationForm
-    template_name = 'register.html'
+    template_name = 'patient/register.html'
     success_url = reverse_lazy('users:login')
     
     def dispatch(self, request, *args, **kwargs):
@@ -48,7 +48,7 @@ class UserLoginView(LoginView):
     Class-based view for user login
     """
     form_class = UserLoginForm
-    template_name = 'login.html'
+    template_name = 'patient/login.html'
     redirect_authenticated_user = True
     
     def get_success_url(self):

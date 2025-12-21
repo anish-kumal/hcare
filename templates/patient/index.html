@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "patient/base.html" %}
 {% load static %}
 
 {% block title %}Home - Health Care{% endblock title %}
@@ -12,7 +12,7 @@
             rgba(36, 82, 88, 0.7)
         ), url('{% static 'images/background.png' %}');">
     <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
-        {% include "navbar.html" %}
+    {% include "patient/navbar.html" %}
 
         {% if messages %}
         <div id="message-container"
@@ -53,9 +53,9 @@
         <div class="flex flex-col lg:flex-row items-center justify-between flex-1 relative mt-10">
             <div class="w-full lg:w-[60%] text-white z-10 text-center lg:text-left pt-10 pb-10 lg:pb-20">
                 <h1 class="text-xl md:text-5xl font-bold leading-tight">
-                    Bringing Healthcare<br />
-                    to Your Everystep.<br />
-                    24/7.
+                    <span class="block">Bringing Healthcare</span>
+                    <span class="block mt-2 md:mt-2">to Your Everystep.</span>
+                    <span class="block mt-2 md:mt-2">24/7.</span>
                 </h1>
                 <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-lg mx-auto lg:mx-0">
                     Qualified doctors available nation-wide, providing quick and
@@ -90,7 +90,7 @@
     <div class="max-w-[1300px] mx-auto px-6 md:px-10">
         <div class="flex flex-col md:flex-row items-center gap-12 md:gap-16">
             <div class="w-full md:w-1/2">
-                <img src="{% static 'images/image1.png' %}" alt="Medical Team" class="w-full h-auto object-cover shadow-xl rounded-lg" />
+                <img src="{% static 'images/image 1.png' %}" alt="Medical Team" class="w-full h-auto object-cover rounded-lg" />
             </div>
 
             <div class="w-full md:w-1/2 text-center md:text-left">
@@ -117,8 +117,7 @@
 </section>
 
 <section class="py-10 px-4">
-    <div
-        class="w-full mx-auto bg-primary rounded-tl-[50px] rounded-br-[50px] md:rounded-tl-[150px] md:rounded-br-[150px] overflow-hidden shadow-2xl relative">
+    <div class="w-full mx-auto bg-primary rounded-tl-[50px] rounded-br-[50px] md:rounded-tl-[150px] md:rounded-br-[150px] overflow-hidden shadow-2xl relative">
         <div class="flex flex-col md:flex-row items-center justify-between p-8 md:p-16 gap-10">
             <div class="w-full md:w-1/2 text-white z-10 flex-col flex items-center justify-center">
                 <h2 class="text-3xl md:text-4xl font-bold text-accent mb-8 md:mb-10 text-center md:text-left">
@@ -286,7 +285,7 @@
     </div>
 </section>
 
-{% include "footer.html" %}
+{% include "patient/footer.html" %}
 {% endblock content %}
 {% block javascript %}
 <script>
@@ -297,7 +296,7 @@
         setTimeout(() => message.remove(), 500);
     }
 
-    // Auto close after 2 seconds
+    // Auto close after  seconds
     document.addEventListener("DOMContentLoaded", function () {
         const messages = document.querySelectorAll(".message-item");
         messages.forEach((message) => {
