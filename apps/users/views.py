@@ -1,10 +1,11 @@
-from django.shortcuts import redirect
-from django.views.generic import CreateView
+from django.shortcuts import redirect, render
+from django.views.generic import CreateView, View
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import UserRegistrationForm, UserLoginForm
+from .models import User
 
 
 class UserRegisterView(CreateView):
@@ -91,3 +92,42 @@ class UserLogoutView(LoginRequiredMixin, LogoutView):
     def dispatch(self, request, *args, **kwargs):
         messages.success(request, 'You have been logged out successfully.')
         return super().dispatch(request, *args, **kwargs)
+
+
+class PasswordResetView(View):
+    """
+    Class-based view for password reset after OTP verification
+    """
+    template_name = 'patient/password_reset.html'
+    
+    def get(self, request, user_id=None):
+        """Display password reset form"""
+        context = {'user_id': user_id}
+        return render(request, self.template_name, context)
+    
+    def post(self, request, user_id=None):
+        """Handle password reset"""
+        password1 = request.POST.get('password1', '').strip()
+        password2 = request.POST.get('password2', '').strip()
+        
+        if not password1 or not password2:
+            messages.error(request, "Both password fields are required.")
+            return render(request, self.template_name, {'user_id': user_id})
+        
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return render(request, self.template_name, {'user_id': user_id})
+        
+        if len(password1) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return render(request, self.template_name, {'user_id': user_id})
+        
+        try:
+            user = User.objects.get(id=user_id)
+            user.set_password(password1)
+            user.save()
+            messages.success(request, "Password reset successfully! Please log in with your new password.")
+            return redirect('users:login')
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('users:login')
