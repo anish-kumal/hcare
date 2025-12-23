@@ -1,4 +1,4 @@
-{% extends "patient/base.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 
 {% block title %}Request OTP - Health Care{% endblock title %}
@@ -84,22 +84,16 @@
                 <a href="{% url 'users:register' %}" class="text-primary font-semibold hover:underline">Create one</a>
             </p>
 
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <a href="{% url 'users:login' %}" class="flex items-center justify-center gap-2 text-gray-600 hover:text-primary transition">
+                    <span>←</span>
+                    <span class="text-sm">Back to Log In</span>
+                </a>
+            </div>
+
         </div>
     </div>
 
 </div>
 
 {% endblock content %}
-
-                    <hr>
-
-                    <p class="text-center text-muted small">
-                        Already have an account? 
-                        <a href="{% url 'users:login' %}">Login here</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}

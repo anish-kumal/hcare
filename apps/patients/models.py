@@ -1,132 +1,143 @@
 from django.db import models
 from django.conf import settings
 from apps.base.models import BaseModel
-from apps.hospitals.models import Hospital, HospitalDepartment
+from apps.hospitals.models import Hospital
+from apps.doctors.models import Doctor
 
 
-class Specialization(BaseModel):
+class Patient(BaseModel):
     """
-    Medical Specialization model
-    """
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-        help_text="Specialization name (e.g., Cardiology, Pediatrics)"
-    )
-    
-    code = models.CharField(
-        max_length=20,
-        unique=True,
-        help_text="Specialization code"
-    )
-    
-    description = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Description of specialization"
-    )
-    
-    class Meta:
-        verbose_name = 'Specialization'
-        verbose_name_plural = 'Specializations'
-        ordering = ['name']
-    
-    def __str__(self):
-        return self.name
-
-
-class Doctor(BaseModel):
-    """
-    Doctor profile model
+    Patient profile model
     """
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='doctor_profile',
-        limit_choices_to={'user_type': 'DOCTOR'},
-        help_text="User account for this doctor"
+        related_name='patient_profile',
+        limit_choices_to={'user_type': 'PATIENT'},
+        help_text="User account for this patient"
     )
     
     hospital = models.ForeignKey(
         Hospital,
-        on_delete=models.CASCADE,
-        related_name='doctors',
-        help_text="Primary hospital"
-    )
-    
-    department = models.ForeignKey(
-        HospitalDepartment,
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        related_name='doctors',
-        help_text="Department"
+        related_name='patients',
+        help_text="Primary hospital"
     )
     
-    specialization = models.ForeignKey(
-        Specialization,
-        on_delete=models.PROTECT,
-        related_name='doctors',
-        help_text="Primary specialization"
-    )
-    
-    additional_specializations = models.ManyToManyField(
-        Specialization,
-        blank=True,
-        related_name='doctors_additional',
-        help_text="Additional specializations"
-    )
-    
-    license_number = models.CharField(
-        max_length=50,
-        unique=True,
-        help_text="Medical license number"
-    )
-    
-    employee_id = models.CharField(
-        max_length=50,
-        unique=True,
-        help_text="Employee ID"
-    )
-    
-    qualification = models.CharField(
-        max_length=200,
-        help_text="Medical qualifications (e.g., MBBS, MD)"
-    )
-    
-    experience_years = models.PositiveIntegerField(
-        default=0,
-        help_text="Years of experience"
-    )
-    
-    bio = models.TextField(
+    doctor = models.ForeignKey(
+        Doctor,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        help_text="Doctor's biography"
+        related_name='patients',
+        help_text="Primary doctor"
     )
     
-    consultation_fee = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        help_text="Consultation fee"
+    date_of_birth = models.DateField(
+        help_text="Date of birth"
+    )
+    
+    gender = models.CharField(
+        max_length=10,
+        choices=[('M', 'Male'), ('F', 'Female'), ('O', 'Other')],
+        help_text="Gender"
+    )
+    
+    blood_group = models.CharField(
+        max_length=5,
+        choices=[
+            ('O+', 'O+'),
+            ('O-', 'O-'),
+            ('A+', 'A+'),
+            ('A-', 'A-'),
+            ('B+', 'B+'),
+            ('B-', 'B-'),
+            ('AB+', 'AB+'),
+            ('AB-', 'AB-'),
+        ],
+        blank=True,
+        null=True,
+        help_text="Blood group"
+    )
+    
+    contact_number = models.CharField(
+        max_length=15,
+        help_text="Contact number"
+    )
+    
+    emergency_contact = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        help_text="Emergency contact number"
+    )
+    
+    emergency_contact_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Emergency contact person name"
+    )
+    
+    address = models.TextField(
+        help_text="Residential address"
+    )
+    
+    city = models.CharField(
+        max_length=100,
+        help_text="City"
+    )
+    
+    state = models.CharField(
+        max_length=100,
+        help_text="State/Province"
+    )
+    
+    country = models.CharField(
+        max_length=100,
+        default="Nepal",
+        help_text="Country"
+    )
+    
+    postal_code = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text="Postal/ZIP code"
+    )
+    
+    medical_history = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Medical history and allergies"
+    )
+    
+    insurance_provider = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Insurance provider name"
+    )
+    
+    insurance_policy_number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Insurance policy number"
     )
     
     profile_picture = models.ImageField(
-        upload_to='doctors/profiles/',
+        upload_to='patients/profiles/',
         blank=True,
         null=True,
         help_text="Profile picture"
     )
     
-    is_available = models.BooleanField(
-        default=True,
-        help_text="Currently accepting appointments"
-    )
-    
     is_verified = models.BooleanField(
         default=False,
-        help_text="Verified by hospital admin"
+        help_text="Email verified"
     )
     
     verified_at = models.DateTimeField(
@@ -135,86 +146,94 @@ class Doctor(BaseModel):
         help_text="Verification timestamp"
     )
     
-    verified_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='verified_doctors',
-        help_text="Admin who verified"
-    )
-    
-    joining_date = models.DateField(
-        help_text="Date joined hospital"
-    )
-    
     class Meta:
-        verbose_name = 'Doctor'
-        verbose_name_plural = 'Doctors'
+        verbose_name = 'Patient'
+        verbose_name_plural = 'Patients'
         ordering = ['user__first_name']
         indexes = [
-            models.Index(fields=['hospital', 'specialization']),
-            models.Index(fields=['is_available', 'is_verified']),
+            models.Index(fields=['hospital', 'doctor']),
+            models.Index(fields=['is_verified']),
         ]
     
     def __str__(self):
-        return f"Dr. {self.user.get_full_name()} - {self.specialization.name}"
+        return f"{self.user.get_full_name()}"
 
 
-class DoctorSchedule(BaseModel):
+class PatientAppointment(BaseModel):
     """
-    Doctor's availability schedule
+    Patient appointment with doctor
     """
-    WEEKDAY_CHOICES = [
-        (0, 'Monday'),
-        (1, 'Tuesday'),
-        (2, 'Wednesday'),
-        (3, 'Thursday'),
-        (4, 'Friday'),
-        (5, 'Saturday'),
-        (6, 'Sunday'),
+    STATUS_CHOICES = [
+        ('SCHEDULED', 'Scheduled'),
+        ('CONFIRMED', 'Confirmed'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+        ('RESCHEDULED', 'Rescheduled'),
     ]
+    
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='appointments',
+        help_text="Patient"
+    )
     
     doctor = models.ForeignKey(
         Doctor,
         on_delete=models.CASCADE,
-        related_name='schedules',
+        related_name='patient_appointments',
         help_text="Doctor"
     )
     
-    weekday = models.IntegerField(
-        choices=WEEKDAY_CHOICES,
-        help_text="Day of week"
+    appointment_date = models.DateField(
+        help_text="Appointment date"
     )
     
-    start_time = models.TimeField(
-        help_text="Start time"
+    appointment_time = models.TimeField(
+        help_text="Appointment time"
     )
     
-    end_time = models.TimeField(
-        help_text="End time"
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='SCHEDULED',
+        help_text="Appointment status"
     )
     
-    slot_duration = models.IntegerField(
-        default=30,
-        help_text="Appointment slot duration in minutes"
+    reason = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Reason for appointment"
     )
     
-    max_patients = models.IntegerField(
-        default=20,
-        help_text="Maximum patients per session"
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Doctor notes"
     )
     
-    is_available = models.BooleanField(
-        default=True,
-        help_text="Is schedule active"
+    cancelled_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Cancellation timestamp"
+    )
+    
+    cancelled_reason = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="Cancellation reason"
     )
     
     class Meta:
-        verbose_name = 'Doctor Schedule'
-        verbose_name_plural = 'Doctor Schedules'
-        ordering = ['weekday', 'start_time']
-        unique_together = ['doctor', 'weekday', 'start_time']
+        verbose_name = 'Patient Appointment'
+        verbose_name_plural = 'Patient Appointments'
+        ordering = ['-appointment_date', '-appointment_time']
+        indexes = [
+            models.Index(fields=['patient', 'doctor', 'appointment_date']),
+            models.Index(fields=['status']),
+        ]
     
     def __str__(self):
-        return f"{self.doctor} - {self.get_weekday_display()} {self.start_time}-{self.end_time}"
+        return f"{self.patient} - {self.doctor} - {self.appointment_date}"

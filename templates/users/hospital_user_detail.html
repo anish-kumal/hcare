@@ -1,0 +1,190 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{{ object.get_full_name }} - Health Care{% endblock title %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+  title="Toggle menu">
+  <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  {% include "partials/side_bar.html" %}
+  
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+  <!-- Top Header -->
+  <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+    
+    <div class="w-full flex justify-end items-center gap-6">
+
+      <!-- Icons -->
+      <div class="flex items-center gap-3">
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative" title="Notifications">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
+        </button>
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Settings">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Help">
+          <span class="material-symbols-outlined">help</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Scrollable Main Content -->
+  <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+    <div class="max-w-3xl mx-auto space-y-8">
+      <!-- Back Button -->
+      <a href="{% url 'users:hospital_user_list' %}" class="inline-flex items-center gap-2 text-primary hover:text-[#1a3d42] font-medium mb-4">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Back to Staff
+      </a>
+
+      <!-- User Card Header -->
+      <div class="bg-gradient-to-r from-primary to-[#1a3d42] rounded-xl shadow-lg p-8 text-white">
+        <div class="flex items-end gap-6">
+          <!-- Avatar -->
+          <div class="h-24 w-24 rounded-xl bg-white/20 border-4 border-white flex items-center justify-center flex-shrink-0">
+            <span class="text-5xl font-bold text-white">{{ object.first_name|first|upper }}</span>
+          </div>
+
+          <!-- User Info -->
+          <div class="flex-1">
+            <h1 class="text-4xl font-bold mb-1">{{ object.get_full_name }}</h1>
+            <p class="text-white/80 text-lg">@{{ object.username }}</p>
+            <div class="mt-4 flex gap-3 flex-wrap">
+              <span class="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-sm font-semibold">
+                <span class="material-symbols-outlined text-[18px] mr-2">badge</span>
+                {{ object.get_user_type_display }}
+              </span>
+              <span class="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-sm font-semibold">
+                <span class="material-symbols-outlined text-[18px] mr-2">calendar_month</span>
+                Joined {{ object.created|date:"M Y" }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 flex-col">
+            <a href="{% url 'users:hospital_user_update' object.id %}" 
+               class="flex items-center gap-2 px-6 py-2.5 bg-white text-primary rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <span class="material-symbols-outlined">edit</span>
+              Edit
+            </a>
+            <a href="{% url 'users:hospital_user_delete' object.id %}" 
+               class="flex items-center gap-2 px-6 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">
+              <span class="material-symbols-outlined">delete</span>
+              Remove
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Contact Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Contact Information</h3>
+          
+          <div class="space-y-4">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Email Address</p>
+              <p class="text-lg font-semibold text-gray-900 break-all">{{ object.email }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Phone Number</p>
+              <p class="text-lg font-semibold text-gray-900">{{ object.phone_number|default:"Not Provided" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Personal Information</h3>
+          
+          <div class="space-y-4">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Date of Birth</p>
+              <p class="text-lg font-semibold text-gray-900">{{ object.date_of_birth|date:"M d, Y"|default:"Not Provided" }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Address</p>
+              <p class="text-lg font-semibold text-gray-900">{{ object.address|default:"Not Provided" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:col-span-2">
+          <h3 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Account Information</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Status</p>
+              <div class="flex items-center gap-2">
+                {% if object.is_active %}
+                  <span class="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                  <p class="font-semibold text-green-700">Active</p>
+                {% else %}
+                  <span class="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+                  <p class="font-semibold text-red-700">Inactive</p>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Staff Type</p>
+              <p class="font-semibold text-gray-900">{{ object.get_user_type_display }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Account Created</p>
+              <p class="font-semibold text-gray-900">{{ object.created|date:"M d, Y" }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</div>
+
+<script>
+  // Mobile menu toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const menuOverlay = document.getElementById('menuOverlay');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    menuOverlay.classList.toggle('hidden');
+  });
+
+  menuOverlay.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    menuOverlay.classList.add('hidden');
+  });
+
+  // Close sidebar when a link is clicked on mobile
+  document.querySelectorAll('#sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock content %}

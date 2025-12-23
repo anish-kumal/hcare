@@ -1,0 +1,73 @@
+{% extends "base/base.html" %}
+
+{% block title %}Healthcare Dashboard{% endblock title %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+
+<!-- Hide scrollbar styles -->
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    .custom-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Sidebar toggle animation */
+    .sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-closed {
+        transform: translateX(-100%);
+    }
+</style>
+{% block head_extra %}
+
+{% endblock head_extra %}
+{% block body_attribute %} id="body"{% endblock body_attribute %}
+
+
+
+{% block javascript %}
+
+<!-- JavaScript for responsive menu toggle -->
+<script>
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const menuOverlay = document.getElementById('menuOverlay');
+
+    // Toggle menu on button click
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('-translate-x-full');
+        menuOverlay.classList.toggle('hidden');
+    });
+
+    // Close menu when clicking overlay
+    menuOverlay.addEventListener('click', () => {
+        sidebar.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+    });
+
+    // Close menu when clicking on a link
+    const navLinks = sidebar.querySelectorAll('a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            menuOverlay.classList.add('hidden');
+        });
+    });
+
+    // Close menu when window resizes to large screen
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 1024) {
+            sidebar.classList.add('-translate-x-full');
+            menuOverlay.classList.add('hidden');
+        }
+    });
+</script>
+
+{% endblock javascript %}

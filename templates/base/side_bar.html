@@ -1,0 +1,62 @@
+<aside
+      class="w-64 h-screen bg-primary text-white fixed lg:static flex flex-col lg:translate-x-0 -translate-x-full transition-transform duration-300 z-40"
+      id="sidebar">
+    <div class="h-20 flex items-center px-6 border-b border-white/10 flex-shrink-0">
+      <div class="flex items-center gap-4">
+
+        <!-- Logo (no background) -->
+        <div class="flex items-center justify-center">
+          <img src="logo.png" alt="Health Care Logo" class="h-12 w-12 object-contain">
+        </div>
+
+        <div class="leading-tight">
+          <h1 class="text-white text-lg font-bold ">
+            Health Care
+          </h1>
+          <p class="text-white/60 text-xs font-medium tracking-wider">
+            Super Admin
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <nav class="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 border border-white/5 text-white shadow-sm transition-all duration-200"
+        href="#">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+        <span class="font-medium text-sm">Dashboard</span>
+      </a>
+    
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all duration-200"
+        href="#">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">people</span>
+        <span class="font-medium text-sm">Users</span>
+      </a>
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all duration-200"
+        href="#">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+        <span class="font-medium text-sm">Settings</span>
+      </a>
+
+    </nav>
+
+    <!-- Sidebar Footer - Fixed at bottom -->
+    <div class="p-4 border-t border-white/10 bg-gradient-to-r from-white/5 to-white/10 flex-shrink-0">
+      <div class="flex items-center gap-3 px-2">
+        <div class="size-10 rounded-lg bg-white/10 border border-white/20 bg-center bg-cover flex-shrink-0"
+          data-alt="Logged in super admin avatar"
+          style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC_0JjjvNxwH81tImOt3egjXaR3r-28Nbda9YfiakXqZ2-X2AyqCW3BvCOU6lF_LIUG1m12mHzfmPUbFfmKRxUzwawetx7y3IC9zq6cUovOt1WA8vQdMQoYmkS9Awevl0cis7g-n-FylVG3qKxzyqWHs4_XF8pjN_yDgluXPQMbHCUUXZ75MfL40pafxl63Ovax1WW1CY9_acrIAhC1MwdJVeQaL4SpXC_zjvMOhdFTBTFJcrW7roKIzbC_grERdwnXAn7VHsGUZYk');">
+        </div>
+        <div class="flex-1 overflow-hidden min-w-0">
+          <p class="text-sm font-semibold text-white truncate">Super Admin</p>
+          <p class="text-xs text-white/60 truncate">admin@medinet.com</p>
+        </div>
+        <button class="text-white/50 hover:text-white hover:bg-white/10 transition-all p-1.5 rounded-md flex-shrink-0"
+          title="Logout">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </button>
+      </div>
+    </div>
+
+  </aside>

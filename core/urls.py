@@ -18,7 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from apps.base.views import IndexView
+from apps.base.views import (
+    IndexView, 
+    SuperAdminDashboardView, 
+    AdminDashboardView,
+    DoctorDashboardView,
+    PatientDashboardView,
+    LabAssistantDashboardView
+)
 
 
 urlpatterns = [
@@ -26,6 +33,13 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls')),
     path('otp/', include('apps.otp.urls')),
+    path('hospitals/', include('apps.hospitals.urls')),
+    # Dashboard routes based on role
+    path('dashboard/super-admin/', SuperAdminDashboardView.as_view(), name='super_admin_dashboard'),
+    path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('dashboard/doctor/', DoctorDashboardView.as_view(), name='doctor_dashboard'),
+    path('dashboard/patient/', PatientDashboardView.as_view(), name='patient_dashboard'),
+    path('dashboard/lab-assistant/', LabAssistantDashboardView.as_view(), name='lab_assistant_dashboard'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -124,6 +124,62 @@ class Hospital(BaseModel):
         return self.name
 
 
+class HospitalDepartment(BaseModel):
+    """
+    Hospital Department model - represents departments within a hospital
+    """
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.CASCADE,
+        related_name='departments',
+        help_text="Hospital this department belongs to"
+    )
+    
+    name = models.CharField(
+        max_length=100,
+        help_text="Department name (e.g., Cardiology, Orthopedics)"
+    )
+    
+    code = models.CharField(
+        max_length=20,
+        help_text="Department code"
+    )
+    
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Department description"
+    )
+    
+    head_doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='headed_departments',
+        help_text="Head doctor of this department"
+    )
+    
+    total_beds = models.PositiveIntegerField(
+        default=0,
+        help_text="Total beds in this department"
+    )
+    
+    available_beds = models.PositiveIntegerField(
+        default=0,
+        help_text="Currently available beds"
+    )
+    
+    class Meta:
+        verbose_name = 'Hospital Department'
+        verbose_name_plural = 'Hospital Departments'
+        ordering = ['hospital', 'name']
+        unique_together = [['hospital', 'code']]
+    
+    def __str__(self):
+        return f"{self.name} - {self.hospital.name}"
+
+
 class HospitalAdmin(BaseModel):
     """
     Hospital Admin model - manages a specific hospital

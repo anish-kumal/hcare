@@ -1,4 +1,4 @@
-{% extends "patient/base.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 
 {% block title %}Home - Health Care{% endblock title %}
@@ -118,6 +118,13 @@
                 Already have an account?
                 <a href="{% url 'users:login' %}" class="text-primary font-bold underline hover:text-green-800">Log In</a>
             </p>
+
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <a href="{% url 'index' %}" class="flex items-center justify-center gap-2 text-gray-600 hover:text-primary transition">
+                    <span>←</span>
+                    <span class="text-sm">Back to Home</span>
+                </a>
+            </div>
 
         </div>
     </div>

@@ -1,0 +1,541 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Edit Staff{% else %}Add Staff Member{% endif %} - Health Care{% endblock title %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+  title="Toggle menu">
+  <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  {% include "partials/side_bar.html" %}
+  
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+  <!-- Top Header -->
+  <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+    
+    <div class="w-full flex justify-end items-center gap-6">
+
+      <!-- Icons -->
+      <div class="flex items-center gap-3">
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative" title="Notifications">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
+        </button>
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Settings">
+          <span class="material-symbols-outlined">setting</span>
+        </button>
+        <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Help">
+          <span class="material-symbols-outlined">help</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Scrollable Main Content -->
+  <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+    <div class="max-w-2xl mx-auto space-y-8">
+      <!-- Headline -->
+      <div class="pb-4">
+        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{% if form.instance.pk %}Edit Staff Member{% else %}Add New Staff Member{% endif %}</h1>
+        <p class="text-gray-600 mt-2">{% if form.instance.pk %}Update{% else %}Add a new{% endif %} staff member information for {{ hospital.name }}</p>
+      </div>
+
+      <!-- Error Messages -->
+      {% if form.non_field_errors %}
+      <div class="p-4 rounded-lg bg-red-100 border-l-4 border-red-700 text-red-700">
+        <h3 class="font-semibold mb-2">Error</h3>
+        <ul class="list-disc list-inside">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Form Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <form method="POST" class="space-y-6">
+          {% csrf_token %}
+
+          <!-- Basic Information Section -->
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Basic Information</h2>
+            
+            <div class="space-y-4">
+              <!-- Username -->
+              <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">person</span>
+                    Username
+                  </span>
+                </label>
+                {% if form.instance.pk %}
+                  <input type="text" value="{{ form.instance.username }}" disabled class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed" />
+                  <input type="hidden" name="username" value="{{ form.instance.username }}" />
+                {% else %}
+                  {{ form.username }}
+                {% endif %}
+                {% if form.username.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.username.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">mail</span>
+                    Email Address
+                  </span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.email.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- First Name -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}
+                    <ul class="mt-2 text-sm text-red-600">
+                      {% for error in form.first_name.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+
+                <!-- Last Name -->
+                <div>
+                  <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}
+                    <ul class="mt-2 text-sm text-red-600">
+                      {% for error in form.last_name.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- User Type -->
+              <div>
+                <label for="{{ form.user_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">badge</span>
+                    Staff Type
+                  </span>
+                </label>
+                {{ form.user_type }}
+                {% if form.user_type.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.user_type.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Password (only on create) -->
+              {% if not form.instance.pk %}
+              <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">lock</span>
+                    Password
+                  </span>
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.password.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                  <span class="font-semibold">Password Update:</span> Staff members can reset their password through the login page if needed.
+                </p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Contact Information Section -->
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Contact Information</h2>
+            
+            <div class="space-y-4">
+              <!-- Phone Number -->
+              <div>
+                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">phone</span>
+                    Phone Number
+                  </span>
+                </label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.phone_number.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Date of Birth -->
+              <div>
+                <label for="{{ form.date_of_birth.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">cake</span>
+                    Date of Birth
+                  </span>
+                </label>
+                {{ form.date_of_birth }}
+                {% if form.date_of_birth.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.date_of_birth.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Address -->
+              <div>
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">location_on</span>
+                    Address
+                  </span>
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.address.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pt-6 border-t border-gray-200">
+            <button type="submit" class="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">save</span>
+              {% if form.instance.pk %}Save Changes{% else %}Add Staff Member{% endif %}
+            </button>
+            <a href="{% url 'users:hospital_user_list' %}" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">close</span>
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+</div>
+
+<script>
+  // Mobile menu toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const menuOverlay = document.getElementById('menuOverlay');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    menuOverlay.classList.toggle('hidden');
+  });
+
+  menuOverlay.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    menuOverlay.classList.add('hidden');
+  });
+
+  // Close sidebar when a link is clicked on mobile
+  document.querySelectorAll('#sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock content %}
+
+      <!-- Error Messages -->
+      {% if form.non_field_errors %}
+      <div class="p-4 rounded-lg bg-red-100 border-l-4 border-red-700 text-red-700">
+        <h3 class="font-semibold mb-2">Error</h3>
+        <ul class="list-disc list-inside">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Form Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <form method="POST" class="space-y-6">
+          {% csrf_token %}
+
+          <!-- Basic Information Section -->
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Basic Information</h2>
+            
+            <div class="space-y-4">
+              <!-- Username -->
+              <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">person</span>
+                    Username
+                  </span>
+                </label>
+                {% if form.instance.pk %}
+                  <input type="text" value="{{ form.instance.username }}" disabled class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed" />
+                  <input type="hidden" name="username" value="{{ form.instance.username }}" />
+                {% else %}
+                  {{ form.username }}
+                {% endif %}
+                {% if form.username.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.username.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">mail</span>
+                    Email Address
+                  </span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.email.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- First Name -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}
+                    <ul class="mt-2 text-sm text-red-600">
+                      {% for error in form.first_name.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+
+                <!-- Last Name -->
+                <div>
+                  <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}
+                    <ul class="mt-2 text-sm text-red-600">
+                      {% for error in form.last_name.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- User Type -->
+              <div>
+                <label for="{{ form.user_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">badge</span>
+                    Staff Type
+                  </span>
+                </label>
+                {{ form.user_type }}
+                {% if form.user_type.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.user_type.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Password (only on create) -->
+              {% if not form.instance.pk %}
+              <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">lock</span>
+                    Password
+                  </span>
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.password.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                  <span class="font-semibold">Password Update:</span> Staff members can reset their password through the login page if needed.
+                </p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Contact Information Section -->
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Contact Information</h2>
+            
+            <div class="space-y-4">
+              <!-- Phone Number -->
+              <div>
+                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">phone</span>
+                    Phone Number
+                  </span>
+                </label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.phone_number.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Date of Birth -->
+              <div>
+                <label for="{{ form.date_of_birth.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">cake</span>
+                    Date of Birth
+                  </span>
+                </label>
+                {{ form.date_of_birth }}
+                {% if form.date_of_birth.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.date_of_birth.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+
+              <!-- Address -->
+              <div>
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">location_on</span>
+                    Address
+                  </span>
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                  <ul class="mt-2 text-sm text-red-600">
+                    {% for error in form.address.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pt-6 border-t border-gray-200">
+            <button type="submit" class="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">save</span>
+              {% if form.instance.pk %}Save Changes{% else %}Create Staff Member{% endif %}
+            </button>
+            <a href="{% url 'users:hospital_user_list' %}" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">close</span>
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+</div>
+
+<script>
+  // Mobile menu toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const menuOverlay = document.getElementById('menuOverlay');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    menuOverlay.classList.toggle('hidden');
+  });
+
+  menuOverlay.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    menuOverlay.classList.add('hidden');
+  });
+
+  // Close sidebar when a link is clicked on mobile
+  document.querySelectorAll('#sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock content %}

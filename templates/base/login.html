@@ -1,4 +1,4 @@
-{% extends "patient/base.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 
 {% block title %}Home - Health Care{% endblock title %}
@@ -7,7 +7,7 @@
 
 <div class="flex flex-col md:flex-row min-h-screen w-full">
 
-    <div class="relative w-full md:w-1/2 h-64 min-h-screen">
+    <div class="relative w-full md:w-1/2 h-64 md:h-screen md:sticky md:top-0 md:overflow-hidden">
         <img src="{% static 'images/Rectangle 660.png'  %}" alt="Medical Background" class="absolute inset-0 w-full h-full object-cover" />
 
         <div class="absolute inset-0  opacity-90" style="
@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <div class="w-full md:w-1/2 md:min-h-screen flex items-center justify-center px-8 py-12 bg-white">
+    <div class="w-full md:w-1/2 md:h-screen overflow-y-auto flex items-start justify-center px-8 py-12 bg-white">
 
         <div class="w-full max-w-md">
 
@@ -68,6 +68,9 @@
                     {% if form.password.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
                     {% endif %}
+                    <div class="text-right mt-2">
+                        <a href="{% url 'otp:request' %}" class="text-sm text-primary font-medium hover:text-green-800 underline">Forgot Password?</a>
+                    </div>
                 </div>
 
                 <!-- {% if form.non_field_errors %}
@@ -111,6 +114,13 @@
                 Don't have an account?
                 <a href="{% url 'users:register' %}" class="text-primary font-bold underline hover:text-green-800">Create one</a>
             </p>
+
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <a href="{% url 'index' %}" class="flex items-center justify-center gap-2 text-gray-600 hover:text-primary transition">
+                    <span>←</span>
+                    <span class="text-sm">Back to Home</span>
+                </a>
+            </div>
 
         </div>
     </div>

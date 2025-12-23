@@ -9,10 +9,11 @@ class User(AbstractUser, BaseModel):
     """
     class UserType(models.TextChoices):
         SUPER_ADMIN = 'SUPER_ADMIN', 'Super Admin'
+        ADMIN = 'ADMIN', 'Admin'
         DOCTOR = 'DOCTOR', 'Doctor'
         PATIENT = 'PATIENT', 'Patient'
         STAFF = 'STAFF', 'Staff'
-        LAB_ASSISTANT = 'LAB_TECHNICIAN', 'Lab Technician'
+        LAB_ASSISTANT = 'LAB_ASSISTANT', 'Lab Technician'
         PHARMACIST = 'PHARMACIST', 'Pharmacist'
     
     email = models.EmailField(unique=True, blank=False)
@@ -59,6 +60,10 @@ class User(AbstractUser, BaseModel):
         return self.user_type == self.UserType.SUPER_ADMIN
     
     @property
+    def is_admin(self):
+        return self.user_type == self.UserType.ADMIN
+    
+    @property
     def is_doctor(self):
         return self.user_type == self.UserType.DOCTOR
     
@@ -72,7 +77,7 @@ class User(AbstractUser, BaseModel):
     
     @property
     def is_lab_assistant(self):
-        return self.user_type == self.UserType.LAB_TECHNICIAN
+        return self.user_type == self.UserType.LAB_ASSISTANT
     
     @property
     def is_pharmacist(self):

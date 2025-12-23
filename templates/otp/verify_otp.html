@@ -1,4 +1,4 @@
-{% extends "patient/base.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 
 {% block title %}Verify OTP - Health Care{% endblock title %}
@@ -94,9 +94,12 @@
                 </form>
             </div>
 
-            <!-- Support Link -->
+            <!-- Back to Request OTP -->
             <p class="text-center text-gray-600 text-sm mt-8">
-                <a href="{% url 'otp:request' %}" class="text-primary font-semibold hover:underline">Request new OTP</a>
+                <a href="{% url 'otp:request' %}" class="flex items-center justify-center gap-2 text-gray-600 hover:text-primary transition">
+                    <span>←</span>
+                    <span class="text-sm">Request OTP Again</span>
+                </a>
             </p>
 
         </div>

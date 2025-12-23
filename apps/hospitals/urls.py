@@ -1,0 +1,35 @@
+from django.urls import path
+from .views import (
+    HospitalListView,
+    HospitalDetailView,
+    HospitalCreateView,
+    HospitalUpdateView,
+    HospitalDeleteView,
+    HospitalAdminListView,
+    HospitalAdminCreateView,
+    HospitalAdminUpdateView,
+    HospitalAdminDeleteView,
+    AdminOwnHospitalDetailView,
+    AdminOwnHospitalUpdateView,
+)
+
+app_name = 'hospitals'
+
+urlpatterns = [
+    # Hospital CRUD URLs
+    path('', HospitalListView.as_view(), name='hospital_list'),
+    path('create/', HospitalCreateView.as_view(), name='hospital_create'),
+    path('<int:pk>/', HospitalDetailView.as_view(), name='hospital_detail'),
+    path('<int:pk>/edit/', HospitalUpdateView.as_view(), name='hospital_update'),
+    path('<int:pk>/delete/', HospitalDeleteView.as_view(), name='hospital_delete'),
+    
+    # Hospital Admin CRUD URLs
+    path('<int:hospital_id>/admins/', HospitalAdminListView.as_view(), name='hospital_admin_list'),
+    path('<int:hospital_id>/admins/add/', HospitalAdminCreateView.as_view(), name='hospital_admin_create'),
+    path('admins/<int:pk>/edit/', HospitalAdminUpdateView.as_view(), name='hospital_admin_update'),
+    path('admins/<int:pk>/delete/', HospitalAdminDeleteView.as_view(), name='hospital_admin_delete'),
+    
+    # Hospital Admin Own Hospital URLs
+    path('admin/hospital/', AdminOwnHospitalDetailView.as_view(), name='admin_hospital_detail'),
+    path('admin/hospital/edit/', AdminOwnHospitalUpdateView.as_view(), name='admin_hospital_update'),
+]

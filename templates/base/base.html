@@ -8,6 +8,10 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <script>
         tailwind.config = {
@@ -23,7 +27,12 @@
                 },
             },
         };
-    </script>
+    </script> 
+
+    {% block head_extra %}
+    {% endblock head_extra %}
+
+
 </head>
 
 <body {% block body_attribute %}{% endblock body_attribute %} class="bg-white overflow-x-hidden font-sans">

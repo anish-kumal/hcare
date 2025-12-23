@@ -1,0 +1,341 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Hospital - Health Care{% endblock title %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+  title="Toggle menu">
+  <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  {% include "partials/side_bar.html" %}
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+    <!-- Top Header -->
+    <header
+      class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+
+      <div class="w-full flex justify-end items-center gap-6">
+
+        <!-- Icons -->
+        <div class="flex items-center gap-3">
+          <button
+            class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative"
+            title="Notifications">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
+          </button>
+          <button
+            class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+            title="Settings">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <button
+            class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+            title="Help">
+            <span class="material-symbols-outlined">help</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+      <div class="max-w-[1000px] mx-auto space-y-8">
+        <!-- Headline & Actions -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+          <h1 class="text-3xl font-bold text-[#131616] tracking-tight">
+            {% if form.instance.pk %}
+            Edit Hospital
+            {% else %}
+            Add New Hospital
+            {% endif %}
+          </h1>
+
+          <div class="flex gap-3 flex-wrap">
+            <a href="{% url 'hospitals:hospital_list' %}"
+              class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+              Back to Hospitals
+            </a>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          {% if form.non_field_errors %}
+          <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-700 border border-red-300">
+            {% for error in form.non_field_errors %}
+            <p class="text-sm">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form method="POST" enctype="multipart/form-data" class="space-y-8">
+            {% csrf_token %}
+
+            <!-- Section 1: Basic Information -->
+            <div class="pb-8 border-b border-gray-200">
+              <h2 class="text-xl font-bold text-gray-900 mb-6">Basic Information</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Hospital Name -->
+                <div>
+                  <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Hospital Name *
+                  </label>
+                  {{ form.name }}
+                  {% if form.name.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Registration Number -->
+                <div>
+                  <label for="{{ form.registration_number.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    Registration Number *
+                  </label>
+                  {{ form.registration_number }}
+                  {% if form.registration_number.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.registration_number.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  {{ form.email }}
+                  {% if form.email.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                  <label for="{{ form.phone_number.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  {{ form.phone_number }}
+                  {% if form.phone_number.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Address -->
+              <div class="mt-6">
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Address *
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- City, State, Country, Postal Code -->
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+                <div>
+                  <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  {{ form.city }}
+                  {% if form.city.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <div>
+                  <label for="{{ form.state.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    State *
+                  </label>
+                  {{ form.state }}
+                  {% if form.state.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.state.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <div>
+                  <label for="{{ form.country.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Country
+                  </label>
+                  {{ form.country }}
+                  {% if form.country.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.country.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <div>
+                  <label for="{{ form.postal_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Postal Code
+                  </label>
+                  {{ form.postal_code }}
+                  {% if form.postal_code.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.postal_code.errors.0 }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Additional Information -->
+            <div class="pb-8 border-b border-gray-200">
+              <h2 class="text-xl font-bold text-gray-900 mb-6">Additional Information</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Website -->
+                <div>
+                  <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Website URL
+                  </label>
+                  {{ form.website }}
+                  {% if form.website.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.website.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Established Date -->
+                <div>
+                  <label for="{{ form.established_date.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    Established Date
+                  </label>
+                  {{ form.established_date }}
+                  {% if form.established_date.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.established_date.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Total Beds -->
+                <div>
+                  <label for="{{ form.total_beds.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Total Beds
+                  </label>
+                  {{ form.total_beds }}
+                  {% if form.total_beds.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.total_beds.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Emergency Contact -->
+                <div>
+                  <label for="{{ form.emergency_contact.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    Emergency Contact
+                  </label>
+                  {{ form.emergency_contact }}
+                  {% if form.emergency_contact.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ form.emergency_contact.errors.0 }}</p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="mt-6">
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Description & Facilities
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Logo -->
+              <div class="mt-6">
+                <label for="{{ form.logo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Hospital Logo
+                </label>
+                {% if form.instance.logo %}
+                <div class="mb-4">
+                  <img src="{{ form.instance.logo.url }}" alt="Hospital Logo"
+                    class="h-24 w-24 object-cover rounded-lg border border-gray-200">
+                </div>
+                {% endif %}
+                {{ form.logo }}
+                {% if form.logo.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.logo.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-xs text-gray-500">Accepted formats: JPG, PNG, GIF. Max size: 5MB</p>
+              </div>
+            </div>
+
+            <!-- Section 3: Verification Status -->
+            <div class="pb-8">
+              <h2 class="text-xl font-bold text-gray-900 mb-6">Verification Status</h2>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center">
+                  {{ form.is_verified }}
+                  <label for="{{ form.is_verified.id_for_label }}"
+                    class="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                    Mark as Verified
+                  </label>
+                </div>
+                {% if form.is_verified.errors %}
+                <p class="text-sm text-red-600">{{ form.is_verified.errors.0 }}</p>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-3 pt-8 border-t border-gray-200">
+              <button type="submit"
+                class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors shadow-md">
+                <span class="material-symbols-outlined">save</span>
+                {% if form.instance.pk %}
+                Update Hospital
+                {% else %}
+                Create Hospital
+                {% endif %}
+              </button>
+              <a href="{% url 'hospitals:hospital_list' %}"
+                class="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors shadow-md">
+                <span class="material-symbols-outlined">cancel</span>
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script>
+  // Mobile menu toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const menuOverlay = document.getElementById('menuOverlay');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    menuOverlay.classList.toggle('hidden');
+  });
+
+  menuOverlay.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    menuOverlay.classList.add('hidden');
+  });
+
+  // Close sidebar when a link is clicked on mobile
+  document.querySelectorAll('#sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock content %}
