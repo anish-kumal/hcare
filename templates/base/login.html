@@ -41,15 +41,6 @@
                 <p class="text-gray-500 text-sm">Log in to access your patient dashboard</p>
             </div>
 
-            {% if messages %}
-            <div class="mb-6">
-                {% for message in messages %}
-                <div class="p-4 rounded-lg {% if message.tags == 'error' %} text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
 
             <form method="POST" class="space-y-6">
                 {% csrf_token %}

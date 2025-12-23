@@ -65,17 +65,7 @@
                     </div>
                 </div>
 
-                <!-- Messages -->
-                {% if messages %}
-                <div class="space-y-3">
-                    {% for message in messages %}
-                    <div
-                        class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} border-l-4 {% if message.tags == 'error' %}border-red-700{% elif message.tags == 'success' %}border-green-700{% else %}border-blue-700{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
+
 
                 <!-- Search and Filter Section -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

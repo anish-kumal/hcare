@@ -37,12 +37,36 @@
 
 <body {% block body_attribute %}{% endblock body_attribute %} class="bg-white overflow-x-hidden font-sans">
 
+    {% include "partials/message.html" %}
+
 
     {% block content %}
+    
+
     
     {% endblock content %}
 
     {% block javascript %}
+        <script>
+            // Manual close
+            function closeMessage(button) {
+                const message = button.parentElement;
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 500);
+            }
+
+            // Auto close after  seconds
+            document.addEventListener("DOMContentLoaded", function () {
+                const messages = document.querySelectorAll(".message-item");
+                messages.forEach((message) => {
+                    setTimeout(() => {
+                        message.style.opacity = '0';
+                        setTimeout(() => message.remove(), 500);
+                    }, 5000);
+                });
+            });
+        </script>
+
     {% endblock javascript %}
 </body>
 
