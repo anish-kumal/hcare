@@ -6,6 +6,8 @@ from apps.base.models import BaseModel
 
 class CustomUserManager(UserManager):
     def create_superuser(self, username, email=None, password=None, **extra_fields):
+        if '@' in username:
+            raise ValueError('Username cannot contain @.')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields['user_type'] = User.UserType.SUPER_ADMIN

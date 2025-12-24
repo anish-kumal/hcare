@@ -1,7 +1,11 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Hospital, HospitalAdmin
@@ -153,8 +157,42 @@ class HospitalAdminCreateView(SuperAdminOnlyMixin, CreateView):
         hospital_id = self.kwargs.get('hospital_id')
         hospital = get_object_or_404(Hospital, id=hospital_id)
         form.instance.hospital = hospital
-        messages.success(self.request, 'Admin added to hospital successfully!')
-        return super().form_valid(form)
+
+        password = form.cleaned_data.get('password')
+        response = super().form_valid(form)
+
+        if password:
+            admin_user = self.object.user
+            login_url = self.request.build_absolute_uri(reverse_lazy('users:administer_login'))
+            context = {
+                'user_name': admin_user.get_full_name() or admin_user.username,
+                'hospital_name': hospital.name,
+                'username': admin_user.username,
+                'password': password,
+                'login_url': login_url,
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+
+            try:
+                html_message = render_to_string('email/admin_credentials_email.html', context)
+                plain_message = strip_tags(html_message)
+                send_mail(
+                    subject='Your Hospital Admin Login Credentials',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[admin_user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                messages.success(self.request, 'Admin added to hospital successfully! Credentials email sent.')
+            except Exception:
+                messages.warning(
+                    self.request,
+                    'Admin added successfully, but credential email could not be sent. Please share credentials manually.'
+                )
+        else:
+            messages.success(self.request, 'Admin added to hospital successfully!')
+        return response
     
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')

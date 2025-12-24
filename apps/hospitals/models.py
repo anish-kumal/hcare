@@ -206,3 +206,33 @@ class HospitalAdmin(BaseModel):
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.hospital.name}"
+    
+
+class HospitalStaff(BaseModel):
+    """
+    Hospital Staff model - represents staff members working in a hospital
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hospital_staff_profile',
+        limit_choices_to={
+            'user_type__in': ['STAFF', 'LAB_ASSISTANT', 'PHARMACIST']
+        },
+        help_text="User account for this staff member"
+    )
+    
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.CASCADE,
+        related_name='staff',
+        help_text="Hospital where this staff member works"
+    )
+    
+    class Meta:
+        verbose_name = 'Hospital Staff'
+        verbose_name_plural = 'Hospital Staff'
+        ordering = ['-created']
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.hospital.name}"

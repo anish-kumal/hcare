@@ -5,7 +5,7 @@ from .models import Patient, PatientAppointment
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-	list_display = ('user', 'hospital', 'doctor', 'gender', 'blood_group', 'is_verified')
+	list_display = ('user', 'doctor', 'gender', 'blood_group', 'is_verified')
 	list_filter = ('gender', 'blood_group', 'is_verified')
 	search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name', 'contact_number')
 

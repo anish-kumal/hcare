@@ -192,6 +192,8 @@ class HospitalAdminForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data['username']
+        if '@' in username:
+            raise forms.ValidationError('Username cannot contain @.')
         qs = User.objects.filter(username__iexact=username)
         if self._linked_user:
             qs = qs.exclude(pk=self._linked_user.pk)

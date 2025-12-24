@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
     UserRegisterView, UserLoginView, UserLogoutView, 
-    AdministerLoginView,AdministerLogoutView,
-    AdminUserListView, AdminUserDetailView, 
-    AdminUserUpdateView, AdminUserDeleteView,AdminUserCreateView
+    AdministerLoginView, AdministerLogoutView,
+    UserListView, UserDetailView, 
+    UserUpdateView, UserDeleteView,UserCreateView
 
 )
 
@@ -17,12 +17,12 @@ urlpatterns = [
     path('administer/login/', AdministerLoginView.as_view(), name='administer_login'),
     path('administer/logout/', AdministerLogoutView.as_view(), name='administer_logout'),
     
-    # Super Admin User Management URLs
-    path('admin/users/', AdminUserListView.as_view(), name='admin_user_list'),
-    path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
-    path('admin/users/create/', AdminUserCreateView.as_view(), name='admin_user_create'),
-    path('admin/users/<int:pk>/edit/', AdminUserUpdateView.as_view(), name='admin_user_update'),
-    path('admin/users/<int:pk>/delete/', AdminUserDeleteView.as_view(), name='admin_user_delete'),
+    # Super  User Management URLs
+    path('users/', UserListView.as_view(), name='user_list'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
+    path('users/create/', UserCreateView.as_view(), name='user_create'),
+    path('users/<int:pk>/edit/', UserUpdateView.as_view(), name='user_update'),
+    path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
     
 
 ]

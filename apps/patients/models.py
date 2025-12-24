@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from apps.base.models import BaseModel
-from apps.hospitals.models import Hospital
 from apps.doctors.models import Doctor
 
 
@@ -15,15 +14,6 @@ class Patient(BaseModel):
         related_name='patient_profile',
         limit_choices_to={'user_type': 'PATIENT'},
         help_text="User account for this patient"
-    )
-    
-    hospital = models.ForeignKey(
-        Hospital,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='patients',
-        help_text="Primary hospital"
     )
     
     doctor = models.ForeignKey(
@@ -151,7 +141,7 @@ class Patient(BaseModel):
         verbose_name_plural = 'Patients'
         ordering = ['user__first_name']
         indexes = [
-            models.Index(fields=['hospital', 'doctor']),
+            models.Index(fields=['doctor']),
             models.Index(fields=['is_verified']),
         ]
     

@@ -36,7 +36,7 @@
           </h1>
 
           <div class="flex gap-3 flex-wrap">
-            <a href="{% url 'hospitals:hospital_list' %}"
+            <a href="{% if request.user.is_super_admin %}{% url 'hospitals:hospital_list' %}{% else %}{% url 'hospitals:admin_hospital_detail' %}{% endif %}"
               class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
               <span class="material-symbols-outlined text-[20px]">arrow_back</span>
               Back to Hospitals
@@ -246,6 +246,7 @@
 
             <!-- Section 3: Verification Status -->
             <div class="pb-8">
+              {% if request.user.is_super_admin %}
               <h2 class="text-xl font-bold text-gray-900 mb-6">Verification Status</h2>
               <div class="flex items-center gap-8 flex-wrap">
                 <div class="flex items-center">
@@ -270,6 +271,7 @@
                 <p class="text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
                 {% endif %}
               </div>
+              {% endif %}
 
               {% if form.instance.pk %}
               <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,7 +298,7 @@
                 Create Hospital
                 {% endif %}
               </button>
-              <a href="{% url 'hospitals:hospital_list' %}"
+              <a href="{% if request.user.is_super_admin %}{% url 'hospitals:hospital_list' %}{% else %}{% url 'hospitals:admin_hospital_detail' %}{% endif %}"
                 class="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors shadow-md">
                 <span class="material-symbols-outlined">cancel</span>
                 Cancel

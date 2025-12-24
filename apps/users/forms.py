@@ -66,12 +66,19 @@ class UserRegistrationForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already registered.")
         return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '')
+        if '@' in username:
+            raise forms.ValidationError("Username cannot contain @.")
+        return username
     
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        user.is_default_password = False
         if commit:
             user.save()
         return user
@@ -99,6 +106,13 @@ class UserManagementForm(forms.ModelForm):
     """
     Form for managing users (Create/Update) by Super Admin and Hospital Admin
     """
+    USER_TYPE_CHOICES = [
+        (User.UserType.STAFF, 'Staff'),
+        (User.UserType.LAB_ASSISTANT, 'Lab Technician'),
+        (User.UserType.PHARMACIST, 'Pharmacist'),
+    ]
+
+
     password = forms.CharField(
         required=False,
         widget=forms.PasswordInput(attrs={
@@ -137,7 +151,7 @@ class UserManagementForm(forms.ModelForm):
     )
     
     user_type = forms.ChoiceField(
-        choices=User.UserType.choices,
+        choices=USER_TYPE_CHOICES,
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition'
         })
@@ -171,17 +185,20 @@ class UserManagementForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'user_type', 'phone_number', 'date_of_birth', 'address']
+
     
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        user_id = self.instance.id
+        user_id = self.instance.id if self.instance and self.instance.id else None
         if User.objects.filter(email=email).exclude(id=user_id).exists():
             raise forms.ValidationError("This email is already in use.")
         return email
     
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        user_id = self.instance.id
+        if username and '@' in username:
+            raise forms.ValidationError("Username cannot contain @.")
+        user_id = self.instance.id if self.instance and self.instance.id else None
         if User.objects.filter(username=username).exclude(id=user_id).exists():
             raise forms.ValidationError("This username is already taken.")
         return username
@@ -191,6 +208,7 @@ class UserManagementForm(forms.ModelForm):
         password = self.cleaned_data.get('password')
         if password:
             user.set_password(password)
+            user.is_default_password = False
         if commit:
             user.save()
         return user

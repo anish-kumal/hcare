@@ -220,6 +220,7 @@ class PasswordResetView(View):
         try:
             user = User.objects.get(id=user_id)
             user.set_password(password1)
+            user.is_default_password = False
             user.save()
             messages.success(request, "Password reset successfully! Please log in with your new password.")
             return redirect(self.get_login_url_name(source))

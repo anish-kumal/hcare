@@ -15,8 +15,8 @@
           Health Care
         </h1>
         <p class="text-white/60 text-xs font-medium tracking-wider">
-          {% if user.is_authenticated %}
-            {{ user.get_user_type_display|default:"User" }}
+          {% if request.user.is_authenticated %}
+            {{ request.user.get_user_type_display|default:"User" }}
           {% else %}
             User
           {% endif %}
@@ -27,7 +27,7 @@
   </div>
 
   <nav class="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
-    {% if user.is_super_admin %}
+    {% if request.user.is_super_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'super_admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'super_admin_dashboard' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
@@ -40,12 +40,12 @@
         <span class="font-medium text-sm">Hospitals</span>
       </a>
 
-      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'admin_user_list admin_user_create admin_user_detail admin_user_update admin_user_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
-        href="{% url 'users:admin_user_list' %}">
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'user_list admin_user_create admin_user_detail admin_user_update admin_user_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'users:user_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">people</span>
         <span class="font-medium text-sm">Users</span>
       </a>
-    {% elif user.is_admin %}
+    {% elif request.user.is_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'admin_dashboard' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
@@ -57,7 +57,7 @@
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">domain</span>
         <span class="font-medium text-sm">Hospital</span>
       </a>
-    {% elif user.is_doctor %}
+    {% elif request.user.is_doctor %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'doctor_dashboard' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
@@ -77,11 +77,11 @@
       </a>
     {% endif %}
 
-    {% if user.is_admin %}
-      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'hospital_user_list hospital_user_create hospital_user_detail hospital_user_update hospital_user_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
-        href="{% url 'users:hospital_user_list' %}">
+    {% if request.user.is_admin %}
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'user_list user_create hospital_user_detail hospital_user_update hospital_user_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'users:user_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">people</span>
-        <span class="font-medium text-sm">Staff</span>
+        <span class="font-medium text-sm">Users</span>
       </a>
     {% endif %}
     <a class="group flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all duration-200"
@@ -101,15 +101,15 @@
       </div>
       <div class="flex-1 overflow-hidden min-w-0">
         <p class="text-sm font-semibold text-white truncate">
-          {% if user.is_authenticated %}
-            {{ user.get_full_name|default:user.username|default:"User" }}
+          {% if request.user.is_authenticated %}
+            {{ request.user.get_full_name|default:request.user.username|default:"User" }}
           {% else %}
             Guest
           {% endif %}
         </p>
         <p class="text-xs text-white/60 truncate">
-          {% if user.is_authenticated %}
-            {{ user.email|default:user.username }}
+          {% if request.user.is_authenticated %}
+            {{ request.user.email|default:request.user.username }}
           {% else %}
             
           {% endif %}

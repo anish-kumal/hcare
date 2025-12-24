@@ -1,14 +1,16 @@
-from django.shortcuts import redirect, render, get_object_or_404
-from django.views.generic import CreateView, View, ListView, DetailView, UpdateView, DeleteView
+from django.shortcuts import redirect
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+
 from .forms import UserRegistrationForm, UserLoginForm, UserManagementForm
 from .models import User
 from apps.hospitals.models import HospitalAdmin
-from apps.base.mixin import SuperAdminOnlyMixin
+
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminOnlyMixin
 
 class UserRegisterView(CreateView):
     """
@@ -70,6 +72,14 @@ class UserLoginView(LoginView):
                 'Unauthorized: This login is for patients only.'
             )
             return redirect(reverse_lazy('users:login'))
+
+        if user.is_default_password:
+            messages.warning(
+                self.request,
+                'Please change your default password before continuing.'
+            )
+            return redirect(f"{reverse('otp:request')}?source=patient")
+
         messages.success(
             self.request,
             f'Welcome back, {user.get_full_name() or user.username}!'
@@ -118,6 +128,14 @@ class AdministerLoginView(LoginView):
                 'Unauthorized: This login is for staff only. Patients please use the patient login.'
             )
             return redirect(reverse_lazy('users:administer_login'))
+
+        if user.is_default_password:
+            messages.warning(
+                self.request,
+                'Please change your default password before continuing.'
+            )
+            return redirect(f"{reverse('otp:request')}?source=administer")
+
         messages.success(
             self.request,
             f'Welcome back, {user.get_full_name() or user.username}!'
@@ -157,7 +175,7 @@ class AdministerLogoutView(LoginRequiredMixin, LogoutView):
 
 
 
-class AdminUserListView(SuperAdminOnlyMixin, ListView):
+class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
     """List all users for Super Admin"""
     model = User
     template_name = 'users/user_list.html'
@@ -165,7 +183,20 @@ class AdminUserListView(SuperAdminOnlyMixin, ListView):
     paginate_by = 15
     
     def get_queryset(self):
-        queryset = User.objects.all().order_by('-created')
+        manageable_user_types = [
+            User.UserType.STAFF,
+            User.UserType.LAB_ASSISTANT,
+            User.UserType.PHARMACIST,
+        ]
+        queryset = User.objects.filter(user_type__in=manageable_user_types).order_by('-created')
+
+        if self.request.user.is_admin:
+            try:
+                hospital_id = self.request.user.hospital_admin_profile.hospital_id
+            except HospitalAdmin.DoesNotExist:
+                return User.objects.none()
+            queryset = queryset.filter(hospital_staff_profile__hospital_id=hospital_id)
+
         search_query = self.request.GET.get('search', '')
         user_type = self.request.GET.get('user_type', '')
         
@@ -178,20 +209,44 @@ class AdminUserListView(SuperAdminOnlyMixin, ListView):
                 Q(last_name__icontains=search_query)
             )
         
-        if user_type:
+        if user_type in manageable_user_types:
             queryset = queryset.filter(user_type=user_type)
         
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        manageable_user_types = [
+            User.UserType.STAFF,
+            User.UserType.LAB_ASSISTANT,
+            User.UserType.PHARMACIST,
+        ]
         context['search_query'] = self.request.GET.get('search', '')
         context['user_type_filter'] = self.request.GET.get('user_type', '')
-        context['user_types'] = User.UserType.choices
+        context['user_types'] = [
+            choice for choice in User.UserType.choices
+            if choice[0] in manageable_user_types
+        ]
         return context
 
-
-class AdminUserDetailView(SuperAdminOnlyMixin, DetailView):
+class UserCreateView(AdminOnlyMixin, CreateView):
+    """Create user for Super Admin"""
+    model = User
+    form_class = UserManagementForm
+    template_name = 'users/user_form.html'
+    success_url = reverse_lazy('users:user_list')
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'User created successfully!')
+        return response
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+    
+    
+class UserDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
     """View user details for Super Admin"""
     model = User
     template_name = 'users/user_detail.html'
@@ -199,207 +254,61 @@ class AdminUserDetailView(SuperAdminOnlyMixin, DetailView):
     slug_field = 'id'
     slug_url_kwarg = 'pk'
 
+    def get_queryset(self):
+        return User.objects.filter(
+            user_type__in=[
+                User.UserType.STAFF,
+                User.UserType.LAB_ASSISTANT,
+                User.UserType.PHARMACIST,
+            ]
+        )
 
 
-class AdminUserUpdateView(SuperAdminOnlyMixin, UpdateView):
+class UserUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
     """Update user for Super Admin"""
     model = User
     form_class = UserManagementForm
     template_name = 'users/user_form.html'
+    success_url = reverse_lazy('users:user_list')
     slug_field = 'id'
     slug_url_kwarg = 'pk'
-    success_url = reverse_lazy('users:admin_user_list')
-    
+
     def form_valid(self, form):
-        messages.success(self.request, 'User updated successfully!')
-        return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = f'Edit User - {self.object.get_full_name()}'
-        context['action'] = 'update'
-        return context
-
-
-class AdminUserDeleteView(SuperAdminOnlyMixin, DeleteView):
-    """Delete user for Super Admin"""
-    model = User
-    template_name = 'users/user_confirm_delete.html'
-    slug_field = 'id'
-    slug_url_kwarg = 'pk'
-    success_url = reverse_lazy('users:admin_user_list')
-    
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'User deleted successfully!')
-        return super().delete(request, *args, **kwargs)
-
-
-# Hospital Admin User Management Views
-
-class HospitalAdminUserListView( ListView):
-    """List users for a Hospital Admin (only their hospital users)"""
-    model = User
-    template_name = 'users/hospital_user_list.html'
-    context_object_name = 'users'
-    paginate_by = 15
-    
-    def get_queryset(self):
-        # Get hospital admin's hospital
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        hospital = hospital_admin.hospital
-        
-        # Get all hospital admins for this hospital
-        hospital_admins = HospitalAdmin.objects.filter(hospital=hospital).values_list('user_id', flat=True)
-        
-        queryset = User.objects.filter(id__in=hospital_admins).order_by('-created')
-        search_query = self.request.GET.get('search', '')
-        
-        if search_query:
-            from django.db.models import Q
-            queryset = queryset.filter(
-                Q(username__icontains=search_query) |
-                Q(email__icontains=search_query) |
-                Q(first_name__icontains=search_query) |
-                Q(last_name__icontains=search_query)
-            )
-        
-        return queryset
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        context['hospital'] = hospital_admin.hospital
-        context['search_query'] = self.request.GET.get('search', '')
-        return context
-
-
-class HospitalAdminUserCreateView( CreateView):
-    """Create new user for Hospital Admin (only for their hospital)"""
-    model = User
-    form_class = UserManagementForm
-    template_name = 'users/hospital_user_form.html'
-    
-    def form_valid(self, form):
-        # Get hospital for this hospital admin
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        
-        # Save the user
         response = super().form_valid(form)
-        
-        # Create HospitalAdmin entry for the new user
-        HospitalAdmin.objects.create(
-            user=form.instance,
-            hospital=hospital_admin.hospital
-        )
-        
-        messages.success(self.request, f'{form.instance.get_full_name} has been added to {hospital_admin.hospital.name}!')
+        messages.success(self.request, 'User updated successfully!')
         return response
     
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
-    
-    def get_success_url(self):
-        return reverse_lazy('users:hospital_user_list')
-    
+
+
+
+
+class UserDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+    """Delete user for Super Admin"""
+    model = User
+    template_name = 'partials/delete.html'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+    success_url = reverse_lazy('users:user_list')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        context['hospital'] = hospital_admin.hospital
-        context['action'] = 'create'
+        full_name = self.object.get_full_name() or self.object.username
+        context['delete_page_title'] = 'Delete User - Health Care'
+        context['delete_confirm_title'] = 'Delete User?'
+        context['delete_confirm_message'] = (
+            f'Are you sure you want to delete {full_name}? This action cannot be undone.'
+        )
+        context['delete_warning_text'] = (
+            'Deleting this user will permanently remove all associated data.'
+        )
+        context['delete_button_label'] = 'Delete User'
+        context['cancel_url'] = reverse_lazy('users:user_list')
         return context
 
-
-class HospitalAdminUserDetailView( DetailView):
-    """View user details for Hospital Admin (only their hospital users)"""
-    model = User
-    template_name = 'users/hospital_user_detail.html'
-    context_object_name = 'user_obj'
-    slug_field = 'id'
-    slug_url_kwarg = 'pk'
-    
-    def get_queryset(self):
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        hospital = hospital_admin.hospital
-        hospital_admins = HospitalAdmin.objects.filter(hospital=hospital).values_list('user_id', flat=True)
-        return User.objects.filter(id__in=hospital_admins)
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except User.DoesNotExist:
-            messages.error(self.request, 'User not found or you do not have access.')
-            return redirect('users:hospital_user_list')
-
-
-class HospitalAdminUserUpdateView( UpdateView):
-    """Update user for Hospital Admin (only their hospital users)"""
-    model = User
-    form_class = UserManagementForm
-    template_name = 'users/hospital_user_form.html'
-    slug_field = 'id'
-    slug_url_kwarg = 'pk'
-    
-    def get_queryset(self):
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        hospital = hospital_admin.hospital
-        hospital_admins = HospitalAdmin.objects.filter(hospital=hospital).values_list('user_id', flat=True)
-        return User.objects.filter(id__in=hospital_admins)
-    
-    def get_success_url(self):
-        return reverse_lazy('users:hospital_user_list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'User updated successfully!')
-        return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except User.DoesNotExist:
-            messages.error(self.request, 'User not found or you do not have access.')
-            return redirect('users:hospital_user_list')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        context['hospital'] = hospital_admin.hospital
-        context['title'] = f'Edit User - {self.object.get_full_name()}'
-        context['action'] = 'update'
-        return context
-
-
-class HospitalAdminUserDeleteView( DeleteView):
-    """Delete user for Hospital Admin (only their hospital users)"""
-    model = User
-    template_name = 'users/hospital_user_confirm_delete.html'
-    slug_field = 'id'
-    slug_url_kwarg = 'pk'
-    
-    def get_queryset(self):
-        hospital_admin = HospitalAdmin.objects.get(user=self.request.user)
-        hospital = hospital_admin.hospital
-        hospital_admins = HospitalAdmin.objects.filter(hospital=hospital).values_list('user_id', flat=True)
-        return User.objects.filter(id__in=hospital_admins)
-    
-    def get_success_url(self):
-        return reverse_lazy('users:hospital_user_list')
-    
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'User deleted successfully!')
         return super().delete(request, *args, **kwargs)
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except User.DoesNotExist:
-            messages.error(self.request, 'User not found or you do not have access.')
-            return redirect('users:hospital_user_list')
+

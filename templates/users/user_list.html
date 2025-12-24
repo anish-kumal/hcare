@@ -19,7 +19,7 @@
     <!-- Main Content Wrapper -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
         <!-- Top Header -->
-        {% include "partials/top_header.html" %}
+        {% include "partials/header.html" %}
 
         <!-- Scrollable Main Content -->
         <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -28,7 +28,13 @@
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
 
                     <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Users Management</h1>
-
+                    {% if request.user.is_admin %}
+                        <a href="{% url 'users:user_create' %}"
+                            class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
+                            <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                            Add New User
+                        </a>
+                    {% endif %}
                     
                 </div>
 
@@ -53,7 +59,9 @@
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                                     <option value="">All Users</option>
                                     {% for value, label in user_types %}
+                                    {% if value != 'DOCTOR' and value != 'PATIENT' %}
                                     <option value="{{ value }}" {% if user_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endif %}
                                     {% endfor %}
                                 </select>
                             </div>
@@ -67,7 +75,7 @@
                                         Search
                                     </span>
                                 </button>
-                                <a href="{% url 'users:admin_user_list' %}"
+                                <a href="{% url 'users:user_list' %}"
                                     class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                                     <span class="material-symbols-outlined">restart_alt</span>
                                 </a>
@@ -133,17 +141,17 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <div class="flex items-center justify-center gap-2">
-                                            <a href="{% url 'users:admin_user_detail' user.id %}"
+                                            <a href="{% url 'users:user_detail' user.id %}"
                                                 class="text-primary hover:text-[#1a3d42] transition duration-150"
                                                 title="View Details">
                                                 <span class="material-symbols-outlined text-[20px]">visibility</span>
                                             </a>
-                                            <a href="{% url 'users:admin_user_update' user.id %}"
+                                            <a href="{% url 'users:user_update' user.id %}"
                                                 class="text-primary hover:text-[#1a3d42] transition duration-150"
                                                 title="Edit User">
                                                 <span class="material-symbols-outlined text-[20px]">edit</span>
                                             </a>
-                                            <a href="{% url 'users:admin_user_delete' user.id %}"
+                                            <a href="{% url 'users:user_delete' user.id %}"
                                                 class="text-red-600 hover:text-red-900 transition duration-150"
                                                 title="Delete User">
                                                 <span class="material-symbols-outlined text-[20px]">delete</span>
@@ -217,11 +225,13 @@
                     {% endif %}
                 </div>
                 {% else %}
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
-                    <span class="material-symbols-outlined text-6xl text-blue-400 flex justify-center mb-4">group</span>
-                    <h3 class="text-lg font-bold text-blue-900 mb-2">No Users Found</h3>
-                    <p class="text-blue-700 mb-6">No users match your search criteria.</p>
-                    <a href="{% url 'users:admin_user_list' %}"
+                <div class="bg-accent/30 border border-accent rounded-xl p-8 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
+                        <span class="material-symbols-outlined text-primary text-[32px]">group</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
+                    <p class="text-primary mb-6">No users match your search criteria.</p>
+                    <a href="{% url 'users:user_list' %}"
                         class="inline-flex items-center gap-2 bg-primary hover:bg-[#1a3d42] text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         <span class="material-symbols-outlined">refresh</span>
                         Clear Filters

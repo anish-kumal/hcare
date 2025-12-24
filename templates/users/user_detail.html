@@ -55,12 +55,12 @@
                     <h1 class="text-3xl font-bold text-[#131616] tracking-tight">User Details</h1>
 
                     <div class="flex gap-3 flex-wrap">
-                        <a href="{% url 'users:admin_user_update' user_obj.id %}"
+                        <a href="{% url 'users:user_update' user_obj.id %}"
                             class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md">
                             <span class="material-symbols-outlined text-[20px]">edit</span>
                             Edit User
                         </a>
-                        <a href="{% url 'users:admin_user_list' %}"
+                        <a href="{% url 'users:user_list' %}"
                             class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
                             <span class="material-symbols-outlined text-[20px]">arrow_back</span>
                             Back
@@ -159,14 +159,13 @@
 
                         <!-- Action Buttons -->
                         <div class="flex gap-3">
-                            <a href="{% url 'users:admin_user_update' user_obj.id %}"
+                            <a href="{% url 'users:user_update' user_obj.id %}"
                                 class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors shadow-md">
                                 <span class="material-symbols-outlined">edit</span>
                                 Edit User
                             </a>
-                            <a href="{% url 'users:admin_user_delete' user_obj.id %}"
-                                class="flex items-center gap-2 px-6 py-3 bg-red-100 text-red-700 rounded-lg font-semibold hover:bg-red-200 transition-colors shadow-md"
-                                onclick="return confirm('Are you sure you want to delete this user?')">
+                            <a href="{% url 'users:user_delete' user_obj.id %}"
+                                class="flex items-center gap-2 px-6 py-3 bg-red-100 text-red-700 rounded-lg font-semibold hover:bg-red-200 transition-colors shadow-md">
                                 <span class="material-symbols-outlined">delete</span>
                                 Delete User
                             </a>

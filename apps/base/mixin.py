@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 
 
 class RoleRequiredMixin:
@@ -33,8 +33,27 @@ class SuperAdminOnlyMixin(LoginRequiredMixin):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
         if not request.user.is_super_admin:
-            messages.error(request, 'You do not have permission to access this page.')
-            return redirect('index')
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+class SuperAdminAndAdminOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to super admin and admin users only"""
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_super_admin or request.user.is_admin):
+            raise PermissionDenied("You don't have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
     
-
+class AdminOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to admin users only"""
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_admin:
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
