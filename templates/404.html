@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+
+{% block title %}Page Not Found{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(220,238,178,0.45),_transparent_35%),linear-gradient(180deg,_#f8fbf6_0%,_#edf5ef_100%)] px-6 py-10 md:px-10 lg:px-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-8">
+        <div class="rounded-3xl bg-primary px-6 py-5 shadow-lg">
+            <div class="flex items-center justify-between gap-4">
+                <a href="{% url 'index' %}" class="text-2xl font-bold uppercase tracking-[0.2em] text-white">Health Care</a>
+                <a href="{% url 'index' %}" class="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-primary transition duration-300 hover:bg-white">Back to home</a>
+            </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div class="rounded-[2rem] bg-white/90 p-8 shadow-xl ring-1 ring-primary/10 md:p-12">
+                <p class="text-sm font-semibold uppercase tracking-[0.35em] text-primary/60">Error 404</p>
+                <h1 class="mt-4 max-w-xl text-4xl font-bold leading-tight text-primary md:text-6xl">This page does not exist.</h1>
+                <p class="mt-5 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
+                    The address you entered does not match any page in the Health Care portal. Use one of the links below to return to a valid section.
+                </p>
+
+                <div class="mt-8 flex flex-wrap gap-4">
+                    <a href="{% url 'index' %}" class="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-primary/90">Go to homepage</a>
+                    <a href="{% url 'appointments:doctor_list' %}" class="rounded-2xl border border-primary/15 bg-accent px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-accent/80">Browse doctors</a>
+                    {% if user.is_authenticated %}
+                        {% if user.is_super_admin %}
+                    <a href="{% url 'super_admin_dashboard' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Open dashboard</a>
+                        {% elif user.is_admin %}
+                    <a href="{% url 'admin_dashboard' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Open dashboard</a>
+                        {% elif user.is_doctor %}
+                    <a href="{% url 'doctor_dashboard' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Open dashboard</a>
+                        {% elif user.is_lab_assistant %}
+                    <a href="{% url 'lab_assistant_dashboard' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Open dashboard</a>
+                        {% else %}
+                    <a href="{% url 'patient_dashboard' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Open dashboard</a>
+                        {% endif %}
+                    {% else %}
+                    <a href="{% url 'users:login' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Sign in</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-[2rem] bg-primary p-8 text-white shadow-xl md:p-10">
+                <div class="flex h-full flex-col justify-between gap-8">
+                    <div>
+                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-accent">Suggested routes</p>
+                        <div class="mt-6 space-y-4">
+                            <a href="{% url 'administer' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
+                                <span class="block text-lg font-semibold">Hospital onboarding</span>
+                                <span class="mt-1 block text-sm text-white/70">Access the administrator portal landing page.</span>
+                            </a>
+                            <a href="{% url 'appointments:doctor_list' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
+                                <span class="block text-lg font-semibold">Doctor directory</span>
+                                <span class="mt-1 block text-sm text-white/70">Find available doctors and appointment options.</span>
+                            </a>
+                            <a href="{% url 'users:register' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
+                                <span class="block text-lg font-semibold">Create an account</span>
+                                <span class="mt-1 block text-sm text-white/70">Register a new patient account and continue from there.</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-white/10 p-5">
+                        <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Tip</p>
+                        <p class="mt-2 text-sm leading-6 text-white/75">
+                            Your custom 404 template is shown when <span class="font-semibold text-white">DEBUG=False</span>. For local testing, keep <span class="font-semibold text-white">ALLOWED_HOSTS</span> set to include <span class="font-semibold text-white">127.0.0.1</span> and <span class="font-semibold text-white">localhost</span>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

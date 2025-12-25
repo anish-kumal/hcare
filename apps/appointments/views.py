@@ -10,6 +10,8 @@ from apps.doctors.models import Doctor, DoctorSchedule
 from apps.patients.models import Patient, PatientAppointment
 from apps.users.models import User
 from .forms import AppointmentBookingForm, AppointmentEditForm
+from apps.base.mixin import RoleRequiredMixin
+
 
 
 class PatientOnlyMixin(LoginRequiredMixin):
@@ -25,7 +27,7 @@ class PatientOnlyMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class DoctorListView(PatientOnlyMixin, ListView):
+class DoctorListView(RoleRequiredMixin, ListView):
     """List all available doctors for booking"""
     template_name = 'appointments/doctor_list.html'
     context_object_name = 'doctors'
@@ -64,7 +66,7 @@ class DoctorListView(PatientOnlyMixin, ListView):
         return context
 
 
-class DoctorDetailView(PatientOnlyMixin, DetailView):
+class DoctorDetailView(RoleRequiredMixin, DetailView):
     """Show doctor details and available appointment slots"""
     model = Doctor
     template_name = 'appointments/doctor_detail.html'
@@ -132,7 +134,7 @@ class DoctorDetailView(PatientOnlyMixin, DetailView):
         return context
 
 
-class AppointmentCreateView(PatientOnlyMixin, CreateView):
+class AppointmentCreateView(RoleRequiredMixin, CreateView):
     """Create an appointment booking"""
     model = PatientAppointment
     form_class = AppointmentBookingForm
@@ -248,7 +250,7 @@ class AppointmentCreateView(PatientOnlyMixin, CreateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class BookingConfirmationView(PatientOnlyMixin, ListView):
+class BookingConfirmationView(RoleRequiredMixin, ListView):
     """Show recent bookings and confirmation"""
     template_name = 'appointments/booking_confirmation.html'
     context_object_name = 'appointments'
@@ -288,7 +290,7 @@ class BookingConfirmationView(PatientOnlyMixin, ListView):
         return context
 
 
-class AppointmentDetailView(PatientOnlyMixin, DetailView):
+class AppointmentDetailView(RoleRequiredMixin, DetailView):
     """View appointment details and edit appointment"""
     model = PatientAppointment
     template_name = 'appointments/appointment_detail.html'

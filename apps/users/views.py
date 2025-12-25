@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic import CreateView, View, ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth import logout
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -54,16 +55,49 @@ class UserLoginView(LoginView):
     redirect_authenticated_user = True
     
     def get_success_url(self):
+        return reverse_lazy('patient_dashboard')
+    
+    def form_valid(self, form):
         """
-        Redirect to the appropriate dashboard based on user role
+        If the form is valid, log the user in only if they are a patient.
+        Any other role is rejected with an unauthorized message.
         """
-        next_url = self.request.GET.get('next')
-        if next_url:
-            return next_url
-        
+        user = form.get_user()
+        if not user.is_patient:
+            logout(self.request)
+            messages.error(
+                self.request,
+                'Unauthorized: This login is for patients only.'
+            )
+            return redirect(reverse_lazy('users:login'))
+        messages.success(
+            self.request,
+            f'Welcome back, {user.get_full_name() or user.username}!'
+        )
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """
+        If the form is invalid, display error message
+        """
+        messages.error(
+            self.request,
+            'Invalid email/username or password. Please try again.'
+        )
+        return super().form_invalid(form)
+
+
+class AdministerLoginView(LoginView):
+    """
+    Login view for all non-patient staff (admins, doctors, lab assistants, etc.).
+    Patients are rejected as unauthorized.
+    """
+    form_class = UserLoginForm
+    template_name = 'base/login_administer.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
         user = self.request.user
-        
-        # Redirect based on user type/role
         if user.is_super_admin:
             return reverse_lazy('super_admin_dashboard')
         elif user.is_admin:
@@ -72,26 +106,25 @@ class UserLoginView(LoginView):
             return reverse_lazy('doctor_dashboard')
         elif user.is_lab_assistant:
             return reverse_lazy('lab_assistant_dashboard')
-        elif user.is_patient:
-            return reverse_lazy('patient_dashboard')
         else:
-            # Default redirect for other roles (staff, pharmacist, etc.)
             return reverse_lazy('index')
-    
+
     def form_valid(self, form):
-        """
-        If the form is valid, log the user in and display success message
-        """
+        user = form.get_user()
+        if user.is_patient:
+            logout(self.request)
+            messages.error(
+                self.request,
+                'Unauthorized: This login is for staff only. Patients please use the patient login.'
+            )
+            return redirect(reverse_lazy('users:administer_login'))
         messages.success(
             self.request,
-            f'Welcome back, {form.get_user().get_full_name() or form.get_user().username}!'
+            f'Welcome back, {user.get_full_name() or user.username}!'
         )
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
-        """
-        If the form is invalid, display error message
-        """
         messages.error(
             self.request,
             'Invalid email/username or password. Please try again.'
@@ -109,45 +142,19 @@ class UserLogoutView(LoginRequiredMixin, LogoutView):
     def get(self, request, *args, **kwargs):
         messages.success(request, 'You have been logged out successfully.')
         return self.post(request, *args, **kwargs)
-
-
-class PasswordResetView(View):
-    """
-    Class-based view for password reset after OTP verification
-    """
-    template_name = 'patient/password_reset.html'
     
-    def get(self, request, user_id=None):
-        """Display password reset form"""
-        context = {'user_id': user_id}
-        return render(request, self.template_name, context)
+
+class AdministerLogoutView(LoginRequiredMixin, LogoutView):
+    """
+    Class-based view for user logout
+    """
+    next_page = reverse_lazy('administer')  # Redirect to home after logout
+    http_method_names = ['get', 'post']  # Allow both GET and POST
     
-    def post(self, request, user_id=None):
-        """Handle password reset"""
-        password1 = request.POST.get('password1', '').strip()
-        password2 = request.POST.get('password2', '').strip()
-        
-        if not password1 or not password2:
-            messages.error(request, "Both password fields are required.")
-            return render(request, self.template_name, {'user_id': user_id})
-        
-        if password1 != password2:
-            messages.error(request, "Passwords do not match.")
-            return render(request, self.template_name, {'user_id': user_id})
-        
-        if len(password1) < 8:
-            messages.error(request, "Password must be at least 8 characters long.")
-            return render(request, self.template_name, {'user_id': user_id})
-        
-        try:
-            user = User.objects.get(id=user_id)
-            user.set_password(password1)
-            user.save()
-            messages.success(request, "Password reset successfully! Please log in with your new password.")
-            return redirect('users:login')
-        except User.DoesNotExist:
-            messages.error(request, "User not found.")
-            return redirect('users:login')
+    def get(self, request, *args, **kwargs):
+        messages.success(request, 'You have been logged out successfully.')
+        return self.post(request, *args, **kwargs)
+
 
 
 # User Management Views for Super Admin and Hospital Admin

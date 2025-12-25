@@ -11,12 +11,12 @@
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Home</a>
         </li>
         <li>
-            <a href="{% url 'appointments:doctor_list' %}"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Doctor</a>
+            <a href="#"
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">How It Works</a>
         </li>
         <li>
             <a href="#"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Services</a>
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Pricing</a>
         </li>
         <li>
             <a href="#"
@@ -46,28 +46,15 @@
     </button>
 
     <div class="hidden lg:flex gap-3">
-        {% if user.is_authenticated %}
-        <a href="{% url 'patients:patient_profile' %}"
-            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">person</span>
-        </a>
-        <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit"
-                class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
-                Logout
-            </button>
-        </form>
-        {% else %}
-        <a href="{% url 'users:login' %}"
+        <a href="{% url 'users:administer_login' %}"
             class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Log in
         </a>
-        <a href="{% url 'users:register' %}"
+        <a href="#"
             class="hidden md:block px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
-            Sign up
+            Join us
         </a>
-        {% endif %}
+
     </div>
 </nav>
 
@@ -96,20 +83,6 @@
     </ul>
 
     <div class="mt-5 pt-4 border-t border-white/20 flex flex-wrap gap-3">
-        {% if user.is_authenticated %}
-        <a href="{% url 'patients:patient_profile' %}"
-            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">person</span>
-            Profile
-        </a>
-        <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit"
-                class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
-                Logout
-            </button>
-        </form>
-        {% else %}
         <a href="{% url 'users:login' %}"
             class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Log in
@@ -118,7 +91,6 @@
             class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Sign up
         </a>
-        {% endif %}
     </div>
 </div>
 

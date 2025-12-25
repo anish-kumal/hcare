@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
-    UserRegisterView, UserLoginView, UserLogoutView, PasswordResetView,
+    UserRegisterView, UserLoginView, UserLogoutView, 
+    AdministerLoginView,AdministerLogoutView,
     AdminUserListView, AdminUserDetailView, AdminUserCreateView, 
     AdminUserUpdateView, AdminUserDeleteView,
     HospitalAdminUserListView, HospitalAdminUserCreateView, HospitalAdminUserDetailView,
@@ -14,7 +15,8 @@ urlpatterns = [
     path('register/', UserRegisterView.as_view(), name='register'),
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
-    path('password-reset/<int:user_id>/', PasswordResetView.as_view(), name='password_reset'),
+    path('administer/login/', AdministerLoginView.as_view(), name='administer_login'),
+    path('administer/logout/', AdministerLogoutView.as_view(), name='administer_logout'),
     
     # Super Admin User Management URLs
     path('admin/users/', AdminUserListView.as_view(), name='admin_user_list'),

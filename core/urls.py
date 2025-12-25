@@ -20,16 +20,20 @@ from django.conf import settings
 from django.conf.urls.static import static
 from apps.base.views import (
     IndexView, 
+    AdministrView,
     SuperAdminDashboardView, 
     AdminDashboardView,
     DoctorDashboardView,
     PatientDashboardView,
-    LabAssistantDashboardView
+    LabAssistantDashboardView,
+    Custom404View,
+    Custom500View,
 )
 
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
+    path('administer/', AdministrView.as_view(), name='administer'),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls')),
     path('otp/', include('apps.otp.urls')),
@@ -46,3 +50,7 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+handler404 = Custom404View.as_view()
+handler500 = Custom500View.as_view()
