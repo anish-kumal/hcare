@@ -92,9 +92,9 @@ class LabAssistantDashboardView(LoginRequiredMixin, TemplateView):
 
 class Custom404View(View):
     def dispatch(self, request, *args, **kwargs):
-        return render(request, '404.html', status=404)
+        return render(request, 'custom/404.html', status=404)
 
 
 class Custom500View(View):
     def dispatch(self, request, *args, **kwargs):
-        return render(request, '500.html', status=500)
+        return render(request, 'custom/500.html', status=500)
