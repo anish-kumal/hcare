@@ -1,0 +1,198 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Edit Doctor - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1200px] mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Edit Doctor</h1>
+                    <div class="flex gap-3 flex-wrap">
+                        <a href="{% url 'doctors:doctor_list' %}" class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+                            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                            Back to Doctors
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                    {% if user_form.non_field_errors %}
+                    <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-700 border border-red-300">
+                        {% for error in user_form.non_field_errors %}
+                        <p class="text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if doctor_form.non_field_errors %}
+                    <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-700 border border-red-300">
+                        {% for error in doctor_form.non_field_errors %}
+                        <p class="text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                        {% csrf_token %}
+
+                        <div class="pb-8 border-b border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">Hospital Information</h2>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label for="hospital" class="block text-sm font-medium text-gray-700 mb-2">Select Hospital *</label>
+                                    {% if request.user.is_super_admin %}
+                                    <select name="hospital" id="hospital" required
+                                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+                                        <option value="">-- Select a Hospital --</option>
+                                        {% for hospital in hospitals %}
+                                        <option value="{{ hospital.id }}" {% if hospital.id == hospital_id %}selected{% endif %}>{{ hospital.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% else %}
+                                    <input type="text" value="{{ doctor.hospital.name }}" readonly
+                                        class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 text-gray-700" />
+                                    <input type="hidden" name="hospital" value="{{ doctor.hospital.id }}" />
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pb-8 border-b border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">User Account Information</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ user_form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                                    {{ user_form.username }}
+                                    {% if user_form.username.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.username.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ user_form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                    {{ user_form.email }}
+                                    {% if user_form.email.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.email.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                                    {{ user_form.first_name }}
+                                    {% if user_form.first_name.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.first_name.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                                    {{ user_form.last_name }}
+                                    {% if user_form.last_name.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.last_name.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ user_form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                    {{ user_form.phone_number }}
+                                    {% if user_form.phone_number.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.phone_number.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ user_form.date_of_birth.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                                    {{ user_form.date_of_birth }}
+                                    {% if user_form.date_of_birth.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.date_of_birth.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="{{ user_form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                    {{ user_form.address }}
+                                    {% if user_form.address.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.address.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="{{ user_form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                                    {{ user_form.password }}
+                                    <p class="mt-1 text-xs text-gray-500">Leave blank to keep the current password.</p>
+                                    {% if user_form.password.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.password.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pb-8 border-b border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">Doctor Profile Information</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ doctor_form.specialization.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Specialization *</label>
+                                    {{ doctor_form.specialization }}
+                                    {% if doctor_form.specialization.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.specialization.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.license_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">License Number *</label>
+                                    {{ doctor_form.license_number }}
+                                    {% if doctor_form.license_number.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.license_number.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.employee_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Employee ID *</label>
+                                    {{ doctor_form.employee_id }}
+                                    {% if doctor_form.employee_id.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.employee_id.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.qualification.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Qualification *</label>
+                                    {{ doctor_form.qualification }}
+                                    {% if doctor_form.qualification.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.qualification.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.experience_years.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
+                                    {{ doctor_form.experience_years }}
+                                    {% if doctor_form.experience_years.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.experience_years.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.joining_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Joining Date *</label>
+                                    {{ doctor_form.joining_date }}
+                                    {% if doctor_form.joining_date.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.joining_date.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.department.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                    {{ doctor_form.department }}
+                                    {% if doctor_form.department.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.department.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.consultation_fee.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Consultation Fee</label>
+                                    {{ doctor_form.consultation_fee }}
+                                    {% if doctor_form.consultation_fee.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.consultation_fee.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ doctor_form.profile_picture.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                                    {{ doctor_form.profile_picture }}
+                                    {% if doctor.profile_picture %}
+                                    <p class="mt-2 text-xs text-gray-500">Current file: {{ doctor.profile_picture.name }}</p>
+                                    {% endif %}
+                                    {% if doctor_form.profile_picture.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.profile_picture.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div class="flex items-center pt-8">
+                                    <label for="{{ doctor_form.is_available.id_for_label }}" class="flex items-center gap-3 cursor-pointer">
+                                        {{ doctor_form.is_available }}
+                                        <span class="text-sm font-medium text-gray-700">Currently Accepting Appointments</span>
+                                    </label>
+                                    {% if doctor_form.is_available.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.is_available.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="{{ doctor_form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Biography</label>
+                                    {{ doctor_form.bio }}
+                                    {% if doctor_form.bio.errors %}<p class="mt-1 text-sm text-red-600">{{ doctor_form.bio.errors|join:', ' }}</p>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 justify-end pt-4">
+                            <a href="{% url 'doctors:doctor_list' %}" class="px-8 py-3 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg font-semibold hover:bg-gray-300 transition-colors shadow-md">Cancel</a>
+                            <button type="submit" class="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors shadow-md">
+                                <span class="material-symbols-outlined text-[20px]">save</span>
+                                Update Doctor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}

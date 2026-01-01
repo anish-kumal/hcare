@@ -1,11 +1,24 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import IntegrityError
-from django.shortcuts import redirect
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.utils.dateparse import parse_time
+from django.utils.html import strip_tags
 from django.views.generic import TemplateView
+from django.core.exceptions import PermissionDenied
 
-from .models import Doctor, DoctorSchedule, Specialization
+from .models import Doctor, DoctorSchedule
+from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm
+from apps.hospitals.models import Hospital, HospitalAdmin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+
+User = get_user_model()
 
 
 class DoctorOnlyMixin(LoginRequiredMixin):
@@ -185,13 +198,12 @@ class DoctorProfileEditView(DoctorOnlyMixin, TemplateView):
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = Doctor.objects.filter(user=self.request.user).select_related('specialization').first()
+		doctor = Doctor.objects.filter(user=self.request.user).first()
 		context['doctor'] = doctor
-		context['specializations'] = Specialization.objects.order_by('name')
 		return context
 
 	def post(self, request, *args, **kwargs):
-		doctor = Doctor.objects.filter(user=request.user).select_related('specialization').first()
+		doctor = Doctor.objects.filter(user=request.user).first()
 		if not doctor:
 			messages.error(request, 'Doctor profile not found.')
 			return redirect('doctor_dashboard')
@@ -200,7 +212,7 @@ class DoctorProfileEditView(DoctorOnlyMixin, TemplateView):
 		last_name = request.POST.get('last_name', '').strip()
 		email = request.POST.get('email', '').strip()
 		phone_number = request.POST.get('phone_number', '').strip()
-		specialization_id = request.POST.get('specialization_id', '').strip()
+		specialization = request.POST.get('specialization', '').strip()
 
 		if not email:
 			messages.error(request, 'Email is required.')
@@ -211,11 +223,7 @@ class DoctorProfileEditView(DoctorOnlyMixin, TemplateView):
 		request.user.email = email
 		request.user.phone_number = phone_number
 
-		if specialization_id:
-			specialization = Specialization.objects.filter(id=specialization_id).first()
-			if not specialization:
-				messages.error(request, 'Please select a valid specialization.')
-				return redirect('doctors:doctor_profile')
+		if specialization:
 			doctor.specialization = specialization
 
 		try:
@@ -227,3 +235,342 @@ class DoctorProfileEditView(DoctorOnlyMixin, TemplateView):
 
 		messages.success(request, 'Profile updated successfully.')
 		return redirect('doctors:doctor_profile')
+
+
+class DoctorCreateView(LoginRequiredMixin, TemplateView):
+	"""
+	Create Doctor - Both User and Doctor Profile in one page
+	Hospital Admin can create doctors for their hospital
+	Super Admin can create doctors for any hospital
+	"""
+	template_name = 'doctors/doctor_create.html'
+	login_url = 'users:login'
+	
+	def dispatch(self, request, *args, **kwargs):
+		"""Check if user has permission to create doctors"""
+		if not request.user.is_authenticated:
+			return self.handle_no_permission()
+		
+		# Only super admin and hospital admin can create doctors
+		if not (request.user.is_super_admin or request.user.is_admin):
+			messages.error(request, 'You do not have permission to create doctors.')
+			raise PermissionDenied
+		
+		return super().dispatch(request, *args, **kwargs)
+	
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		user_form = kwargs.get('user_form') or DoctorUserForm()
+		doctor_form = kwargs.get('doctor_form') or DoctorProfileForm()
+		
+		context['user_form'] = user_form
+		context['doctor_form'] = doctor_form
+		
+		# Get hospitals based on user type
+		if self.request.user.is_super_admin:
+			context['hospitals'] = Hospital.objects.all().order_by('name')
+		elif self.request.user.is_admin:
+			# Hospital admin can only see their own hospital
+			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).first()
+			if hospital_admin:
+				context['hospitals'] = Hospital.objects.filter(id=hospital_admin.hospital.id)
+				context['hospital_id'] = hospital_admin.hospital.id
+		
+		return context
+	
+	def post(self, request, *args, **kwargs):
+		"""Handle doctor creation"""
+		# Validate hospital selection
+		hospital_id = request.POST.get('hospital')
+		if not hospital_id:
+			messages.error(request, 'Please select a hospital.')
+			return self.get(request, *args, **kwargs)
+		
+		try:
+			hospital_id = int(hospital_id)
+			hospital = Hospital.objects.get(id=hospital_id)
+		except (ValueError, Hospital.DoesNotExist):
+			messages.error(request, 'Selected hospital does not exist.')
+			return self.get(request, *args, **kwargs)
+		
+		# Validate hospital admin permissions
+		if request.user.is_admin:
+			hospital_admin = HospitalAdmin.objects.filter(user=request.user).first()
+			if not hospital_admin or hospital_admin.hospital.id != hospital.id:
+				messages.error(request, 'You can only create doctors for your hospital.')
+				raise PermissionDenied
+		
+		# Create forms
+		user_form = DoctorUserForm(request.POST)
+		doctor_form = DoctorProfileForm(request.POST, request.FILES)
+		
+		# Validate both forms
+		if user_form.is_valid() and doctor_form.is_valid():
+			try:
+				with transaction.atomic():
+					# 1. Save User first
+					user = user_form.save(commit=False)
+					user.user_type = User.UserType.DOCTOR
+					user.is_default_password = False
+					user.save()
+					
+					# Set password
+					password = user_form.cleaned_data.get('password')
+					user.set_password(password)
+					user.save()
+					
+					# 2. Save Doctor Profile
+					doctor = doctor_form.save(commit=False)
+					doctor.user = user
+					doctor.hospital = hospital
+					doctor.save()
+
+
+				next_response = redirect('doctors:doctor_list')
+
+
+				if password:
+					login_url = self.request.build_absolute_uri(reverse_lazy('users:administer_login'))
+					context = {
+						'title': 'Your doctor account for ',
+						'user_name': user.get_full_name() or user.username,
+						'hospital_name': hospital.name,
+						'username': user.username,
+						'password': password,
+						'login_url': login_url,
+						'support_email': settings.DEFAULT_FROM_EMAIL,
+					}
+
+					try:
+						html_message = render_to_string('email/credentials_email.html', context)
+						plain_message = strip_tags(html_message)
+						send_mail(
+							subject='Your Doctor Login Credentials',
+							message=plain_message,
+							from_email=settings.DEFAULT_FROM_EMAIL,
+							recipient_list=[user.email],
+							html_message=html_message,
+							fail_silently=False,
+						)
+						messages.success(request, 'Doctor created successfully! Credentials email sent.')
+					except Exception:
+						messages.warning(
+							request,
+							'Doctor created successfully, but credential email could not be sent. Please share credentials manually.'
+						)
+				else:
+					messages.success(request, f'Doctor {user.get_full_name()} has been created successfully!')
+
+				return next_response
+			
+			except IntegrityError as e:
+				messages.error(request, f'Error creating doctor: {str(e)}')
+				return self.get(
+					request, 
+					user_form=user_form, 
+					doctor_form=doctor_form,
+					*args, 
+					**kwargs
+				)
+		else:
+			# Forms not valid, return with errors
+			messages.error(request, 'Please correct the errors below.')
+			return self.get(
+				request, 
+				user_form=user_form, 
+				doctor_form=doctor_form,
+				*args, 
+				**kwargs
+			)
+
+
+class DoctorListView(SuperAdminAndAdminOnlyMixin, TemplateView):
+	"""List doctors for admins"""
+	template_name = 'doctors/doctor_list.html'
+
+	def get_queryset(self):
+		queryset = Doctor.objects.select_related('user', 'hospital', 'department').order_by('-created')
+
+		if self.request.user.is_admin:
+			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
+			if not hospital_admin:
+				return Doctor.objects.none()
+			queryset = queryset.filter(hospital=hospital_admin.hospital)
+
+		search_query = self.request.GET.get('search', '').strip()
+		if search_query:
+			queryset = queryset.filter(
+				Q(user__first_name__icontains=search_query)
+				| Q(user__last_name__icontains=search_query)
+				| Q(user__username__icontains=search_query)
+				| Q(user__email__icontains=search_query)
+				| Q(specialization__icontains=search_query)
+				| Q(license_number__icontains=search_query)
+			)
+
+		return queryset
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context['doctors'] = self.get_queryset()
+		context['search_query'] = self.request.GET.get('search', '').strip()
+		return context
+
+
+class DoctorDetailView(SuperAdminAndAdminOnlyMixin, TemplateView):
+	"""Doctor detail view for admins"""
+	template_name = 'doctors/doctor_detail.html'
+
+	def get_doctor(self):
+		doctor = get_object_or_404(
+			Doctor.objects.select_related('user', 'hospital', 'department'),
+			pk=self.kwargs.get('pk'),
+		)
+
+		if self.request.user.is_admin:
+			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
+			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+				raise PermissionDenied
+
+		return doctor
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context['doctor'] = self.get_doctor()
+		return context
+
+
+class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, TemplateView):
+	"""Delete doctor user and profile"""
+	template_name = 'partials/delete.html'
+
+	def get_doctor(self):
+		doctor = get_object_or_404(
+			Doctor.objects.select_related('user', 'hospital'),
+			pk=self.kwargs.get('pk'),
+		)
+
+		if self.request.user.is_admin:
+			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
+			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+				raise PermissionDenied
+
+		return doctor
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		doctor = self.get_doctor()
+		context.update({
+			'doctor': doctor,
+			'delete_page_title': 'Delete Doctor - Health Care',
+			'delete_confirm_title': 'Delete Doctor?',
+			'delete_confirm_message': (
+				f'Are you sure you want to delete Dr. {doctor.user.get_full_name() or doctor.user.username}? '
+				'This action cannot be undone.'
+			),
+			'delete_warning_text': (
+				'Deleting this doctor will remove the doctor profile and login account permanently.'
+			),
+			'delete_button_label': 'Delete Doctor',
+			'cancel_url': self.request.META.get('HTTP_REFERER') or '/doctors/',
+		})
+		return context
+
+	def post(self, request, *args, **kwargs):
+		doctor = self.get_doctor()
+		doctor_name = doctor.user.get_full_name() or doctor.user.username
+
+		try:
+			with transaction.atomic():
+				doctor.user.delete()
+			messages.success(request, f'Doctor {doctor_name} deleted successfully.')
+		except IntegrityError as exc:
+			messages.error(request, f'Could not delete doctor: {exc}')
+			return redirect('doctors:doctor_detail', pk=doctor.pk)
+
+		return redirect('doctors:doctor_list')
+
+
+class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
+	"""Update doctor user and profile details"""
+	template_name = 'doctors/doctor_edit.html'
+
+	def get_doctor(self):
+		doctor = get_object_or_404(
+			Doctor.objects.select_related('user', 'hospital', 'department'),
+			pk=self.kwargs.get('pk'),
+		)
+
+		if self.request.user.is_admin:
+			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
+			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+				raise PermissionDenied
+
+		return doctor
+
+	def get_hospitals(self):
+		if self.request.user.is_super_admin:
+			return Hospital.objects.all().order_by('name')
+
+		hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
+		if hospital_admin:
+			return Hospital.objects.filter(id=hospital_admin.hospital_id)
+
+		return Hospital.objects.none()
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		doctor = kwargs.get('doctor') or self.get_doctor()
+		user_form = kwargs.get('user_form') or DoctorUserUpdateForm(instance=doctor.user)
+		doctor_form = kwargs.get('doctor_form') or DoctorProfileForm(instance=doctor)
+
+		context['doctor'] = doctor
+		context['user_form'] = user_form
+		context['doctor_form'] = doctor_form
+		context['hospitals'] = self.get_hospitals()
+		context['hospital_id'] = doctor.hospital_id
+		return context
+
+	def post(self, request, *args, **kwargs):
+		doctor = self.get_doctor()
+
+		if request.user.is_super_admin:
+			hospital_id = request.POST.get('hospital')
+			if not hospital_id:
+				messages.error(request, 'Please select a hospital.')
+				return self.get(request, doctor=doctor, *args, **kwargs)
+			hospital = get_object_or_404(Hospital, id=hospital_id)
+		else:
+			hospital_admin = HospitalAdmin.objects.filter(user=request.user).select_related('hospital').first()
+			if not hospital_admin:
+				messages.error(request, 'You are not assigned to any hospital.')
+				return redirect('doctors:doctor_list')
+			hospital = hospital_admin.hospital
+
+		user_form = DoctorUserUpdateForm(request.POST, instance=doctor.user)
+		doctor_form = DoctorProfileForm(request.POST, request.FILES, instance=doctor)
+
+		if user_form.is_valid() and doctor_form.is_valid():
+			try:
+				with transaction.atomic():
+					user_form.save()
+					updated_doctor = doctor_form.save(commit=False)
+					updated_doctor.hospital = hospital
+					updated_doctor.save()
+
+				messages.success(request, 'Doctor updated successfully.')
+				return redirect('doctors:doctor_list')
+			except IntegrityError as exc:
+				messages.error(request, f'Error updating doctor: {exc}')
+
+		messages.error(request, 'Please correct the errors below.')
+		return self.get(
+			request,
+			doctor=doctor,
+			user_form=user_form,
+			doctor_form=doctor_form,
+			*args,
+			**kwargs,
+		)
+
+

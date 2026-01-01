@@ -165,6 +165,7 @@ class HospitalAdminCreateView(SuperAdminOnlyMixin, CreateView):
             admin_user = self.object.user
             login_url = self.request.build_absolute_uri(reverse_lazy('users:administer_login'))
             context = {
+                'title': 'Your hospital admin account for',
                 'user_name': admin_user.get_full_name() or admin_user.username,
                 'hospital_name': hospital.name,
                 'username': admin_user.username,
@@ -174,7 +175,7 @@ class HospitalAdminCreateView(SuperAdminOnlyMixin, CreateView):
             }
 
             try:
-                html_message = render_to_string('email/admin_credentials_email.html', context)
+                html_message = render_to_string('email/credentials_email.html', context)
                 plain_message = strip_tags(html_message)
                 send_mail(
                     subject='Your Hospital Admin Login Credentials',

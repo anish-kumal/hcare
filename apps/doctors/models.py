@@ -4,37 +4,6 @@ from apps.base.models import BaseModel
 from apps.hospitals.models import Hospital, HospitalDepartment
 
 
-class Specialization(BaseModel):
-    """
-    Medical Specialization model
-    """
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-        help_text="Specialization name (e.g., Cardiology, Pediatrics)"
-    )
-    
-    code = models.CharField(
-        max_length=20,
-        unique=True,
-        help_text="Specialization code"
-    )
-    
-    description = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Description of specialization"
-    )
-    
-    class Meta:
-        verbose_name = 'Specialization'
-        verbose_name_plural = 'Specializations'
-        ordering = ['name']
-    
-    def __str__(self):
-        return self.name
-
-
 class Doctor(BaseModel):
     """
     Doctor profile model
@@ -63,18 +32,9 @@ class Doctor(BaseModel):
         help_text="Department"
     )
     
-    specialization = models.ForeignKey(
-        Specialization,
-        on_delete=models.PROTECT,
-        related_name='doctors',
-        help_text="Primary specialization"
-    )
-    
-    additional_specializations = models.ManyToManyField(
-        Specialization,
-        blank=True,
-        related_name='doctors_additional',
-        help_text="Additional specializations"
+    specialization = models.CharField(
+        max_length=100,
+        help_text="Primary specialization (e.g., Cardiology, Pediatrics)"
     )
     
     license_number = models.CharField(
@@ -124,26 +84,6 @@ class Doctor(BaseModel):
         help_text="Currently accepting appointments"
     )
     
-    is_verified = models.BooleanField(
-        default=False,
-        help_text="Verified by hospital admin"
-    )
-    
-    verified_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text="Verification timestamp"
-    )
-    
-    verified_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='verified_doctors',
-        help_text="Admin who verified"
-    )
-    
     joining_date = models.DateField(
         help_text="Date joined hospital"
     )
@@ -154,11 +94,11 @@ class Doctor(BaseModel):
         ordering = ['user__first_name']
         indexes = [
             models.Index(fields=['hospital', 'specialization']),
-            models.Index(fields=['is_available', 'is_verified']),
+            models.Index(fields=['is_available']),
         ]
     
     def __str__(self):
-        return f"Dr. {self.user.get_full_name()} - {self.specialization.name}"
+        return f"Dr. {self.user.get_full_name()} - {self.specialization}"
 
 
 class DoctorSchedule(BaseModel):
