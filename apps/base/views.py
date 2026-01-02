@@ -7,14 +7,9 @@ from django.urls import reverse_lazy
 from .mixin import RoleRequiredMixin
 
 # Create your views here.
-
-
-
-
 class IndexView(RoleRequiredMixin, TemplateView):
     """Render the home page"""
     template_name = 'patient/index.html'
-
 
 
 class AdministrView(TemplateView):

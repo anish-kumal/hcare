@@ -19,33 +19,8 @@
     <!-- Main Content Wrapper -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
         <!-- Top Header -->
-        <header
-            class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+        {% include "partials/header.html" %}
 
-            <div class="w-full flex justify-end items-center gap-6">
-
-                <!-- Icons -->
-                <div class="flex items-center gap-3">
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative"
-                        title="Notifications">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span
-                            class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
-                    </button>
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                        title="Settings">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                        title="Help">
-                        <span class="material-symbols-outlined">help</span>
-                    </button>
-                </div>
-            </div>
-        </header>
 
         <!-- Scrollable Main Content -->
         <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -163,11 +138,13 @@
                                                 <span id="togglePasswordIcon" class="material-symbols-outlined text-[18px]">visibility</span>
                                             </button>
                                         </div>
-                                        <button type="button" id="generatePasswordBtn"
-                                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <span class="material-symbols-outlined text-[16px]">password</span>
-                                            Generate Random Password
-                                        </button>
+                                        {% if not form.instance.pk %}
+                                            <button type="button" id="generatePasswordBtn"
+                                                class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <span class="material-symbols-outlined text-[16px]">password</span>
+                                                Generate Random Password
+                                            </button>
+                                        {% endif %}
                                     </div>
                                     {% if form.password.help_text %}
                                     <p class="mt-1 text-xs text-gray-500">{{ form.password.help_text }}</p>
@@ -187,8 +164,7 @@
                             </a>
                             <button type="submit"
                                 class="px-6 py-2.5 bg-primary hover:bg-[#1a3d42] text-white font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-md">
-                                <span class="material-symbols-outlined text-[18px]">{% if form.instance.pk %}edit{% else
-                                    %}add_circle{% endif %}</span>
+                                <span class="material-symbols-outlined text-[18px]">{% if form.instance.pk %}edit{% else %}add_circle{% endif %}</span>
                                 {% if form.instance.pk %}Update Admin{% else %}Add Admin{% endif %}
                             </button>
                         </div>

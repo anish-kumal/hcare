@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     UserRegisterView, UserLoginView, UserLogoutView, 
     AdministerLoginView,AdministerLogoutView,
-    AdminUserListView, AdminUserDetailView, AdminUserCreateView, 
+    AdminUserListView, AdminUserDetailView, 
     AdminUserUpdateView, AdminUserDeleteView,
     HospitalAdminUserListView, HospitalAdminUserCreateView, HospitalAdminUserDetailView,
     HospitalAdminUserUpdateView, HospitalAdminUserDeleteView
@@ -20,7 +20,6 @@ urlpatterns = [
     
     # Super Admin User Management URLs
     path('admin/users/', AdminUserListView.as_view(), name='admin_user_list'),
-    path('admin/users/create/', AdminUserCreateView.as_view(), name='admin_user_create'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
     path('admin/users/<int:pk>/edit/', AdminUserUpdateView.as_view(), name='admin_user_update'),
     path('admin/users/<int:pk>/delete/', AdminUserDeleteView.as_view(), name='admin_user_delete'),

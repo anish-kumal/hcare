@@ -7,6 +7,7 @@ from .views import (
     HospitalDeleteView,
     HospitalAdminListView,
     HospitalAdminCreateView,
+    HospitalAdminDetailView,
     HospitalAdminUpdateView,
     HospitalAdminDeleteView,
     AdminOwnHospitalDetailView,
@@ -26,6 +27,7 @@ urlpatterns = [
     # Hospital Admin CRUD URLs
     path('<int:hospital_id>/admins/', HospitalAdminListView.as_view(), name='hospital_admin_list'),
     path('<int:hospital_id>/admins/add/', HospitalAdminCreateView.as_view(), name='hospital_admin_create'),
+    path('admins/<int:pk>/', HospitalAdminDetailView.as_view(), name='hospital_admin_detail'),
     path('admins/<int:pk>/edit/', HospitalAdminUpdateView.as_view(), name='hospital_admin_update'),
     path('admins/<int:pk>/delete/', HospitalAdminDeleteView.as_view(), name='hospital_admin_delete'),
     

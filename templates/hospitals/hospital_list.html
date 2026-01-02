@@ -39,18 +39,6 @@
           </div>
         </div>
 
-        <!-- Messages -->
-        {% if messages %}
-        <div class="space-y-3">
-          {% for message in messages %}
-          <div
-            class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} border-l-4 {% if message.tags == 'error' %}border-red-700{% elif message.tags == 'success' %}border-green-700{% else %}border-blue-700{% endif %}">
-            {{ message }}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-
         <!-- Search and Filter Section -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <form method="GET" class="space-y-4">
@@ -97,29 +85,28 @@
             <table class="w-full">
               <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Hospital Name</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Registration</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Email</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">City</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Total Beds</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Hospital Name</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Registration</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Total Beds</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
                 {% for hospital in hospitals %}
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="px-6 py-4 text-sm text-gray-900 font-medium">
-                    {{ hospital.name }}
+                      <a href="{% url 'hospitals:hospital_detail' hospital.id %}" class="text-primary font-medium hover:underline">
+                        {{ hospital.name }}
+                      </a>
+                    
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-600">
                     {{ hospital.registration_number }}
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-600">
                     {{ hospital.email }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-600">
-                    {{ hospital.city }}
                   </td>
                   <td class="px-6 py-4 text-sm">
                     {% if hospital.is_verified %}
@@ -153,7 +140,7 @@
                       </a>
                       <a href="{% url 'hospitals:hospital_delete' hospital.id %}"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
-                        title="Delete" onclick="return confirm('Are you sure you want to delete this hospital?')">
+                        title="Delete" >
                         <span class="material-symbols-outlined text-[16px]">delete</span>
                       </a>
                     </div>

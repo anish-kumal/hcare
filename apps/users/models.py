@@ -9,7 +9,7 @@ class CustomUserManager(UserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields['user_type'] = User.UserType.SUPER_ADMIN
-        extra_fields['is_default_password'] = True
+        extra_fields['is_default_password'] = False
         return super().create_superuser(username, email, password, **extra_fields)
 
 class User(AbstractUser, BaseModel):

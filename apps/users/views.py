@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import UserRegistrationForm, UserLoginForm, UserManagementForm
 from .models import User
 from apps.hospitals.models import HospitalAdmin
-
+from apps.base.mixin import SuperAdminOnlyMixin
 
 class UserRegisterView(CreateView):
     """
@@ -157,39 +157,6 @@ class AdministerLogoutView(LoginRequiredMixin, LogoutView):
 
 
 
-# User Management Views for Super Admin and Hospital Admin
-
-class SuperAdminOnlyMixin(LoginRequiredMixin):
-    """Mixin to restrict access to super admin users only"""
-    login_url = 'users:login'
-    
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return self.handle_no_permission()
-        if not request.user.is_super_admin:
-            messages.error(request, 'You do not have permission to access this page.')
-            return redirect('index')
-        return super().dispatch(request, *args, **kwargs)
-
-
-class HospitalAdminOnlyMixin(LoginRequiredMixin):
-    """Mixin to restrict access to hospital admins"""
-    login_url = 'users:login'
-    
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return self.handle_no_permission()
-        # Check if user is hospital admin
-        try:
-            HospitalAdmin.objects.get(user=request.user)
-        except HospitalAdmin.DoesNotExist:
-            messages.error(request, 'You do not have permission to access this page.')
-            return redirect('index')
-        return super().dispatch(request, *args, **kwargs)
-
-
-# Super Admin User Management Views
-
 class AdminUserListView(SuperAdminOnlyMixin, ListView):
     """List all users for Super Admin"""
     model = User
@@ -233,27 +200,6 @@ class AdminUserDetailView(SuperAdminOnlyMixin, DetailView):
     slug_url_kwarg = 'pk'
 
 
-class AdminUserCreateView(SuperAdminOnlyMixin, CreateView):
-    """Create new user for Super Admin"""
-    model = User
-    form_class = UserManagementForm
-    template_name = 'users/user_form.html'
-    success_url = reverse_lazy('users:admin_user_list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'User created successfully!')
-        return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Add New User'
-        context['action'] = 'create'
-        return context
-
 
 class AdminUserUpdateView(SuperAdminOnlyMixin, UpdateView):
     """Update user for Super Admin"""
@@ -294,7 +240,7 @@ class AdminUserDeleteView(SuperAdminOnlyMixin, DeleteView):
 
 # Hospital Admin User Management Views
 
-class HospitalAdminUserListView(HospitalAdminOnlyMixin, ListView):
+class HospitalAdminUserListView( ListView):
     """List users for a Hospital Admin (only their hospital users)"""
     model = User
     template_name = 'users/hospital_user_list.html'
@@ -331,7 +277,7 @@ class HospitalAdminUserListView(HospitalAdminOnlyMixin, ListView):
         return context
 
 
-class HospitalAdminUserCreateView(HospitalAdminOnlyMixin, CreateView):
+class HospitalAdminUserCreateView( CreateView):
     """Create new user for Hospital Admin (only for their hospital)"""
     model = User
     form_class = UserManagementForm
@@ -368,7 +314,7 @@ class HospitalAdminUserCreateView(HospitalAdminOnlyMixin, CreateView):
         return context
 
 
-class HospitalAdminUserDetailView(HospitalAdminOnlyMixin, DetailView):
+class HospitalAdminUserDetailView( DetailView):
     """View user details for Hospital Admin (only their hospital users)"""
     model = User
     template_name = 'users/hospital_user_detail.html'
@@ -390,7 +336,7 @@ class HospitalAdminUserDetailView(HospitalAdminOnlyMixin, DetailView):
             return redirect('users:hospital_user_list')
 
 
-class HospitalAdminUserUpdateView(HospitalAdminOnlyMixin, UpdateView):
+class HospitalAdminUserUpdateView( UpdateView):
     """Update user for Hospital Admin (only their hospital users)"""
     model = User
     form_class = UserManagementForm
@@ -431,7 +377,7 @@ class HospitalAdminUserUpdateView(HospitalAdminOnlyMixin, UpdateView):
         return context
 
 
-class HospitalAdminUserDeleteView(HospitalAdminOnlyMixin, DeleteView):
+class HospitalAdminUserDeleteView( DeleteView):
     """Delete user for Hospital Admin (only their hospital users)"""
     model = User
     template_name = 'users/hospital_user_confirm_delete.html'

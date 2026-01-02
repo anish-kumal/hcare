@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Admin Details - {{ admin.user.username }} - Health Care{% endblock title %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+    title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    {% include "partials/side_bar.html" %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        <!-- Top Header -->
+        {% include "partials/header.html" %}
+
+        <!-- Scrollable Main Content -->
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1000px] mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Hospital Admin Details</h1>
+
+                    <div class="flex gap-3 flex-wrap">
+                        <a href="{% url 'hospitals:hospital_admin_update' admin.id %}"
+                            class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md">
+                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                            Edit Admin
+                        </a>
+                        <a href="{% url 'hospitals:hospital_admin_list' hospital.id %}"
+                            class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+                            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                            Back to Admins
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="h-24 bg-gradient-to-r from-primary to-[#1a3d42] flex items-center px-8">
+                        <p class="text-white font-semibold text-xl">{{ admin.hospital.name }}</p>
+                    </div>
+
+
+                    <div class="p-8 -mt-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Username</p>
+                                    <p class="text-gray-900 font-semibold">{{ admin.user.username }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Full Name</p>
+                                    <p class="text-gray-900 font-semibold">
+                                        {% if admin.user.get_full_name %}
+                                        {{ admin.user.get_full_name }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Email</p>
+                                    <a href="mailto:{{ admin.user.email }}" class="text-primary font-medium hover:underline">{{ admin.user.email }}</a>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Phone Number</p>
+                                    <p class="text-gray-900 font-semibold">{{ admin.user.phone_number|default:"-" }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Hospital</p>
+                                    <a href="{% url 'hospitals:hospital_detail' hospital.id %}" class="text-primary font-semibold hover:underline">{{ hospital.name }}</a>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Assigned Date</p>
+                                    <p class="text-gray-900 font-semibold">{{ admin.created|date:"M d, Y h:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+{% endblock content %}

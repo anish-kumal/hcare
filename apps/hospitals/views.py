@@ -6,22 +6,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Hospital, HospitalAdmin
 from .forms import HospitalForm, HospitalAdminForm
-
-
-class SuperAdminOnlyMixin(LoginRequiredMixin):
-    """Mixin to restrict access to super admin users only"""
-    login_url = 'users:login'
-    
-    def dispatch(self, request, *args, **kwargs):
-        # First check if user is authenticated (redirect to login if not)
-        if not request.user.is_authenticated:
-            return self.handle_no_permission()
-        
-        # Then check if user is super admin
-        if not request.user.is_super_admin:
-            raise PermissionDenied("You don't have permission to access this page.")
-        
-        return super().dispatch(request, *args, **kwargs)
+from apps.base.mixin import SuperAdminOnlyMixin
 
 
 class HospitalListView(SuperAdminOnlyMixin, ListView):
@@ -107,10 +92,27 @@ class HospitalUpdateView(SuperAdminOnlyMixin, UpdateView):
 class HospitalDeleteView(SuperAdminOnlyMixin, DeleteView):
     """Delete a hospital"""
     model = Hospital
-    template_name = 'hospitals/hospital_confirm_delete.html'
+    template_name = 'partials/delete.html'
     success_url = reverse_lazy('hospitals:hospital_list')
     slug_field = 'id'
     slug_url_kwarg = 'pk'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'delete_page_title': 'Delete Hospital - Health Care',
+            'delete_confirm_title': f'Delete {self.object.name}?',
+            'delete_confirm_message': (
+                f'Are you sure you want to delete {self.object.name}? '
+                'This action cannot be undone.'
+            ),
+            'delete_warning_text': (
+                'Deleting this hospital will permanently remove all related records.'
+            ),
+            'delete_button_label': 'Delete Hospital',
+            'cancel_url': reverse_lazy('hospitals:hospital_list'),
+        })
+        return context
     
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Hospital deleted successfully!')
@@ -187,21 +189,50 @@ class HospitalAdminUpdateView(SuperAdminOnlyMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('hospitals:hospital_admin_list', kwargs={'hospital_id': self.object.hospital.id})
 
-
-class HospitalAdminDeleteView(SuperAdminOnlyMixin, DeleteView):
-    """Remove an admin from a hospital"""
+class HospitalAdminDetailView(SuperAdminOnlyMixin, DetailView):
+    """View hospital admin details"""
     model = HospitalAdmin
-    template_name = 'hospitals/hospital_admin_confirm_delete.html'
+    template_name = 'hospitals/hospital_admin_detail.html'
+    context_object_name = 'admin'
     slug_field = 'id'
     slug_url_kwarg = 'pk'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['hospital'] = self.object.hospital
         return context
     
+
+class HospitalAdminDeleteView(SuperAdminOnlyMixin, DeleteView):
+    """Remove an admin from a hospital"""
+    model = HospitalAdmin
+    template_name = 'partials/delete.html'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        full_name = self.object.user.get_full_name() or self.object.user.email
+        context['hospital'] = self.object.hospital
+        context.update({
+            'delete_page_title': 'Remove Hospital Admin - Health Care',
+            'delete_confirm_title': f'Remove {full_name}?',
+            'delete_confirm_message': (
+                f'Are you sure you want to remove {full_name} from '
+                f'{self.object.hospital.name}?'
+            ),
+            'delete_warning_text': (
+                'This will revoke this admin account\'s access to the hospital.'
+            ),
+            'delete_button_label': 'Remove Admin',
+            'cancel_url': reverse_lazy(
+                'hospitals:hospital_admin_list',
+                kwargs={'hospital_id': self.object.hospital.id},
+            ),
+        })
+        return context
+    
     def delete(self, request, *args, **kwargs):
-        hospital_id = self.object.hospital.id
         messages.success(self.request, 'Admin removed from hospital successfully!')
         return super().delete(request, *args, **kwargs)
     
