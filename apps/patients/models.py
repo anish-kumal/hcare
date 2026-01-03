@@ -16,15 +16,6 @@ class Patient(BaseModel):
         help_text="User account for this patient"
     )
     
-    doctor = models.ForeignKey(
-        Doctor,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='patients',
-        help_text="Primary doctor"
-    )
-    
     date_of_birth = models.DateField(
         help_text="Date of birth"
     )
@@ -141,7 +132,6 @@ class Patient(BaseModel):
         verbose_name_plural = 'Patients'
         ordering = ['user__first_name']
         indexes = [
-            models.Index(fields=['doctor']),
             models.Index(fields=['is_verified']),
         ]
     

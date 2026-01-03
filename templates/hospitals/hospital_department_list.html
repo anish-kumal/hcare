@@ -1,0 +1,82 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Hospital Departments - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1200px] mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Departments</h1>
+                        <p class="text-sm text-gray-600 mt-1">{{ hospital.name }}</p>
+                    </div>
+
+                    <a href="{% url 'hospitals:hospital_department_create' %}"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                        Add Department
+                    </a>
+                </div>
+
+                {% if departments %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Code</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for department in departments %}
+                                <tr class="hover:bg-gray-50 transition duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ department.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ department.code }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ department.description|default:'-' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="{% url 'hospitals:hospital_department_update' department.id %}" class="text-primary hover:text-[#1a3d42]" title="Edit">
+                                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                                            </a>
+                                            <a href="{% url 'hospitals:hospital_department_delete' department.id %}" class="text-red-600 hover:text-red-900" title="Delete">
+                                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No departments found</h3>
+                    <p class="text-gray-600 mb-6">Create your first department for this hospital.</p>
+                    <a href="{% url 'hospitals:hospital_department_create' %}"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                        Create Department
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}

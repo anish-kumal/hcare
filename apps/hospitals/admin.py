@@ -12,7 +12,7 @@ class HospitalAdminConfig(admin.ModelAdmin):
 
 @admin.register(HospitalDepartment)
 class HospitalDepartmentAdmin(admin.ModelAdmin):
-	list_display = ('hospital', 'name', 'code', 'head_doctor', 'total_beds', 'available_beds')
+	list_display = ('hospital', 'name', 'code')
 	list_filter = ('hospital',)
 	search_fields = ('name', 'code', 'hospital__name')
 

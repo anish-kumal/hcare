@@ -1,11 +1,23 @@
-from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import DetailView
+from django.shortcuts import redirect
+from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
+from django.conf import settings
+from django.urls import reverse_lazy
 
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.patients.models import Patient, PatientAppointment
-from .forms import PatientProfileForm
+from .forms import PatientCreateProfileForm, PatientProfileForm, PatientUserForm
+
+User = get_user_model()
 
 
 class PatientOnlyMixin(LoginRequiredMixin):
@@ -64,4 +76,215 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
         # Get form
         context['form'] = PatientProfileForm(instance=patient)
         
+        return context
+
+
+class PatientCreateView(LoginRequiredMixin, CreateView):
+    """
+    Create Patient - Both User and Patient Profile in one page
+    Hospital Admin and Super Admin can create patients
+    """
+
+    template_name = 'patients/patient_create.html'
+    login_url = 'users:login'
+    form_class = PatientCreateProfileForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        if not (request.user.is_super_admin or request.user.is_admin):
+            messages.error(request, 'You do not have permission to create patients.')
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['user_form'] = kwargs.get('user_form') or PatientUserForm()
+        context['patient_form'] = kwargs.get('patient_form') or PatientCreateProfileForm()
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user_form = PatientUserForm(request.POST)
+        patient_form = PatientCreateProfileForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if user_form.is_valid() and patient_form.is_valid():
+            try:
+                with transaction.atomic():
+                    user = user_form.save(commit=False)
+                    user.user_type = User.UserType.PATIENT
+                    user.is_default_password = False
+                    user.save()
+
+                    password = user_form.cleaned_data.get('password')
+                    user.set_password(password)
+                    user.save(update_fields=['password', 'is_default_password'])
+
+                    patient = patient_form.save(commit=False)
+                    patient.user = user
+                    patient.save()
+
+                if password:
+                    hospital_name = 'Health Care System'
+                    if request.user.is_admin and hasattr(request.user, 'hospital_admin_profile'):
+                        hospital_name = request.user.hospital_admin_profile.hospital.name
+
+                    login_url = request.build_absolute_uri(reverse_lazy('users:login'))
+                    context = {
+                        'title': 'Your patient account for ',
+                        'user_name': user.get_full_name() or user.username,
+                        'hospital_name': hospital_name,
+                        'username': user.username,
+                        'password': password,
+                        'login_url': login_url,
+                        'support_email': settings.DEFAULT_FROM_EMAIL,
+                    }
+
+                    try:
+                        html_message = render_to_string('email/credentials_email.html', context)
+                        plain_message = strip_tags(html_message)
+                        send_mail(
+                            subject='Your Patient Login Credentials',
+                            message=plain_message,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[user.email],
+                            html_message=html_message,
+                            fail_silently=False,
+                        )
+                        messages.success(request, 'Patient created successfully! Credentials email sent.')
+                    except Exception:
+                        messages.warning(
+                            request,
+                            'Patient created successfully, but credential email could not be sent. Please share credentials manually.'
+                        )
+                else:
+                    messages.success(request, f'Patient {user.get_full_name() or user.username} created successfully!')
+
+                return redirect('patients:patient_create')
+
+            except IntegrityError as exc:
+                messages.error(request, f'Error creating patient: {exc}')
+
+        messages.error(request, 'Please correct the errors below.')
+        return self.get(
+            request,
+            user_form=user_form,
+            patient_form=patient_form,
+            *args,
+            **kwargs,
+        )
+
+class PatientDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+    """View patient details - For Admin and Super Admin"""
+    model = Patient
+    template_name = 'patients/patient_detail.html'
+    context_object_name = 'patient'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+
+    def get_object(self, queryset=None):
+        """Get patient by ID"""
+        return Patient.objects.get(id=self.kwargs['pk'])
+    
+class PatientUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+    """Update patient details - For Admin and Super Admin"""
+    model = Patient
+    form_class = PatientCreateProfileForm
+    template_name = 'patients/patient_update.html'
+    context_object_name = 'patient'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+    success_url = reverse_lazy('patients:patient_list')
+    
+    def get_object(self, queryset=None):
+        """Get patient by ID"""
+        return Patient.objects.get(id=self.kwargs['pk'])
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Patient updated successfully!')
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+class PatientDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+    """Delete patient - For Admin and Super Admin"""
+    model = Patient
+    template_name = 'partials/delete.html'
+    context_object_name = 'patient'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+    success_url = reverse_lazy('patients:patient_list')
+    
+    def get_object(self, queryset=None):
+        """Get patient by ID"""
+        return Patient.objects.get(id=self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_super_admin:
+            messages.error(request, 'Only super admin can delete patients.')
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        full_name = self.object.user.get_full_name() or self.object.user.username
+        context['delete_page_title'] = 'Delete Patient - Health Care'
+        context['delete_confirm_title'] = 'Delete Patient?'
+        context['delete_confirm_message'] = (
+            f'Are you sure you want to delete {full_name}? This action cannot be undone.'
+        )
+        context['delete_warning_text'] = (
+            'Deleting this patient will permanently remove profile and related data.'
+        )
+        context['delete_button_label'] = 'Delete Patient'
+        context['cancel_url'] = reverse_lazy('patients:patient_list')
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Patient deleted successfully!')
+        return super().delete(request, *args, **kwargs)
+    
+class PatientListView(SuperAdminAndAdminOnlyMixin, ListView):
+    """List all patients - For Admin and Super Admin"""
+    model = Patient
+    template_name = 'patients/patient_list.html'
+    context_object_name = 'patients'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        """Get all patients with optional search"""
+        queryset = Patient.objects.select_related('user').order_by('-created')
+        search_query = self.request.GET.get('search', '').strip()
+        is_active_filter = self.request.GET.get('is_active', '').strip().lower()
+
+        if search_query:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search_query)
+                | Q(user__last_name__icontains=search_query)
+                | Q(user__username__icontains=search_query)
+                | Q(user__email__icontains=search_query)
+                | Q(contact_number__icontains=search_query)
+                | Q(city__icontains=search_query)
+            )
+
+        if is_active_filter == 'true':
+            queryset = queryset.filter(is_active=True)
+        elif is_active_filter == 'false':
+            queryset = queryset.filter(is_active=False)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '').strip()
+        context['is_active_filter'] = self.request.GET.get('is_active', '').strip().lower()
         return context

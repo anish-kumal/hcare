@@ -1,0 +1,61 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Patient Details - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1100px] mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Patient Details</h1>
+
+                    <div class="flex gap-3 flex-wrap">
+                        <a href="{% url 'patients:patient_list' %}" class="px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">Back</a>
+                        <a href="{% url 'patients:patient_update' patient.id %}" class="px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">Edit</a>
+                        <a href="{% url 'patients:patient_delete' patient.id %}" class="px-5 py-2.5 bg-red-600 text-white border border-red-600 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors">Delete</a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-8">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">Account Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                            <div><p class="text-gray-500">Full Name</p><p class="font-semibold text-gray-900">{{ patient.user.get_full_name|default:patient.user.username }}</p></div>
+                            <div><p class="text-gray-500">Username</p><p class="font-semibold text-gray-900">{{ patient.user.username }}</p></div>
+                            <div><p class="text-gray-500">Email</p><p class="font-semibold text-gray-900">{{ patient.user.email }}</p></div>
+                            <div><p class="text-gray-500">Phone</p><p class="font-semibold text-gray-900">{{ patient.contact_number }}</p></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">Profile Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                            <div><p class="text-gray-500">Date of Birth</p><p class="font-semibold text-gray-900">{{ patient.date_of_birth }}</p></div>
+                            <div><p class="text-gray-500">Gender</p><p class="font-semibold text-gray-900">{{ patient.get_gender_display }}</p></div>
+                            <div><p class="text-gray-500">Blood Group</p><p class="font-semibold text-gray-900">{{ patient.blood_group|default:'-' }}</p></div>
+                            <div><p class="text-gray-500">Emergency Contact</p><p class="font-semibold text-gray-900">{{ patient.emergency_contact|default:'-' }}</p></div>
+                            <div class="md:col-span-2"><p class="text-gray-500">Address</p><p class="font-semibold text-gray-900">{{ patient.address }}</p></div>
+                            <div><p class="text-gray-500">City</p><p class="font-semibold text-gray-900">{{ patient.city }}</p></div>
+                            <div><p class="text-gray-500">State</p><p class="font-semibold text-gray-900">{{ patient.state }}</p></div>
+                            <div><p class="text-gray-500">Country</p><p class="font-semibold text-gray-900">{{ patient.country }}</p></div>
+                            <div><p class="text-gray-500">Postal Code</p><p class="font-semibold text-gray-900">{{ patient.postal_code|default:'-' }}</p></div>
+                            <div class="md:col-span-2"><p class="text-gray-500">Medical History</p><p class="font-semibold text-gray-900">{{ patient.medical_history|default:'-' }}</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Hospital, HospitalAdmin
+from .models import Hospital, HospitalAdmin, HospitalDepartment
 from apps.users.models import User
 
 
@@ -238,3 +238,27 @@ class HospitalAdminForm(forms.ModelForm):
             hospital_admin.user = user
 
         return hospital_admin
+
+class HospitalDepartmentForm(forms.ModelForm):
+    """Form for adding/editing hospital departments"""
+
+    class Meta:
+        model = HospitalDepartment
+        fields = ['name', 'code', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter department name',
+                'required': 'required',
+            }),
+            'code': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter department code',
+                'required': 'required',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter department description',
+                'rows': 4,
+            }),
+        }

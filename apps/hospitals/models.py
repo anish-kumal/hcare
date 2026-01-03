@@ -151,25 +151,6 @@ class HospitalDepartment(BaseModel):
         help_text="Department description"
     )
     
-    head_doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='headed_departments',
-        help_text="Head doctor of this department"
-    )
-    
-    total_beds = models.PositiveIntegerField(
-        default=0,
-        help_text="Total beds in this department"
-    )
-    
-    available_beds = models.PositiveIntegerField(
-        default=0,
-        help_text="Currently available beds"
-    )
-    
     class Meta:
         verbose_name = 'Hospital Department'
         verbose_name_plural = 'Hospital Departments'

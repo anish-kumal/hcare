@@ -8,8 +8,8 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib import messages
-from .models import Hospital, HospitalAdmin
-from .forms import HospitalForm, HospitalAdminForm
+from .models import Hospital, HospitalAdmin, HospitalDepartment
+from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm
 from apps.base.mixin import SuperAdminOnlyMixin
 
 
@@ -341,3 +341,88 @@ class AdminOwnHospitalUpdateView(HospitalAdminOnlyMixin, UpdateView):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
 
+class HospitalDepartmentListView(HospitalAdminOnlyMixin, ListView):
+    """List all departments for the hospital admin's hospital"""
+    model = HospitalDepartment
+    template_name = 'hospitals/hospital_department_list.html'
+    context_object_name = 'departments'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        hospital = self.get_hospital()
+        return hospital.departments.all().order_by('name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hospital'] = self.get_hospital()
+        return context
+    
+class HospitalDepartmentCreateView(HospitalAdminOnlyMixin, CreateView):
+    """Add a new department to the hospital admin's hospital"""
+    model = HospitalDepartment
+    form_class = HospitalDepartmentForm
+    template_name = 'hospitals/hospital_department_form.html'
+    
+    def form_valid(self, form):
+        form.instance.hospital = self.get_hospital()
+        messages.success(self.request, 'Department added successfully!')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('hospitals:hospital_department_list')
+    
+class HospitalDepartmentUpdateView(HospitalAdminOnlyMixin, UpdateView):
+    """Update a department in the hospital admin's hospital"""
+    model = HospitalDepartment
+    form_class = HospitalDepartmentForm
+    template_name = 'hospitals/hospital_department_form.html'
+    
+    def get_queryset(self):
+        hospital = self.get_hospital()
+        return hospital.departments.all()
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Department updated successfully!')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('hospitals:hospital_department_list')
+
+class HospitalDepartmentDeleteView(HospitalAdminOnlyMixin, DeleteView):
+    """Delete a department from the hospital admin's hospital"""
+    model = HospitalDepartment
+    template_name = 'partials/delete.html'
+    success_url = reverse_lazy('hospitals:hospital_department_list')
+    
+    def get_queryset(self):
+        hospital = self.get_hospital()
+        return hospital.departments.all()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'delete_page_title': 'Delete Department - Health Care',
+            'delete_confirm_title': f'Delete {self.object.name}?',
+            'delete_confirm_message': (
+                f'Are you sure you want to delete the {self.object.name} '
+                f'department? This action cannot be undone.'
+            ),
+            'delete_warning_text': (
+                'Deleting this department will permanently remove all related records.'
+            ),
+            'delete_button_label': 'Delete Department',
+            'cancel_url': reverse_lazy('hospitals:hospital_department_list'),
+        })
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Department deleted successfully!')
+        return super().delete(request, *args, **kwargs)

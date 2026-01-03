@@ -71,9 +71,6 @@ class Command(BaseCommand):
                 defaults={
                     'name': f'Department {index:03d}',
                     'description': f'Department description {index:03d}.',
-                    'total_beds': 20 + (index % 30),
-                    'available_beds': 10 + (index % 10),
-                    'head_doctor': None,
                 },
             )
             departments.append(department)
@@ -133,10 +130,6 @@ class Command(BaseCommand):
                 specializations[(index + 1) % total_records],
             ])
             doctors.append(doctor)
-
-            department = departments[index - 1]
-            department.head_doctor = doctor_user
-            department.save(update_fields=['head_doctor'])
 
             for weekday, start_hour, duration in [(0, 9, 30), (2, 13, 20), (4, 16, 15)]:
                 DoctorSchedule.objects.update_or_create(
