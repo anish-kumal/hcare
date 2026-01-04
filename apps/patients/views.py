@@ -180,7 +180,7 @@ class PatientCreateView(LoginRequiredMixin, CreateView):
                 with transaction.atomic():
                     user = user_form.save(commit=False)
                     user.user_type = User.UserType.PATIENT
-                    user.is_default_password = False
+                    user.is_default_password = True
                     user.save()
 
                     password = user_form.cleaned_data.get('password')
@@ -226,7 +226,7 @@ class PatientCreateView(LoginRequiredMixin, CreateView):
                 else:
                     messages.success(request, f'Patient {user.get_full_name() or user.username} created successfully!')
 
-                return redirect('patients:patient_create')
+                return redirect('patients:patient_list')
 
             except IntegrityError as exc:
                 messages.error(request, f'Error creating patient: {exc}')

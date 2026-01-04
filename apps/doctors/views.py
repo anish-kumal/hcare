@@ -311,7 +311,7 @@ class DoctorCreateView(LoginRequiredMixin, TemplateView):
 					# 1. Save User first
 					user = user_form.save(commit=False)
 					user.user_type = User.UserType.DOCTOR
-					user.is_default_password = False
+					user.is_default_password = True
 					user.save()
 					
 					# Set password
