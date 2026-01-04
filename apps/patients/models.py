@@ -1,7 +1,13 @@
 from django.db import models
 from django.conf import settings
+from django.utils.crypto import get_random_string
 from apps.base.models import BaseModel
 from apps.doctors.models import Doctor
+from apps.hospitals.models import Hospital
+
+
+def generate_booking_code(prefix='BK'):
+    return f"{prefix}{get_random_string(10, allowed_chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789')}"
 
 
 class Patient(BaseModel):
@@ -14,6 +20,23 @@ class Patient(BaseModel):
         related_name='patient_profile',
         limit_choices_to={'user_type': 'PATIENT'},
         help_text="User account for this patient"
+    )
+
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.SET_NULL,
+        related_name='patients',
+        blank=True,
+        null=True,
+        help_text="Hospital associated with this patient"
+    )
+
+    booking_uuid = models.CharField(
+        max_length=20,
+        unique=True,
+        default=generate_booking_code,
+        editable=False,
+        help_text="Unique booking code for booking flow"
     )
     
     date_of_birth = models.DateField(
@@ -137,6 +160,18 @@ class Patient(BaseModel):
     
     def __str__(self):
         return f"{self.user.get_full_name()}"
+
+    def save(self, *args, **kwargs):
+        if not self.booking_uuid:
+            # Retry to avoid extremely rare unique collisions.
+            for _ in range(10):
+                candidate = generate_booking_code()
+                if not self.__class__.objects.filter(booking_uuid=candidate).exists():
+                    self.booking_uuid = candidate
+                    break
+            if not self.booking_uuid:
+                raise ValueError("Could not generate a unique booking code")
+        super().save(*args, **kwargs)
 
 
 class PatientAppointment(BaseModel):

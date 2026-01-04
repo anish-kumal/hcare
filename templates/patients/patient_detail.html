@@ -41,7 +41,7 @@
                     <div>
                         <h2 class="text-xl font-bold text-gray-900 mb-4">Profile Information</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                            <div><p class="text-gray-500">Date of Birth</p><p class="font-semibold text-gray-900">{{ patient.date_of_birth }}</p></div>
+                            <div><p class="text-gray-500">Age</p><p class="font-semibold text-gray-900">{{ patient_age }} years</p></div>
                             <div><p class="text-gray-500">Gender</p><p class="font-semibold text-gray-900">{{ patient.get_gender_display }}</p></div>
                             <div><p class="text-gray-500">Blood Group</p><p class="font-semibold text-gray-900">{{ patient.blood_group|default:'-' }}</p></div>
                             <div><p class="text-gray-500">Emergency Contact</p><p class="font-semibold text-gray-900">{{ patient.emergency_contact|default:'-' }}</p></div>
