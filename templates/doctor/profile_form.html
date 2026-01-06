@@ -1,0 +1,88 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Doctor Profile - Health Care{% endblock title %}
+
+{% block content %}
+  <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+  </button>
+
+  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+  <div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+      <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+        <div>
+          <h1 class="text-xl font-semibold text-[#131616]">Edit Profile</h1>
+          <p class="text-sm text-gray-500">Update your contact details and specialization</p>
+        </div>
+        <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Back to Dashboard
+        </a>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div class="max-w-[900px] mx-auto">
+          <form method="post" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+            {% csrf_token %}
+            <div class="flex items-center gap-4">
+              <div class="size-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-[28px]">person</span>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-[#131616]">Profile Details</h2>
+                <p class="text-sm text-gray-500">Keep your profile up to date for patients and admins.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700" for="first_name">First Name</label>
+                <input id="first_name" name="first_name" type="text" value="{{ request.user.first_name }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700" for="last_name">Last Name</label>
+                <input id="last_name" name="last_name" type="text" value="{{ request.user.last_name }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700" for="email">Email</label>
+                <input id="email" name="email" type="email" value="{{ request.user.email }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700" for="phone_number">Phone Number</label>
+                <input id="phone_number" name="phone_number" type="text" value="{{ request.user.phone_number }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-semibold text-gray-700" for="specialization_id">Specialization</label>
+                <select id="specialization_id" name="specialization_id" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option value="">Select specialization</option>
+                  {% for specialization in specializations %}
+                    <option value="{{ specialization.id }}" {% if doctor and doctor.specialization_id == specialization.id %}selected{% endif %}>
+                      {{ specialization.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">save</span>
+                Save Changes
+              </button>
+              <button type="reset" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:border-primary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+                Reset
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {% include "partials/footer.html" %}
+      </main>
+    </div>
+  </div>
+{% endblock content %}
