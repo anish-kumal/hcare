@@ -15,7 +15,11 @@
           Health Care
         </h1>
         <p class="text-white/60 text-xs font-medium tracking-wider">
-          Super Admin
+          {% if user.is_authenticated %}
+            {{ user.get_user_type_display|default:"User" }}
+          {% else %}
+            User
+          {% endif %}
         </p>
       </div>
 
@@ -53,6 +57,24 @@
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">domain</span>
         <span class="font-medium text-sm">Hospital</span>
       </a>
+    {% elif user.is_doctor %}
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'doctor_dashboard' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+        <span class="font-medium text-sm">Dashboard</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_schedule_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'doctors:doctor_schedule_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">event_available</span>
+        <span class="font-medium text-sm">Manage Schedule</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_profile' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'doctors:doctor_profile' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
+        <span class="font-medium text-sm">Edit Profile</span>
+      </a>
     {% endif %}
 
     {% if user.is_admin %}
@@ -78,8 +100,20 @@
         style="background-image: url('{% static 'images/profile.png' %}');">
       </div>
       <div class="flex-1 overflow-hidden min-w-0">
-        <p class="text-sm font-semibold text-white truncate">Super Admin</p>
-        <p class="text-xs text-white/60 truncate">admin@medinet.com</p>
+        <p class="text-sm font-semibold text-white truncate">
+          {% if user.is_authenticated %}
+            {{ user.get_full_name|default:user.username|default:"User" }}
+          {% else %}
+            Guest
+          {% endif %}
+        </p>
+        <p class="text-xs text-white/60 truncate">
+          {% if user.is_authenticated %}
+            {{ user.email|default:user.username }}
+          {% else %}
+            
+          {% endif %}
+        </p>
       </div>
       <a href="{% url 'users:logout' %}" class="text-white/50 hover:text-white hover:bg-white/10 transition-all p-1.5 rounded-md flex-shrink-0"
         title="Logout">

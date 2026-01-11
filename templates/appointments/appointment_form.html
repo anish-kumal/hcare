@@ -1,0 +1,125 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Book Appointment - {{ doctor_full_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-primary text-white px-6 py-4">
+                <h4 class="text-2xl font-bold">Book Appointment</h4>
+            </div>
+
+            <div class="p-8">
+                <!-- Doctor Info Bar -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 pb-8 border-b border-gray-200">
+                    <div class="text-center md:col-span-1">
+                        {% if doctor.profile_picture %}
+                        <img src="{{ doctor.profile_picture.url }}" class="w-full rounded-xl object-cover"
+                            alt="Dr. {{ doctor.user.get_full_name }}">
+                        {% else %}
+                        <div class="w-full h-40 bg-gray-200 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-5xl text-gray-400">person</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-xl font-bold text-gray-900 mb-3">{{ doctor_full_name }}</h5>
+                        <div class="space-y-2 text-sm">
+                            <p>
+                                <strong class="text-gray-700">Specialization:</strong>
+                                <span class="text-gray-600">{{ doctor.specialization.name }}</span>
+                            </p>
+                            <p>
+                                <strong class="text-gray-700">Hospital:</strong>
+                                <span class="text-gray-600">{{ doctor.hospital.name }}</span>
+                            </p>
+                            <p>
+                                <strong class="text-gray-700">Experience:</strong>
+                                <span class="text-gray-600">{{ doctor.experience_years }} years</span>
+                            </p>
+                            <p class="pt-2">
+                                <strong class="text-accent text-base">Consultation Fee:</strong>
+                                <span class="text-accent font-bold text-base">Ns {{ doctor.consultation_fee }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Form -->
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="id_appointment_date"
+                                class="block text-sm font-semibold text-gray-700 mb-2">Appointment Date <span
+                                    class="text-red-500">*</span></label>
+                            <input type="date"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-gray-100 text-gray-600 cursor-not-allowed {% if form.appointment_date.errors %}border-red-500{% endif %}"
+                                name="appointment_date" id="id_appointment_date" value="{{ appointment_date }}"
+                                readonly>
+                            {% if form.appointment_date.errors %}
+                            <p class="text-red-600 text-sm mt-1">
+                                {{ form.appointment_date.errors }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="id_appointment_time"
+                                class="block text-sm font-semibold text-gray-700 mb-2">Appointment Time <span
+                                    class="text-red-500">*</span></label>
+                            <input type="time"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-gray-100 text-gray-600 cursor-not-allowed {% if form.appointment_time.errors %}border-red-500{% endif %}"
+                                name="appointment_time" id="id_appointment_time" value="{{ appointment_time }}"
+                                readonly>
+                            {% if form.appointment_time.errors %}
+                            <p class="text-red-600 text-sm mt-1">
+                                {{ form.appointment_time.errors }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_reason" class="block text-sm font-semibold text-gray-700 mb-2">Reason for Visit
+                            <span class="text-red-500">*</span></label>
+                        <textarea
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary {% if form.reason.errors %}border-red-500{% endif %}"
+                            name="reason" id="id_reason" rows="3"
+                            placeholder="Please describe the reason for your visit" required></textarea>
+                        {% if form.reason.errors %}
+                        <p class="text-red-600 text-sm mt-1">
+                            {{ form.reason.errors }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="id_notes" class="block text-sm font-semibold text-gray-700 mb-2">Additional Notes
+                            (Optional)</label>
+                        <textarea
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            name="notes" id="id_notes" rows="3"
+                            placeholder="Any additional information you'd like to share"></textarea>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="{% url 'appointments:doctor_detail' doctor.pk %}"
+                            class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors text-center">
+                            <span class="inline-flex items-center gap-2">Back</span>
+                        </a>
+                        <button type="submit"
+                            class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                            <span class="inline-flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-base">check</span> Confirm Booking
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

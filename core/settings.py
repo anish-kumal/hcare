@@ -55,6 +55,8 @@ LOCAL_APPS = [
     "apps.doctors",
     "apps.hospitals",
     "apps.patients",
+    "apps.appointments",
+    "apps.seed",
 ]
 
 INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS

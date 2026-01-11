@@ -49,11 +49,14 @@
             <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Dashboard</h1>
 
           <div class="flex gap-3 flex-wrap">
-
-            <button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
-              <span class="material-symbols-outlined text-[20px]">add_circle</span>
-              Add New Admin
-            </button>
+            <a href="{% url 'doctors:doctor_schedule_list' %}" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
+              <span class="material-symbols-outlined text-[20px]">event_available</span>
+              Manage Schedule
+            </a>
+            <a href="{% url 'doctors:doctor_profile' %}" class="flex items-center gap-2 px-5 py-2.5 bg-white text-primary border border-primary rounded-lg text-sm font-semibold hover:bg-primary/5 transition-colors shadow-sm">
+              <span class="material-symbols-outlined text-[20px]">person</span>
+              Edit Profile
+            </a>
           </div>
         </div>
 

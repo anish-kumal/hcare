@@ -1,0 +1,312 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Patient Dashboard{% endblock %}
+
+{% block content %}
+<!-- Hero Banner Section -->
+<section
+    class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
+    style="
+        background-image: linear-gradient(
+            rgba(36, 82, 88, 0.7),
+            rgba(36, 82, 88, 0.7)
+        ), url('{% static 'images/background.png' %}');">
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+        {% include "partials/navbar.html" %}
+        <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
+            <div class="w-full lg:w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
+                <h1 class="text-xl md:text-5xl font-bold leading-tight mb-4">
+                    <span class="block">My Profile</span>
+                </h1>
+                <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-lg mx-auto">
+                    Manage your personal information and view your appointments
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Content Section -->
+<div class="bg-gray-50">
+<div class="min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        
+        <!-- Profile Info Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+            <div class="p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900">
+                        {{ patient.user.get_full_name }}
+                    </h2>
+                    <button type="button" onclick="toggleEditForm()" class="px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">edit</span>
+                        Edit Profile
+                    </button>
+                </div>
+
+                <!-- View Mode -->
+                <div id="view-mode">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-8 border-b border-gray-200">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Email</p>
+                            <p class="text-gray-900">{{ patient.user.email }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Date of Birth</p>
+                            <p class="text-gray-900">{{ patient.date_of_birth|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Gender</p>
+                            <p class="text-gray-900">{{ patient.get_gender_display }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Blood Group</p>
+                            <p class="text-gray-900">{{ patient.blood_group|default:"Not specified" }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Contact Number</p>
+                            <p class="text-gray-900">{{ patient.contact_number }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Emergency Contact</p>
+                            <p class="text-gray-900">{{ patient.emergency_contact|default:"Not specified" }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg md:col-span-2">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Address</p>
+                            <p class="text-gray-900">{{ patient.address }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">City</p>
+                            <p class="text-gray-900">{{ patient.city }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">State</p>
+                            <p class="text-gray-900">{{ patient.state }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Country</p>
+                            <p class="text-gray-900">{{ patient.country }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div id="edit-mode" class="hidden">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                                {{ form.date_of_birth }}
+                                {% if form.date_of_birth.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.date_of_birth.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.gender.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                                {{ form.gender }}
+                                {% if form.gender.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.gender.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.blood_group.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Blood Group</label>
+                                {{ form.blood_group }}
+                                {% if form.blood_group.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.blood_group.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.contact_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Contact Number <span class="text-red-500">*</span></label>
+                                {{ form.contact_number }}
+                                {% if form.contact_number.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.contact_number.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.emergency_contact.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Emergency Contact</label>
+                                {{ form.emergency_contact }}
+                                {% if form.emergency_contact.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.emergency_contact.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.emergency_contact_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Emergency Contact Name</label>
+                                {{ form.emergency_contact_name }}
+                                {% if form.emergency_contact_name.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.emergency_contact_name.errors }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.address.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Address <span class="text-red-500">*</span></label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.address.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                                <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">City <span class="text-red-500">*</span></label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.city.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.state.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">State <span class="text-red-500">*</span></label>
+                                {{ form.state }}
+                                {% if form.state.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.state.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.country.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Country <span class="text-red-500">*</span></label>
+                                {{ form.country }}
+                                {% if form.country.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.country.errors }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="button" onclick="toggleEditForm()" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Appointments Section -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Upcoming Appointments</h3>
+            
+            {% if upcoming_appointments %}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Doctor</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Specialization</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Date</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Time</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for appointment in upcoming_appointments %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            Dr. {{ appointment.doctor.user.get_full_name }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.doctor.specialization.name }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.appointment_date|date:"M d, Y" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.appointment_time|date:"h:i A" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <a href="{% url 'appointments:appointment_detail' appointment.pk %}" class="text-primary hover:text-[#1a3d42] font-semibold transition-colors">
+                                                View Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                    <p class="flex items-center gap-2">
+                        <span class="material-symbols-outlined">info</span>
+                        No upcoming appointments. <a href="{% url 'appointments:doctor_list' %}" class="font-semibold underline ml-1">Book one now</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Past Appointments Section -->
+        {% if past_appointments %}
+            <div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">Past Appointments</h3>
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-200 text-gray-900">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Doctor</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Specialization</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Date</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Time</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for appointment in past_appointments %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            Dr. {{ appointment.doctor.user.get_full_name }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.doctor.specialization.name }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.appointment_date|date:"M d, Y" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">
+                                            {{ appointment.appointment_time|date:"h:i A" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full {% if appointment.status == 'COMPLETED' %}bg-green-100 text-green-700{% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <a href="{% url 'appointments:appointment_detail' appointment.pk %}" class="text-primary hover:text-[#1a3d42] font-semibold transition-colors">
+                                                View Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<script>
+    function toggleEditForm() {
+        const viewMode = document.getElementById('view-mode');
+        const editMode = document.getElementById('edit-mode');
+        
+        viewMode.classList.toggle('hidden');
+        editMode.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

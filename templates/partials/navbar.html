@@ -11,7 +11,7 @@
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Home</a>
         </li>
         <li>
-            <a href="#"
+            <a href="{% url 'appointments:doctor_list' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Doctor</a>
         </li>
         <li>
@@ -32,7 +32,10 @@
 
     <div class="flex gap-3">
         {% if user.is_authenticated %}
-        <span class="text-white text-sm font-medium px-4 py-2">Welcome, {{ user.get_full_name|default:user.username }}!</span>
+        <a href="{% url 'patients:patient_profile' %}"
+            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">person</span>
+        </a>
         <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
             {% csrf_token %}
             <button type="submit"
