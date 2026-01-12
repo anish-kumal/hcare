@@ -6,25 +6,13 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-from apps.doctors.models import Doctor, DoctorSchedule
+from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
-from apps.users.models import User
 from .forms import AppointmentBookingForm, AppointmentEditForm
 from apps.base.mixin import RoleRequiredMixin
 
 
 
-class PatientOnlyMixin(LoginRequiredMixin):
-    """Restrict views to patient users only"""
-    login_url = 'users:login'
-    
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return self.handle_no_permission()
-        if not request.user.is_patient:
-            messages.error(request, 'Only patients can access this page.')
-            return redirect('index')
-        return super().dispatch(request, *args, **kwargs)
 
 
 class DoctorListView(RoleRequiredMixin, ListView):
@@ -134,7 +122,7 @@ class DoctorDetailView(RoleRequiredMixin, DetailView):
         return context
 
 
-class AppointmentCreateView(RoleRequiredMixin, CreateView):
+class AppointmentCreateView(LoginRequiredMixin, CreateView):
     """Create an appointment booking"""
     model = PatientAppointment
     form_class = AppointmentBookingForm
@@ -143,6 +131,10 @@ class AppointmentCreateView(RoleRequiredMixin, CreateView):
     
     def dispatch(self, request, *args, **kwargs):
         """Check if patient profile exists"""
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please log in first to continue.')
+            return self.handle_no_permission()
+
         try:
             Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
@@ -250,13 +242,17 @@ class AppointmentCreateView(RoleRequiredMixin, CreateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class BookingConfirmationView(RoleRequiredMixin, ListView):
+class BookingConfirmationView(LoginRequiredMixin, ListView):
     """Show recent bookings and confirmation"""
     template_name = 'appointments/booking_confirmation.html'
     context_object_name = 'appointments'
     
     def dispatch(self, request, *args, **kwargs):
         """Check if patient profile exists"""
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please log in first to continue.')
+            return self.handle_no_permission()
+
         try:
             Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
@@ -290,7 +286,7 @@ class BookingConfirmationView(RoleRequiredMixin, ListView):
         return context
 
 
-class AppointmentDetailView(RoleRequiredMixin, DetailView):
+class AppointmentDetailView(LoginRequiredMixin, DetailView):
     """View appointment details and edit appointment"""
     model = PatientAppointment
     template_name = 'appointments/appointment_detail.html'
