@@ -112,13 +112,13 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
             patient=patient,
             appointment_date__gte=timezone.now().date(),
             status__in=['SCHEDULED', 'CONFIRMED']
-        ).select_related('doctor', 'doctor__user', 'doctor__specialization').order_by('appointment_date', 'appointment_time')
+        ).select_related('doctor', 'doctor__user').order_by('appointment_date', 'appointment_time')
         
         # Get past appointments
         context['past_appointments'] = PatientAppointment.objects.filter(
             patient=patient,
             appointment_date__lt=timezone.now().date()
-        ).select_related('doctor', 'doctor__user', 'doctor__specialization').order_by('-appointment_date', '-appointment_time')
+        ).select_related('doctor', 'doctor__user').order_by('-appointment_date', '-appointment_time')
         
         # Get form
         context['form'] = PatientProfileForm(instance=patient)

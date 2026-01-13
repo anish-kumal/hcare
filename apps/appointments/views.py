@@ -24,8 +24,8 @@ class DoctorListView(RoleRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Doctor.objects.filter(
             is_available=True,
-            is_verified=True
-        ).select_related('user', 'specialization', 'hospital').prefetch_related('schedules')
+            is_active=True
+        ).select_related('user', 'hospital').prefetch_related('schedules')
         
         # Filter by specialization if provided
         specialization_id = self.request.GET.get('specialization')
@@ -47,8 +47,7 @@ class DoctorListView(RoleRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from apps.doctors.models import Specialization
-        context['specializations'] = Specialization.objects.all()
+        context['specializations'] = Doctor.objects.values_list('specialization', flat=True).distinct().order_by('specialization')
         context['selected_specialization'] = self.request.GET.get('specialization')
         context['search_query'] = self.request.GET.get('q')
         return context
@@ -63,8 +62,8 @@ class DoctorDetailView(RoleRequiredMixin, DetailView):
     def get_queryset(self):
         return Doctor.objects.filter(
             is_available=True,
-            is_verified=True
-        ).select_related('user', 'specialization', 'hospital').prefetch_related('schedules')
+            is_active=True
+        ).select_related('user', 'hospital').prefetch_related('schedules')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -145,7 +144,7 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
     def get_doctor(self):
         """Get the doctor from URL parameter"""
         doctor_id = self.kwargs.get('doctor_id')
-        return get_object_or_404(Doctor, id=doctor_id, is_available=True, is_verified=True)
+        return get_object_or_404(Doctor, id=doctor_id, is_available=True, is_active=True)
     
     def get_patient(self):
         """Get the patient profile for the current user"""
@@ -297,7 +296,7 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
         patient = Patient.objects.get(user=self.request.user)
         return PatientAppointment.objects.filter(
             patient=patient
-        ).select_related('doctor', 'doctor__user', 'doctor__specialization', 'doctor__hospital')
+        ).select_related('doctor', 'doctor__user', 'doctor__hospital')
     
     def post(self, request, *args, **kwargs):
         """Handle appointment update"""
