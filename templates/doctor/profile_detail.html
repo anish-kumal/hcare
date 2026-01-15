@@ -1,0 +1,193 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Doctor Profile - Health Care{% endblock title %}
+
+{% block content %}
+  <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+  </button>
+
+  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+  <div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+      <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+        <div>
+          <h1 class="text-xl font-semibold text-[#131616]">My Profile</h1>
+          <p class="text-sm text-gray-500">View and manage your profile information</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="{% url 'doctors:doctor_profile_edit' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+            Edit Profile
+          </a>
+          <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back
+          </a>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div class="max-w-[900px] mx-auto space-y-6">
+          
+          <!-- User Information Section -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="size-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-[28px]">person</span>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-[#131616]">Personal Information</h2>
+                <p class="text-sm text-gray-500">Your account details</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">First Name</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.first_name|default:"Not provided" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Last Name</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.last_name|default:"Not provided" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Username</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.username }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Email Address</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.email }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Phone Number</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.phone_number|default:"Not provided" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Date of Birth</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">
+                  {% if user.date_of_birth %}
+                    {{ user.date_of_birth|date:"d M, Y" }}
+                  {% else %}
+                    Not provided
+                  {% endif %}
+                </p>
+              </div>
+              {% if user.address %}
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-semibold text-gray-600">Address</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ user.address }}</p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Doctor Profile Section -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="size-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[28px]">stethoscope</span>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-[#131616]">Doctor Information</h2>
+                <p class="text-sm text-gray-500">Your professional details</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Hospital</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.hospital.name|default:"Not assigned" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Department</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.department.name|default:"Not assigned" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Specialization</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.specialization|default:"Not provided" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">License Number</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.license_number }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Employee ID</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.employee_id }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Qualification</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.qualification }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Experience (Years)</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.experience_years }} years</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Consultation Fee</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">Rs. {{ doctor.consultation_fee }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Joining Date</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.joining_date|date:"d M, Y" }}</p>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-600">Availability</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">
+                  {% if doctor.is_available %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                      <span class="w-2 h-2 bg-green-600 rounded-full"></span>
+                      Available
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                      <span class="w-2 h-2 bg-red-600 rounded-full"></span>
+                      Not Available
+                    </span>
+                  {% endif %}
+                </p>
+              </div>
+              {% if doctor.bio %}
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-semibold text-gray-600">Biography</label>
+                <p class="text-base text-gray-900 bg-gray-50 rounded-lg px-4 py-3">{{ doctor.bio }}</p>
+              </div>
+              {% endif %}
+              {% if doctor.profile_picture %}
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-semibold text-gray-600">Profile Picture</label>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <img src="{{ doctor.profile_picture.url }}" alt="Profile Picture" class="max-w-xs h-auto rounded-lg">
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 justify-center">
+            <a href="{% url 'doctors:doctor_profile_edit' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition">
+              <span class="material-symbols-outlined text-[20px]">edit</span>
+              Edit Profile
+            </a>
+            <a href="{% url 'doctors:doctor_password_change' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition">
+              <span class="material-symbols-outlined text-[20px]">lock</span>
+              Change Password
+            </a>
+            <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
+              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  {% block extra_js %}
+  <script src="{% static 'js/sidebar_toggle.js' %}"></script>
+  {% endblock extra_js %}
+{% endblock content %}

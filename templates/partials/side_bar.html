@@ -70,10 +70,16 @@
         <span class="font-medium text-sm">Manage Schedule</span>
       </a>
 
-      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_profile' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_profile' or request.resolver_match.url_name == 'doctor_profile_edit' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'doctors:doctor_profile' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
-        <span class="font-medium text-sm">Edit Profile</span>
+        <span class="font-medium text-sm">My Profile</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_password_change' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'doctors:doctor_password_change' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">lock</span>
+        <span class="font-medium text-sm">Change Password</span>
       </a>
     {% endif %}
 

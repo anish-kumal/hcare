@@ -204,3 +204,88 @@ class DoctorProfileForm(forms.ModelForm):
         if employee_id and queryset.exists():
             raise forms.ValidationError("This employee ID is already registered.")
         return employee_id
+
+
+class DoctorSelfProfileForm(DoctorProfileForm):
+    """Doctor self-edit form (consultation fee is read-only for doctors)."""
+
+    class Meta(DoctorProfileForm.Meta):
+        fields = [
+            'department',
+            'specialization',
+            'license_number',
+            'employee_id',
+            'qualification',
+            'experience_years',
+            'bio',
+            'profile_picture',
+            'is_available',
+            'joining_date',
+        ]
+
+
+class DoctorPasswordChangeForm(forms.Form):
+    """Form for changing doctor password during profile update"""
+    
+    old_password = forms.CharField(
+        label='Current Password',
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'Enter current password',
+            'autocomplete': 'current-password'
+        })
+    )
+    
+    new_password = forms.CharField(
+        label='New Password',
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'Enter new password',
+            'autocomplete': 'new-password'
+        })
+    )
+    
+    confirm_password = forms.CharField(
+        label='Confirm Password',
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'Confirm new password',
+            'autocomplete': 'new-password'
+        })
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        old_password = cleaned_data.get('old_password', '')
+        new_password = cleaned_data.get('new_password', '')
+        confirm_password = cleaned_data.get('confirm_password', '')
+        
+        # If any password field is provided, all must be provided
+        if old_password or new_password or confirm_password:
+            if not old_password:
+                self.add_error('old_password', 'Current password is required to change password.')
+            if not new_password:
+                self.add_error('new_password', 'New password is required.')
+            if not confirm_password:
+                self.add_error('confirm_password', 'Password confirmation is required.')
+            
+            # Verify old password
+            if old_password and not self.user.check_password(old_password):
+                self.add_error('old_password', 'Current password is incorrect.')
+            
+            # Check new password length
+            if new_password and len(new_password) < 8:
+                self.add_error('new_password', 'New password must be at least 8 characters long.')
+            
+            # Check passwords match
+            if new_password and confirm_password and new_password != confirm_password:
+                self.add_error('confirm_password', 'Passwords do not match.')
+        
+        return cleaned_data

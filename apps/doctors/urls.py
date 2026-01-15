@@ -6,6 +6,8 @@ from .views import (
     DoctorDetailView,
     DoctorListView,
     DoctorProfileEditView,
+    DoctorPasswordChangeView,
+    DoctorProfileUpdateView,
     DoctorScheduleCreateView,
     DoctorScheduleDetailView,
     DoctorScheduleListView,
@@ -25,5 +27,7 @@ urlpatterns = [
     path('schedule/create/', DoctorScheduleCreateView.as_view(), name='doctor_schedule_create'),
     path('schedule/<int:pk>/', DoctorScheduleDetailView.as_view(), name='doctor_schedule_detail'),
     path('schedule/<int:pk>/edit/', DoctorScheduleUpdateView.as_view(), name='doctor_schedule_edit'),
-    path('profile/', DoctorProfileEditView.as_view(), name='doctor_profile'),
+    path('profile/', DoctorProfileUpdateView.as_view(), name='doctor_profile'),
+    path('profile/edit/', DoctorProfileEditView.as_view(), name='doctor_profile_edit'),
+    path('profile/password/', DoctorPasswordChangeView.as_view(), name='doctor_password_change'),
 ]

@@ -10,11 +10,12 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_time
 from django.utils.html import strip_tags
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, UpdateView
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import update_session_auth_hash
 
 from .models import Doctor, DoctorSchedule
-from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm
+from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorPasswordChangeForm, DoctorSelfProfileForm
 from apps.hospitals.models import Hospital, HospitalAdmin
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
@@ -192,49 +193,104 @@ class DoctorScheduleUpdateView(DoctorOnlyMixin, TemplateView):
 		return redirect('doctors:doctor_schedule_detail', pk=schedule.pk)
 
 
-class DoctorProfileEditView(DoctorOnlyMixin, TemplateView):
-	"""Doctor profile edit"""
-	template_name = 'doctor/profile_form.html'
+class DoctorProfileUpdateView(DoctorOnlyMixin, TemplateView):
+	"""Display doctor's current profile"""
+	template_name = 'doctor/profile_detail.html'
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = Doctor.objects.filter(user=self.request.user).first()
+		doctor = get_object_or_404(Doctor, user=self.request.user)
+		context['doctor'] = doctor
+		context['user'] = self.request.user
+		return context
+
+
+class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
+	"""Doctor profile edit - Display and update user and doctor info"""
+	template_name = 'doctor/profile_form.html'
+	model = Doctor
+	form_class = DoctorSelfProfileForm
+	success_url = reverse_lazy('doctors:doctor_profile')
+
+	def get_object(self, queryset=None):
+		"""Get the doctor profile for the current user"""
+		return get_object_or_404(Doctor, user=self.request.user)
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		doctor = self.object
+		context['doctor_form'] = kwargs.get('doctor_form') or context.get('form')
+		
+		# Initialize user form
+		if 'user_form' not in context:
+			if self.request.method == 'POST':
+				context['user_form'] = DoctorUserUpdateForm(self.request.POST, instance=doctor.user)
+			else:
+				context['user_form'] = DoctorUserUpdateForm(instance=doctor.user)
+		
 		context['doctor'] = doctor
 		return context
 
 	def post(self, request, *args, **kwargs):
-		doctor = Doctor.objects.filter(user=request.user).first()
-		if not doctor:
-			messages.error(request, 'Doctor profile not found.')
-			return redirect('doctor_dashboard')
+		"""Handle updates for user and doctor profile details."""
+		doctor = self.get_object()
+		
+		# Create forms
+		user_form = DoctorUserUpdateForm(request.POST, instance=doctor.user)
+		doctor_form = DoctorSelfProfileForm(request.POST, request.FILES, instance=doctor)
+		
+		# Validate both forms
+		if user_form.is_valid() and doctor_form.is_valid():
+			try:
+				with transaction.atomic():
+					# Update user
+					user_form.save()
+					
+					# Update doctor profile
+					doctor_form.save()
+				
+				messages.success(request, 'Profile updated successfully.')
+				return redirect(self.success_url)
+			
+			except IntegrityError as exc:
+				messages.error(request, f'Error updating profile: {exc}')
+		else:
+			messages.error(request, 'Please correct the errors below.')
+		
+		# Return form with errors
+		return self.render_to_response(
+			self.get_context_data(
+				form=doctor_form,
+				doctor_form=doctor_form,
+				user_form=user_form,
+			)
+		)
 
-		first_name = request.POST.get('first_name', '').strip()
-		last_name = request.POST.get('last_name', '').strip()
-		email = request.POST.get('email', '').strip()
-		phone_number = request.POST.get('phone_number', '').strip()
-		specialization = request.POST.get('specialization', '').strip()
 
-		if not email:
-			messages.error(request, 'Email is required.')
-			return redirect('doctors:doctor_profile')
+class DoctorPasswordChangeView(DoctorOnlyMixin, TemplateView):
+	"""Dedicated doctor password change page."""
+	template_name = 'doctor/password_change.html'
 
-		request.user.first_name = first_name
-		request.user.last_name = last_name
-		request.user.email = email
-		request.user.phone_number = phone_number
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context['password_form'] = kwargs.get('password_form') or DoctorPasswordChangeForm(user=self.request.user)
+		return context
 
-		if specialization:
-			doctor.specialization = specialization
+	def post(self, request, *args, **kwargs):
+		password_form = DoctorPasswordChangeForm(user=request.user, data=request.POST)
 
-		try:
-			request.user.save()
-			doctor.save()
-		except IntegrityError:
-			messages.error(request, 'Email is already in use. Please choose another.')
-			return redirect('doctors:doctor_profile')
+		if password_form.is_valid():
+			new_password = password_form.cleaned_data.get('new_password')
+			if new_password:
+				request.user.set_password(new_password)
+				request.user.is_default_password = False
+				request.user.save(update_fields=['password', 'is_default_password'])
+				update_session_auth_hash(request, request.user)
+				messages.success(request, 'Password changed successfully.')
+				return redirect('doctors:doctor_profile')
 
-		messages.success(request, 'Profile updated successfully.')
-		return redirect('doctors:doctor_profile')
+		messages.error(request, 'Please correct the password errors below.')
+		return self.render_to_response(self.get_context_data(password_form=password_form))
 
 
 class DoctorCreateView(LoginRequiredMixin, TemplateView):
@@ -554,11 +610,12 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
 			try:
 				with transaction.atomic():
 					user_form.save()
+					
 					updated_doctor = doctor_form.save(commit=False)
 					updated_doctor.hospital = hospital
 					updated_doctor.save()
 
-				messages.success(request, 'Doctor updated successfully.')
+				messages.success(request, 'Doctor profile updated successfully.')
 				return redirect('doctors:doctor_list')
 			except IntegrityError as exc:
 				messages.error(request, f'Error updating doctor: {exc}')
