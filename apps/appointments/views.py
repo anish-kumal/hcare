@@ -40,14 +40,20 @@ class DoctorListView(RoleRequiredMixin, ListView):
             ) | queryset.filter(
                 user__last_name__icontains=search_query
             ) | queryset.filter(
-                specialization__name__icontains=search_query
+                specialization__icontains=search_query
             )
         
         return queryset.order_by('user__first_name')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['specializations'] = Doctor.objects.values_list('specialization', flat=True).distinct().order_by('specialization')
+        # Get unique specialization values (CharField), filter out empty ones
+        specs = Doctor.objects.filter(
+            specialization__isnull=False
+        ).exclude(
+            specialization=''
+        ).values_list('specialization', flat=True).distinct().order_by('specialization')
+        context['specializations'] = specs
         context['selected_specialization'] = self.request.GET.get('specialization')
         context['search_query'] = self.request.GET.get('q')
         return context
@@ -322,3 +328,16 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
         appointment = self.object
         context['doctor_full_name'] = f"Dr. {appointment.doctor.user.get_full_name()}"
         return context
+
+
+class AppointmentDoctorListView( ListView):
+    """List all doctors for admin/staff to manage appointments""" 
+    model = Doctor
+    template_name = 'appointments/appointment_doctor_list.html'
+    context_object_name = 'doctors'
+    
+    def get_queryset(self):
+        return Doctor.objects.filter(
+            is_available=True,
+            is_active=True
+        ).select_related('user', 'hospital').order_by('user__first_name') 

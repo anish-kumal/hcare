@@ -69,8 +69,8 @@
                             style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23264653%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;">
                             <option value="">All Specializations</option>
                             {% for spec in specializations %}
-                                <option value="{{ spec.id }}" {% if spec.id|stringformat:"s" == selected_specialization %}selected{% endif %}>
-                                    {{ spec.name }}
+                                <option value="{{ spec }}" {% if spec == selected_specialization %}selected{% endif %}>
+                                    {{ spec }}
                                 </option>
                             {% endfor %}
                         </select>
@@ -129,7 +129,7 @@
                                 </h3>
 
                                 <p class="text-gray-400 text-base">
-                                    {{ doctor.specialization.name }}
+                                    {{ doctor.specialization }}
                                 </p>
                             </div>
                         </div>

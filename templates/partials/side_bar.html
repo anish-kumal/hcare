@@ -95,6 +95,12 @@
         <span class="font-medium text-sm">Doctor</span>
       </a>
 
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'appointment_doctor_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'appointments:appointment_doctor_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">schedule</span>
+        <span class="font-medium text-sm">Manage Appointments</span>
+      </a>
+
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'patient_list patient_create patient_detail patient_update patient_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'patients:patient_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
