@@ -30,7 +30,7 @@ class DoctorListView(RoleRequiredMixin, ListView):
         # Filter by specialization if provided
         specialization_id = self.request.GET.get('specialization')
         if specialization_id:
-            queryset = queryset.filter(specialization_id=specialization_id)
+            queryset = queryset.filter(specialization=specialization_id)
         
         # Filter by search query
         search_query = self.request.GET.get('q')
