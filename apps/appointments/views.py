@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView
 from django.urls import reverse_lazy
@@ -9,7 +10,7 @@ from datetime import datetime, timedelta
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from .forms import AppointmentBookingForm, AppointmentEditForm
-from apps.base.mixin import RoleRequiredMixin
+from apps.base.mixin import RoleRequiredMixin, SuperAdminAndAdminOnlyMixin
 
 
 
@@ -330,14 +331,42 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class AppointmentDoctorListView( ListView):
+class AppointmentDoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
     """List all doctors for admin/staff to manage appointments""" 
     model = Doctor
     template_name = 'appointments/appointment_doctor_list.html'
     context_object_name = 'doctors'
     
     def get_queryset(self):
-        return Doctor.objects.filter(
+        queryset = Doctor.objects.filter(
             is_available=True,
             is_active=True
-        ).select_related('user', 'hospital').order_by('user__first_name') 
+        ).select_related('user', 'hospital', 'department')
+
+        selected_specialization = self.request.GET.get('specialization')
+        if selected_specialization:
+            queryset = queryset.filter(specialization=selected_specialization)
+
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search_query)
+                | Q(user__last_name__icontains=search_query)
+                | Q(user__username__icontains=search_query)
+                | Q(specialization__icontains=search_query)
+                | Q(department__name__icontains=search_query)
+                | Q(hospital__name__icontains=search_query)
+            )
+
+        return queryset.order_by('user__first_name', 'user__last_name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '').strip()
+        context['selected_specialization'] = self.request.GET.get('specialization', '')
+        context['specializations'] = Doctor.objects.filter(
+            is_available=True,
+            is_active=True,
+            specialization__isnull=False,
+        ).exclude(specialization='').values_list('specialization', flat=True).distinct().order_by('specialization')
+        return context
