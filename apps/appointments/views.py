@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
-from .forms import AppointmentBookingForm, AppointmentEditForm
+from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
 from apps.base.mixin import RoleRequiredMixin, SuperAdminAndAdminOnlyMixin
 
 
@@ -462,3 +462,79 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
         context['days_to_show'] = selected_days
         context['allowed_day_filters'] = self.allowed_day_filters
         return context
+
+
+class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
+    """Create booking by admin/staff for patients in doctor hospital"""
+    model = PatientAppointment
+    form_class = AdminAppointmentBookingForm
+    template_name = 'appointments/appointment_admin_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('appointments:appointment_doctor_schedule', kwargs={'pk': self.get_doctor().pk})
+
+    def get_doctor(self):
+        doctor_id = self.kwargs.get('doctor_id')
+        return get_object_or_404(Doctor, id=doctor_id, is_available=True, is_active=True)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['hospital'] = self.get_doctor().hospital
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        doctor = self.get_doctor()
+        context['doctor'] = doctor
+        context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
+        context['appointment_date'] = self.request.GET.get('date', '')
+        context['appointment_time'] = self.request.GET.get('time', '')
+        return context
+
+    def form_valid(self, form):
+        doctor = self.get_doctor()
+        patient = form.cleaned_data.get('patient')
+
+        appointment_date = form.cleaned_data.get('appointment_date')
+        appointment_time = form.cleaned_data.get('appointment_time')
+
+        appointment_datetime = datetime.combine(appointment_date, appointment_time)
+        appointment_datetime = timezone.make_aware(appointment_datetime)
+        if appointment_datetime < timezone.now():
+            form.add_error('appointment_time', 'Appointment date/time must be in the future.')
+            return self.form_invalid(form)
+
+        weekday = appointment_date.weekday()
+        schedule = doctor.schedules.filter(
+            weekday=weekday,
+            is_available=True,
+            start_time__lte=appointment_time,
+            end_time__gte=appointment_time,
+        ).first()
+
+        if not schedule:
+            form.add_error('appointment_time', 'Doctor is not available at this selected day/time.')
+            return self.form_invalid(form)
+
+        existing_appointments = PatientAppointment.objects.filter(
+            doctor=doctor,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time,
+            status__in=['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS']
+        ).count()
+
+        if existing_appointments >= schedule.max_patients:
+            form.add_error('appointment_time', 'This time slot is fully booked.')
+            return self.form_invalid(form)
+
+        self.object = form.save(commit=False)
+        self.object.patient = patient
+        self.object.doctor = doctor
+        self.object.status = 'SCHEDULED'
+        self.object.save()
+
+        messages.success(
+            self.request,
+            f'Appointment booked for {patient.user.get_full_name() or patient.user.username} with booking UUID {patient.booking_uuid}.',
+        )
+        return redirect(self.get_success_url())

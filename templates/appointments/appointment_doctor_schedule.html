@@ -61,6 +61,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booked</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Slots Left</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booking Date/Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -82,6 +83,12 @@
                                         {% else %}
                                             <span class="text-gray-500">No bookings</span>
                                         {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <a href="{% url 'appointments:appointment_admin_book' doctor.pk %}?date={{ day.date|date:'Y-m-d' }}&time={{ session.schedule.start_time|time:'H:i' }}"
+                                           class="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-white hover:bg-[#1a3d42] transition-colors">
+                                            Add Booking
+                                        </a>
                                     </td>
                                 </tr>
                                 {% endfor %}

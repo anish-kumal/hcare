@@ -180,11 +180,10 @@ class PatientAppointment(BaseModel):
     """
     STATUS_CHOICES = [
         ('SCHEDULED', 'Scheduled'),
-        ('CONFIRMED', 'Confirmed'),
-        ('IN_PROGRESS', 'In Progress'),
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
         ('RESCHEDULED', 'Rescheduled'),
+        ('CONFIRMED', 'Confirmed'),
     ]
     
     patient = models.ForeignKey(
