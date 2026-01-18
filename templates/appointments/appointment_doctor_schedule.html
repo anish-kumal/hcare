@@ -1,0 +1,100 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Doctor Weekly Schedule - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1200px] mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{{ doctor_full_name }}</h1>
+                        <p class="text-sm text-gray-500 mt-1">Weekly schedule and booking summary for next {{ days_to_show }} days</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% for day_option in allowed_day_filters %}
+                        <a href="{% url 'appointments:appointment_doctor_schedule' doctor.pk %}?days={{ day_option }}"
+                           class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold border transition-colors {% if days_to_show == day_option %}bg-primary text-white border-primary{% else %}bg-white text-gray-700 border-gray-200 hover:bg-gray-100{% endif %}">
+                            {{ day_option }} Days
+                        </a>
+                        {% endfor %}
+                        <a href="{% url 'appointments:appointment_doctor_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back to Doctors
+                        </a>
+                    </div>
+                </div>
+
+                {% for day in weekly_schedule %}
+                <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">{{ day.weekday }} - {{ day.date|date:"M d, Y" }}</h2>
+                            <p class="text-xs text-gray-500">Max: {{ day.daily_max_patients }} | Booked: {{ day.daily_booked_count }} | Left: {{ day.daily_slots_left }}</p>
+                        </div>
+                        {% if day.has_schedule %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Schedule Active</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">No Schedule</span>
+                        {% endif %}
+                    </div>
+
+                    {% if day.sessions %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[900px]">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Slot Duration</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Max Patients</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booked</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Slots Left</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booking Date/Time</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for session in day.sessions %}
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ session.schedule.start_time|time:"H:i" }} - {{ session.schedule.end_time|time:"H:i" }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ session.schedule.slot_duration }} mins</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ session.schedule.max_patients }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ session.booked_count }}</td>
+                                    <td class="px-6 py-4 text-sm font-semibold {% if session.slots_left <= 0 %}text-red-700{% elif session.slots_left <= 3 %}text-amber-600{% else %}text-green-700{% endif %}">{{ session.slots_left }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        {% if session.bookings %}
+                                            {% for booking in session.bookings %}
+                                            <div class="mb-1">
+                                                <span class="font-semibold">{{ booking.appointment_date|date:"M d" }} {{ booking.appointment_time|time:"H:i" }}</span>
+                                                <span class="text-gray-500">- {{ booking.patient.user.get_full_name|default:booking.patient.user.username }} ({{ booking.status }})</span>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-gray-500">No bookings</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="px-6 py-8 text-sm text-gray-600">Doctor has no active schedule for this day.</div>
+                    {% endif %}
+                </section>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}

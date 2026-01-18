@@ -370,3 +370,95 @@ class AppointmentDoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
             specialization__isnull=False,
         ).exclude(specialization='').values_list('specialization', flat=True).distinct().order_by('specialization')
         return context
+    
+class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
+    """View doctor schedule and appointments for admin/staff"""
+    model = Doctor
+    template_name = 'appointments/appointment_doctor_schedule.html'
+    context_object_name = 'doctor'
+    booking_statuses = ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS']
+    days_to_show = 7
+    allowed_day_filters = (7, 14)
+    
+    def get_queryset(self):
+        return Doctor.objects.filter(
+            is_available=True,
+            is_active=True
+        ).select_related('user', 'hospital').prefetch_related('schedules', 'patient_appointments')
+
+    def get_days_to_show(self):
+        days_param = self.request.GET.get('days', '').strip()
+        try:
+            requested_days = int(days_param)
+        except (TypeError, ValueError):
+            return self.days_to_show
+        if requested_days in self.allowed_day_filters:
+            return requested_days
+        return self.days_to_show
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        doctor = self.object
+        selected_days = self.get_days_to_show()
+
+        today = timezone.now().date()
+        end_date = today + timedelta(days=selected_days - 1)
+
+        schedules = doctor.schedules.filter(is_available=True).order_by('weekday', 'start_time')
+        schedules_by_weekday = {}
+        for schedule in schedules:
+            schedules_by_weekday.setdefault(schedule.weekday, []).append(schedule)
+
+        appointments = PatientAppointment.objects.filter(
+            doctor=doctor,
+            appointment_date__range=(today, end_date),
+            status__in=self.booking_statuses,
+        ).select_related('patient', 'patient__user').order_by('appointment_date', 'appointment_time')
+
+        appointments_by_date = {}
+        for appointment in appointments:
+            appointments_by_date.setdefault(appointment.appointment_date, []).append(appointment)
+
+        weekly_schedule = []
+        for offset in range(selected_days):
+            current_date = today + timedelta(days=offset)
+            weekday = current_date.weekday()
+            day_schedules = schedules_by_weekday.get(weekday, [])
+            day_bookings = appointments_by_date.get(current_date, [])
+
+            session_rows = []
+            for schedule in day_schedules:
+                session_bookings = [
+                    booking
+                    for booking in day_bookings
+                    if schedule.start_time <= booking.appointment_time <= schedule.end_time
+                ]
+                booked_count = len(session_bookings)
+                slots_left = max(schedule.max_patients - booked_count, 0)
+
+                session_rows.append({
+                    'schedule': schedule,
+                    'booked_count': booked_count,
+                    'slots_left': slots_left,
+                    'bookings': session_bookings,
+                })
+
+            daily_max_patients = sum(session['schedule'].max_patients for session in session_rows)
+            daily_booked_count = sum(session['booked_count'] for session in session_rows)
+
+            weekly_schedule.append({
+                'date': current_date,
+                'weekday': current_date.strftime('%A'),
+                'sessions': session_rows,
+                'has_schedule': bool(day_schedules),
+                'daily_max_patients': daily_max_patients,
+                'daily_booked_count': daily_booked_count,
+                'daily_slots_left': max(daily_max_patients - daily_booked_count, 0),
+                'all_bookings': day_bookings,
+            })
+
+        context['weekly_schedule'] = weekly_schedule
+        context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
+        context['days_to_show'] = selected_days
+        context['allowed_day_filters'] = self.allowed_day_filters
+        return context

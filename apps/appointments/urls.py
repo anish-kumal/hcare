@@ -6,6 +6,7 @@ from .views import (
     BookingConfirmationView,
     AppointmentDetailView,
     AppointmentDoctorListView,
+    AppointmentDoctorScheduleView,
 )
 
 app_name = 'appointments'
@@ -17,4 +18,5 @@ urlpatterns = [
     path('confirmation/', BookingConfirmationView.as_view(), name='booking_confirmation'),
     path('appointment/<int:pk>/', AppointmentDetailView.as_view(), name='appointment_detail'),
     path('manage-doctors/', AppointmentDoctorListView.as_view(), name='appointment_doctor_list'),
+    path('manage-doctors/<int:pk>/schedule/', AppointmentDoctorScheduleView.as_view(), name='appointment_doctor_schedule'),
 ]
