@@ -183,7 +183,7 @@ class PatientAppointment(BaseModel):
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
         ('RESCHEDULED', 'Rescheduled'),
-        ('CONFIRMED', 'Confirmed'),
+        ('FOLLOW_UP', 'Follow-up'),
     ]
     
     patient = models.ForeignKey(

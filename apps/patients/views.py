@@ -111,7 +111,7 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
         context['upcoming_appointments'] = PatientAppointment.objects.filter(
             patient=patient,
             appointment_date__gte=timezone.now().date(),
-            status__in=['SCHEDULED', 'CONFIRMED']
+            status__in=['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'FOLLOW_UP']
         ).select_related('doctor', 'doctor__user').order_by('appointment_date', 'appointment_time')
         
         # Get past appointments
