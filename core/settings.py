@@ -60,6 +60,7 @@ LOCAL_APPS = [
     "apps.hospitals",
     "apps.patients",
     "apps.appointments",
+    "apps.payments",
     "apps.seed",
 ]
 
