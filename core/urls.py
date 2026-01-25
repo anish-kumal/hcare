@@ -41,6 +41,7 @@ urlpatterns = [
     path('doctors/', include('apps.doctors.urls')),
     path('patients/', include('apps.patients.urls')),
     path('appointments/', include('apps.appointments.urls')),
+    path('payments/', include('apps.payments.urls')),
     # Dashboard routes based on role
     path('dashboard/super-admin/', SuperAdminDashboardView.as_view(), name='super_admin_dashboard'),
     path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),

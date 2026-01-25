@@ -1,0 +1,73 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Appointment Payment{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-primary text-white px-6 py-4">
+                <h1 class="text-2xl font-bold">Payment</h1>
+                <p class="text-sm opacity-90 mt-1">Complete payment for your appointment.</p>
+            </div>
+
+            <div class="p-8">
+                <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
+                    <p class="text-gray-700"><span class="font-semibold">Doctor:</span> Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</p>
+                    <p class="text-gray-700"><span class="font-semibold">Date:</span> {{ appointment.appointment_date }}</p>
+                    <p class="text-gray-700"><span class="font-semibold">Time:</span> {{ appointment.appointment_time }}</p>
+                    <p class="text-gray-700"><span class="font-semibold">Current Status:</span> {{ payment.status }}</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <form method="post" novalidate class="space-y-4">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="id_amount" class="block text-sm font-semibold text-gray-700 mb-2">Amount</label>
+                        {{ form.amount }}
+                        {% if form.amount.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.amount.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_payment_method" class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.payment_method.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_transaction_reference" class="block text-sm font-semibold text-gray-700 mb-2">Transaction Reference</label>
+                        {{ form.transaction_reference }}
+                        {% if form.transaction_reference.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.transaction_reference.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_notes" class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.notes.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="pt-2 flex gap-3">
+                        <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                            Save Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
+from apps.payments.models import AppointmentPayment
 from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
 from apps.base.mixin import RoleRequiredMixin, SuperAdminAndAdminOnlyMixin
 
@@ -276,6 +277,15 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
             default_status='SCHEDULED',
         )
         appointment.save()
+
+        AppointmentPayment.objects.get_or_create(
+            appointment=appointment,
+            defaults={
+                'amount': doctor.consultation_fee,
+                'status': AppointmentPayment.PaymentStatus.PENDING,
+                'payment_method': AppointmentPayment.PaymentMethod.CASH,
+            },
+        )
         
         messages.success(self.request, 'Appointment booked successfully!')
         return redirect(self.success_url)
@@ -636,8 +646,17 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         )
         self.object.save()
 
+        AppointmentPayment.objects.get_or_create(
+            appointment=self.object,
+            defaults={
+                'amount': doctor.consultation_fee,
+                'status': AppointmentPayment.PaymentStatus.PENDING,
+                'payment_method': AppointmentPayment.PaymentMethod.CASH,
+            },
+        )
+
         messages.success(
             self.request,
             f'Appointment booked for {patient.user.get_full_name() or patient.user.username} with booking UUID {patient.booking_uuid}.',
         )
-        return redirect(self.get_success_url())
+        return redirect('payments:appointment_payment', appointment_id=self.object.id)
