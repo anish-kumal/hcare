@@ -1,0 +1,92 @@
+{% extends "base/base.html" %}
+{% block title %}Appointment Detail - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Appointment Detail</h1>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'appointments:appointment_manage_edit' appointment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit Appointment
+                        </a>
+                        <a href="{% url 'appointments:appointment_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Patient</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
+                            <p class="text-sm text-gray-600">UUID: {{ appointment.patient.booking_uuid }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Doctor</p>
+                            <p class="text-lg font-semibold text-gray-900">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</p>
+                            <p class="text-sm text-gray-600">{{ appointment.doctor.hospital.name }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Appointment Date</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.appointment_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Appointment Time</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4 md:col-span-2">
+                            <p class="text-xs text-gray-500 mb-1">Status</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.get_status_display }}</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <p class="text-xs text-gray-500 mb-1">Reason</p>
+                        <p class="text-gray-800">{{ appointment.reason|default:"-" }}</p>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <p class="text-xs text-gray-500 mb-1">Notes</p>
+                        <p class="text-gray-800">{{ appointment.notes|default:"-" }}</p>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Payment</p>
+                                {% if appointment.payment %}
+                                <p class="text-gray-900 font-semibold">{{ appointment.payment.get_status_display }} - Rs. {{ appointment.payment.amount }}</p>
+                                {% else %}
+                                <p class="text-gray-700">No payment record yet.</p>
+                                {% endif %}
+                            </div>
+                            {% if appointment.payment %}
+                            <a href="{% url 'payments:payment_detail' appointment.payment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">payments</span>
+                                View Payment
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}

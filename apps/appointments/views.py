@@ -2,8 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView
-from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
 
@@ -660,3 +660,80 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             f'Appointment booked for {patient.user.get_full_name() or patient.user.username} with booking UUID {patient.booking_uuid}.',
         )
         return redirect('payments:appointment_payment', appointment_id=self.object.id)
+
+
+class AdminAppointmentListView(SuperAdminAndAdminOnlyMixin, ListView):
+    """List appointments for admin/super-admin with basic filters."""
+    model = PatientAppointment
+    template_name = 'appointments/appointment_list.html'
+    context_object_name = 'appointments'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = PatientAppointment.objects.select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+            'payment',
+        ).order_by('-appointment_date', '-appointment_time')
+
+        status = self.request.GET.get('status', '').strip()
+        if status:
+            queryset = queryset.filter(status=status)
+
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(patient__user__first_name__icontains=search)
+                | Q(patient__user__last_name__icontains=search)
+                | Q(patient__booking_uuid__icontains=search)
+                | Q(doctor__user__first_name__icontains=search)
+                | Q(doctor__user__last_name__icontains=search)
+                | Q(doctor__hospital__name__icontains=search)
+            )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['selected_status'] = self.request.GET.get('status', '').strip()
+        context['search_query'] = self.request.GET.get('search', '').strip()
+        context['status_choices'] = PatientAppointment.STATUS_CHOICES
+        return context
+
+
+class AdminAppointmentDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+    """Show appointment detail for admin/super-admin."""
+    model = PatientAppointment
+    template_name = 'appointments/appointment_manage_detail.html'
+    context_object_name = 'appointment'
+
+    def get_queryset(self):
+        return PatientAppointment.objects.select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+            'payment',
+        )
+
+
+class AdminAppointmentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+    """Edit appointment for admin/super-admin."""
+    model = PatientAppointment
+    form_class = AppointmentEditForm
+    template_name = 'appointments/appointment_manage_form.html'
+    context_object_name = 'appointment'
+
+    def get_queryset(self):
+        return PatientAppointment.objects.select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+        )
+
+    def get_success_url(self):
+        return reverse('appointments:appointment_manage_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Appointment updated successfully.')
+        return super().form_valid(form)

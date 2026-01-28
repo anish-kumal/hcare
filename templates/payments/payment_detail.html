@@ -1,0 +1,84 @@
+{% extends "base/base.html" %}
+{% block title %}Payment Detail - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Payment Detail</h1>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'payments:payment_edit' payment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit Payment
+                        </a>
+                        <a href="{% url 'payments:payment_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Patient</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ payment.appointment.patient.user.get_full_name|default:payment.appointment.patient.user.username }}</p>
+                            <p class="text-sm text-gray-600">UUID: {{ payment.appointment.patient.booking_uuid }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Doctor</p>
+                            <p class="text-lg font-semibold text-gray-900">Dr. {{ payment.appointment.doctor.user.get_full_name|default:payment.appointment.doctor.user.username }}</p>
+                            <p class="text-sm text-gray-600">{{ payment.appointment.doctor.hospital.name }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Amount</p>
+                            <p class="text-lg font-semibold text-gray-900">Rs. {{ payment.amount }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Status</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ payment.get_status_display }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Payment Method</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ payment.get_payment_method_display }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Paid At</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ payment.paid_at|date:"M d, Y h:i A"|default:"-" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <p class="text-xs text-gray-500 mb-1">Transaction Reference</p>
+                        <p class="text-gray-800">{{ payment.transaction_reference|default:"-" }}</p>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <p class="text-xs text-gray-500 mb-1">Notes</p>
+                        <p class="text-gray-800">{{ payment.notes|default:"-" }}</p>
+                    </div>
+
+                    <div class="pt-1">
+                        <a href="{% url 'appointments:appointment_manage_detail' payment.appointment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">event_note</span>
+                            Open Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock content %}
