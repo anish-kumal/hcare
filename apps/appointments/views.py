@@ -11,10 +11,26 @@ from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
 from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
-from apps.base.mixin import RoleRequiredMixin, SuperAdminAndAdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
 
 ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP']
+
+
+class PatientAccessMixin(LoginRequiredMixin):
+    """Restrict appointment booking views to patient users."""
+    login_url = 'users:login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please log in first to continue.')
+            return self.handle_no_permission()
+
+        if not request.user.is_patient:
+            messages.error(request, 'Only patients can access this page.')
+            return redirect('index')
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 def get_booking_status(patient, doctor, appointment_date, appointment_time, default_status):
@@ -48,7 +64,7 @@ def get_booking_status(patient, doctor, appointment_date, appointment_time, defa
 
 
 
-class DoctorListView(RoleRequiredMixin, ListView):
+class DoctorListView(PatientAccessMixin, ListView):
     """List all available doctors for booking"""
     template_name = 'appointments/doctor_list.html'
     context_object_name = 'doctors'
@@ -92,7 +108,7 @@ class DoctorListView(RoleRequiredMixin, ListView):
         return context
 
 
-class DoctorDetailView(RoleRequiredMixin, DetailView):
+class DoctorDetailView(PatientAccessMixin, DetailView):
     """Show doctor details and available appointment slots"""
     model = Doctor
     template_name = 'appointments/doctor_detail.html'
@@ -160,7 +176,7 @@ class DoctorDetailView(RoleRequiredMixin, DetailView):
         return context
 
 
-class AppointmentCreateView(LoginRequiredMixin, CreateView):
+class AppointmentCreateView(PatientAccessMixin, CreateView):
     """Create an appointment booking"""
     model = PatientAppointment
     form_class = AppointmentBookingForm
@@ -169,15 +185,11 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
     
     def dispatch(self, request, *args, **kwargs):
         """Check if patient profile exists"""
-        if not request.user.is_authenticated:
-            messages.warning(request, 'Please log in first to continue.')
-            return self.handle_no_permission()
-
         try:
             Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
             messages.error(request, 'Please complete your patient profile before booking an appointment.')
-            return redirect('patient_dashboard')
+            return redirect('patients:patient_profile_create')
         return super().dispatch(request, *args, **kwargs)
     
     def get_doctor(self):
@@ -295,22 +307,18 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class BookingConfirmationView(LoginRequiredMixin, ListView):
+class BookingConfirmationView(PatientAccessMixin, ListView):
     """Show recent bookings and confirmation"""
     template_name = 'appointments/booking_confirmation.html'
     context_object_name = 'appointments'
     
     def dispatch(self, request, *args, **kwargs):
         """Check if patient profile exists"""
-        if not request.user.is_authenticated:
-            messages.warning(request, 'Please log in first to continue.')
-            return self.handle_no_permission()
-
         try:
             Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
             messages.error(request, 'Please complete your patient profile before viewing appointments.')
-            return redirect('patient_dashboard')
+            return redirect('patients:patient_profile_create')
         return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -339,7 +347,7 @@ class BookingConfirmationView(LoginRequiredMixin, ListView):
         return context
 
 
-class AppointmentDetailView(LoginRequiredMixin, DetailView):
+class AppointmentDetailView(PatientAccessMixin, DetailView):
     """View appointment details and edit appointment"""
     model = PatientAppointment
     template_name = 'appointments/appointment_detail.html'
@@ -347,7 +355,9 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         """Only show appointments for the current patient"""
-        patient = Patient.objects.get(user=self.request.user)
+        patient = Patient.objects.filter(user=self.request.user).first()
+        if not patient:
+            return PatientAppointment.objects.none()
         return PatientAppointment.objects.filter(
             patient=patient
         ).select_related('doctor', 'doctor__user', 'doctor__hospital')

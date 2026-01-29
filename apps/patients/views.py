@@ -85,10 +85,20 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
     model = Patient
     template_name = 'patients/patient_profile.html'
     context_object_name = 'patient'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+
+        return super().dispatch(request, *args, **kwargs)
     
     def get_object(self, queryset=None):
         """Get the patient profile for the current user"""
-        return Patient.objects.get(user=self.request.user)
+        return get_object_or_404(Patient, user=self.request.user)
     
     def post(self, request, *args, **kwargs):
         """Handle profile update"""
@@ -124,6 +134,29 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
         context['form'] = PatientProfileForm(instance=patient)
         
         return context
+
+
+class PatientSelfProfileCreateView(PatientOnlyMixin, CreateView):
+    """Allow logged-in patients to create their own profile once."""
+    model = Patient
+    form_class = PatientCreateProfileForm
+    template_name = 'patients/patient_profile_create.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if Patient.objects.filter(user=request.user).exists():
+            return redirect('patients:patient_profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        patient = form.save(commit=False)
+        patient.user = self.request.user
+        patient.save()
+        messages.success(self.request, 'Your patient profile has been created successfully!')
+        return redirect('patients:patient_profile')
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
 class PatientCreateView(LoginRequiredMixin, CreateView):
