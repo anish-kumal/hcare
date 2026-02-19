@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from calendar import c
 from pathlib import Path
 from decouple import config
 import os
@@ -185,3 +186,11 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@healthcare.co
 OTP_LENGTH = 6
 OTP_VALIDITY_MINUTES = 5
 OTP_MAX_ATTEMPTS = 5
+
+
+SANDBOX_KHALTI_URL = config("SANDBOX_KHALTI_URL", default="https://dev.khalti.com/api/v2/")
+PAYMENT_INITIATE_URL = config("PAYMENT_INITIATE_URL", default=f"{SANDBOX_KHALTI_URL}epayment/initiate/")
+
+
+KHALTI_SECRET_KEY = config("KHALTI_SECRET_KEY")
+KHALTI_PUBLIC_KEY= config("KHALTI_PUBLIC_KEY")

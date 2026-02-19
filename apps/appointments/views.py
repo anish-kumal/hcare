@@ -34,31 +34,44 @@ class PatientAccessMixin(LoginRequiredMixin):
 
 
 def get_booking_status(patient, doctor, appointment_date, appointment_time, default_status):
-    """Set follow-up when latest previous CONFIRMED booking for same doctor is within 7 days."""
-    previous_confirmed_appointment = PatientAppointment.objects.filter(
-        patient=patient,
-        doctor=doctor,
-        status='CONFIRMED',
+    """Set follow-up when latest previous COMPLETED booking for same doctor is within 7 days."""
+    previous_completed_appointment = PatientAppointment.objects.filter(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        status='COMPLETED',
     ).filter(
         Q(appointment_date__lt=appointment_date)
         | Q(appointment_date=appointment_date, appointment_time__lt=appointment_time)
     ).order_by('-appointment_date', '-appointment_time').first()
 
-    if not previous_confirmed_appointment:
+    if not previous_completed_appointment:
         return default_status
 
     current_dt = timezone.make_aware(datetime.combine(appointment_date, appointment_time))
     previous_dt = timezone.make_aware(
         datetime.combine(
-            previous_confirmed_appointment.appointment_date,
-            previous_confirmed_appointment.appointment_time,
+            previous_completed_appointment.appointment_date,
+            previous_completed_appointment.appointment_time,
         )
     )
 
-    if current_dt - previous_dt <= timedelta(days=7):
+    if timedelta(0) <= (current_dt - previous_dt) <= timedelta(days=7):
         return 'FOLLOW_UP'
 
     return default_status
+
+
+def has_existing_active_booking(patient, doctor):
+    """Return True when patient already has an upcoming active booking with this doctor."""
+    now = timezone.localtime()
+    return PatientAppointment.objects.filter(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        status__in=ACTIVE_BOOKING_STATUSES,
+    ).filter(
+        Q(appointment_date__gt=now.date())
+        | Q(appointment_date=now.date(), appointment_time__gte=now.time())
+    ).exists()
 
 
 
@@ -123,55 +136,12 @@ class DoctorDetailView(PatientAccessMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         doctor = self.object
-        
-        # Get available appointment slots for the next 7 days
-        available_slots = []
-        today = timezone.now().date()
-        now = timezone.now()
-        
-        for i in range(7):
-            appointment_date = today + timedelta(days=i)
-            weekday = appointment_date.weekday()
-            
-            # Get schedule for this day
-            schedule = doctor.schedules.filter(weekday=weekday, is_available=True).first()
-            
-            if schedule:
-                # Generate time slots based on slot duration
-                slots = []
-                current_time = datetime.combine(appointment_date, schedule.start_time)
-                end_time = datetime.combine(appointment_date, schedule.end_time)
-                
-                # Count existing appointments for this slot
-                existing_appointments = PatientAppointment.objects.filter(
-                    doctor=doctor,
-                    appointment_date=appointment_date,
-                    status__in=ACTIVE_BOOKING_STATUSES
-                ).count()
-                
-                if existing_appointments < schedule.max_patients:
-                    while current_time < end_time:
-                        slot_time = current_time.time()
-                        # Make current_time timezone-aware for comparison
-                        current_time_aware = timezone.make_aware(current_time)
-                        
-                        # Only include slots that are in the future (not past)
-                        if current_time_aware > now:
-                            slots.append({
-                                'time': slot_time,
-                                'datetime': current_time
-                            })
-                        current_time = current_time + timedelta(minutes=schedule.slot_duration)
-                    
-                    if slots:
-                        available_slots.append({
-                            'date': appointment_date,
-                            'weekday': appointment_date.strftime('%A'),
-                            'slots': slots,
-                            'schedule': schedule
-                        })
-        
-        context['available_slots'] = available_slots
+
+        context['available_slots'] = doctor.get_available_slots_by_date(
+            days=7,
+            now=timezone.now(),
+            active_statuses=ACTIVE_BOOKING_STATUSES,
+        )
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         return context
 
@@ -246,33 +216,42 @@ class AppointmentCreateView(PatientAccessMixin, CreateView):
         if appointment_datetime < timezone.now():
             messages.error(self.request, 'Appointment date/time must be in the future.')
             return self.form_invalid(form)
+
+        if has_existing_active_booking(patient=patient, doctor=doctor):
+            messages.error(
+                self.request,
+                'You already have an active booking with this doctor. Please complete or cancel it before booking again.',
+            )
+            return self.form_invalid(form)
         
-        # Get the schedule for this day
+        # Validate selected slot against model-calculated availability for that date.
         weekday = appointment_date.weekday()
-        schedule = doctor.schedules.filter(
+        schedules = doctor.schedules.filter(
             weekday=weekday,
-            is_available=True
-        ).first()
-        
-        if not schedule:
+            is_available=True,
+        ).order_by('start_time')
+
+        if not schedules:
             messages.error(self.request, 'Doctor is not available on that day.')
             return self.form_invalid(form)
-        
-        # Check if time is within schedule
-        if not (schedule.start_time <= appointment_time <= schedule.end_time):
-            messages.error(self.request, 'Selected time is outside doctor\'s working hours.')
-            return self.form_invalid(form)
-        
-        # Check if slot is available
-        existing_appointments = PatientAppointment.objects.filter(
-            doctor=doctor,
-            appointment_date=appointment_date,
-            appointment_time=appointment_time,
-            status__in=ACTIVE_BOOKING_STATUSES
-        ).count()
-        
-        if existing_appointments >= schedule.max_patients:
-            messages.error(self.request, 'This time slot is fully booked. Please choose another time.')
+
+        now = timezone.now()
+        is_slot_available = False
+        for schedule in schedules:
+            available_slot_times = {
+                slot['time']
+                for slot in schedule.get_available_slots(
+                    appointment_date=appointment_date,
+                    now=now,
+                    active_statuses=ACTIVE_BOOKING_STATUSES,
+                )
+            }
+            if appointment_time in available_slot_times:
+                is_slot_available = True
+                break
+
+        if not is_slot_available:
+            messages.error(self.request, 'Selected slot is not available. Please choose another available time slot.')
             return self.form_invalid(form)
         
         # Create appointment
@@ -619,6 +598,13 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         appointment_datetime = timezone.make_aware(appointment_datetime)
         if appointment_datetime < timezone.now():
             form.add_error('appointment_time', 'Appointment date/time must be in the future.')
+            return self.form_invalid(form)
+
+        if has_existing_active_booking(patient=patient, doctor=doctor):
+            form.add_error(
+                'appointment_time',
+                'This patient already has an active booking with this doctor. Complete or cancel it before booking again.',
+            )
             return self.form_invalid(form)
 
         weekday = appointment_date.weekday()
