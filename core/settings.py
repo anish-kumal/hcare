@@ -188,9 +188,8 @@ OTP_VALIDITY_MINUTES = 5
 OTP_MAX_ATTEMPTS = 5
 
 
-SANDBOX_KHALTI_URL = config("SANDBOX_KHALTI_URL", default="https://dev.khalti.com/api/v2/")
-PAYMENT_INITIATE_URL = config("PAYMENT_INITIATE_URL", default=f"{SANDBOX_KHALTI_URL}epayment/initiate/")
+SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')
+PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
 
-
-KHALTI_SECRET_KEY = config("KHALTI_SECRET_KEY")
-KHALTI_PUBLIC_KEY= config("KHALTI_PUBLIC_KEY")
+KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='')
+KHALTI_PUBLIC_KEY = config('KHALTI_PUBLIC_KEY', default='')

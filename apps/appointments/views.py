@@ -278,8 +278,8 @@ class AppointmentCreateView(PatientAccessMixin, CreateView):
             },
         )
         
-        messages.success(self.request, 'Appointment booked successfully!')
-        return redirect(self.success_url)
+        messages.success(self.request, 'Appointment booked successfully! Please choose your payment method.')
+        return redirect('payments:patient_payment_list')
     
     def form_invalid(self, form):
         """Handle invalid form"""
@@ -339,7 +339,7 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
             return PatientAppointment.objects.none()
         return PatientAppointment.objects.filter(
             patient=patient
-        ).select_related('doctor', 'doctor__user', 'doctor__hospital')
+        ).select_related('doctor', 'doctor__user', 'doctor__hospital', 'payment')
     
     def post(self, request, *args, **kwargs):
         """Handle appointment update"""
@@ -363,7 +363,13 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         appointment = self.object
+        payment = getattr(appointment, 'payment', None)
+
         context['doctor_full_name'] = f"Dr. {appointment.doctor.user.get_full_name()}"
+        context['payment'] = payment
+        context['show_khalti_pay_button'] = bool(
+            payment and payment.status != AppointmentPayment.PaymentStatus.PAID
+        )
         return context
 
 

@@ -1,0 +1,79 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Payment Status{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6">
+  <h1 class="text-2xl font-bold mb-4">Payment Status</h1>
+
+  {% if messages %}
+    <div class="space-y-2 mb-4">
+      {% for message in messages %}
+        <div class="p-3 rounded border {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-green-300 bg-green-50 text-green-700{% elif message.tags == 'info' %}border-blue-300 bg-blue-50 text-blue-700{% else %}border-gray-300 bg-gray-50 text-gray-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+      <div class="text-sm text-gray-500">Appointment #{{ payment.appointment.id }}</div>
+      <div>
+        {% if payment.status == 'PAID' %}
+          <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Paid</span>
+        {% elif payment.status == 'FAILED' %}
+          <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Failed</span>
+        {% else %}
+          <span class="px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">Pending</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-500">Doctor</p>
+        <p class="font-medium">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Hospital</p>
+        <p class="font-medium">{{ payment.appointment.doctor.hospital.name }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Appointment Date/Time</p>
+        <p class="font-medium">{{ payment.appointment.appointment_date }} {{ payment.appointment.appointment_time|time:'H:i' }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Amount</p>
+        <p class="font-medium">NPR {{ payment.amount }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Payment Method</p>
+        <p class="font-medium">{{ payment.get_payment_method_display }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Payment Time</p>
+        <p class="font-medium">{% if payment.paid_at %}{{ payment.paid_at|date:'Y-m-d H:i' }}{% else %}Not paid yet{% endif %}</p>
+      </div>
+    </div>
+
+    {% if payment.payment_method == 'CASH' and payment.status != 'PAID' %}
+      <div class="p-3 rounded border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+        Payment option selected: Pay at Hospital. Please complete payment at the hospital counter at your appointment time.
+      </div>
+    {% endif %}
+
+    <div class="pt-2 flex flex-wrap gap-2">
+      <a href="{% url 'patient_dashboard' %}" class="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900">Back to Dashboard</a>
+      <a href="{% url 'payments:patient_payment_list' %}" class="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200">View Payment List</a>
+      {% if payment.status != 'PAID' %}
+        <form method="post" action="{% url 'payments:patient_payment_process' %}">
+          {% csrf_token %}
+          <input type="hidden" name="appointment_id" value="{{ payment.appointment.id }}">
+          <button type="submit" name="payment_method" value="KHALTI" class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">Pay with Khalti</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

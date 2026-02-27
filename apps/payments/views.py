@@ -1,3 +1,5 @@
+import requests
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -5,7 +7,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
-from django.views.generic import UpdateView, ListView, DetailView
+from django.views.generic import UpdateView, ListView, DetailView, View
 
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.patients.models import PatientAppointment
@@ -146,3 +148,182 @@ class PaymentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
         payment.save()
         messages.success(self.request, 'Payment updated successfully.')
         return redirect(self.get_success_url())
+
+
+class PatientPaymentListView(LoginRequiredMixin, ListView):
+    """List patient payments available for payment."""
+    model = AppointmentPayment
+    template_name = 'payments/patient_payment_list.html'
+    context_object_name = 'payments'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_patient:
+            raise PermissionDenied("Only patients can access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return AppointmentPayment.objects.select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__doctor__hospital',
+        ).filter(
+            appointment__patient__user=self.request.user,
+        ).order_by('-created')
+
+    def get(self, request, *args, **kwargs):
+        pidx = request.GET.get('pidx', '').strip()
+        khalti_status = request.GET.get('status', '').strip().upper()
+
+        if pidx:
+            payment = AppointmentPayment.objects.filter(
+                transaction_reference=pidx,
+                appointment__patient__user=request.user,
+            ).first()
+
+            if not payment:
+                messages.error(request, 'Payment reference not found for this account.')
+                return redirect(reverse('payments:patient_payment_list'))
+
+            if khalti_status == 'COMPLETED':
+                if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                    payment.status = AppointmentPayment.PaymentStatus.PAID
+                    payment.payment_method = AppointmentPayment.PaymentMethod.ONLINE
+                    payment.paid_at = timezone.now()
+                    payment.save(update_fields=['status', 'payment_method', 'paid_at', 'modified'])
+                messages.success(request, 'Khalti payment completed successfully.')
+                return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+            if khalti_status in {'FAILED', 'EXPIRED', 'CANCELED', 'USER_CANCELED'}:
+                if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                    payment.status = AppointmentPayment.PaymentStatus.FAILED
+                    payment.save(update_fields=['status', 'modified'])
+                messages.error(request, 'Khalti payment was not completed.')
+                return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+            messages.info(request, 'Khalti payment is still pending. Please check again.')
+            return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+        return super().get(request, *args, **kwargs)
+
+
+class PatientPaymentStatusView(LoginRequiredMixin, DetailView):
+    """Show payment result/status page for patient."""
+    model = AppointmentPayment
+    template_name = 'payments/patient_payment_status.html'
+    context_object_name = 'payment'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_patient:
+            raise PermissionDenied("Only patients can access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return AppointmentPayment.objects.select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__doctor__hospital',
+        ).filter(appointment__patient__user=self.request.user)
+
+
+class PatientPaymentProcessView(LoginRequiredMixin, View):
+    """Handle cash or Khalti payment selection for patient appointments."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_patient:
+            raise PermissionDenied("Only patients can access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        appointment_id = request.POST.get('appointment_id')
+        selected_method = request.POST.get('payment_method', '').strip().upper()
+
+        if not appointment_id:
+            messages.error(request, 'Please choose an appointment to pay for.')
+            return redirect(reverse('payments:patient_payment_list'))
+
+        # Fetch appointment with required relations
+        appointment = get_object_or_404(
+            PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'doctor'),
+            pk=appointment_id,
+            patient__user=request.user,
+        )
+
+        # Get or create payment record
+        payment, _ = AppointmentPayment.objects.get_or_create(
+            appointment=appointment,
+            defaults={
+                'amount': appointment.doctor.consultation_fee,
+                'status': AppointmentPayment.PaymentStatus.PENDING,
+                'payment_method': AppointmentPayment.PaymentMethod.CASH,
+            },
+        )
+
+        if selected_method == AppointmentPayment.PaymentMethod.CASH:
+            payment.payment_method = AppointmentPayment.PaymentMethod.CASH
+            if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                payment.status = AppointmentPayment.PaymentStatus.PENDING
+            payment.save(update_fields=['payment_method', 'status', 'modified'])
+            messages.success(request, 'Cash at hospital selected. Please pay at the hospital counter.')
+            return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+        if selected_method == 'KHALTI':
+            payment.payment_method = AppointmentPayment.PaymentMethod.ONLINE
+            if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                payment.status = AppointmentPayment.PaymentStatus.PENDING
+
+            return_url = request.build_absolute_uri(reverse('payments:patient_payment_list'))
+            website_url = request.build_absolute_uri('/')
+
+            amount_paisa = int(payment.amount * 100)
+            patient_user = appointment.patient.user
+            purchase_order_id = f'APPT-{appointment.id}-{payment.id}'
+
+            initiate_khalti_payload = {
+                'return_url': return_url,
+                'website_url': website_url,
+                'amount': amount_paisa,
+                'purchase_order_id': purchase_order_id,
+                'purchase_order_name': f'Appointment #{appointment.id}',
+                'customer_info': {
+                    'name': patient_user.get_full_name() or patient_user.username,
+                    'email': patient_user.email or 'no-email@example.com',
+                    'phone': getattr(appointment.patient, 'contact_number', '') or '9800000000',
+                },
+            }
+
+            headers = {
+                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Content-Type': 'application/json',
+            }
+
+            try:
+                response = requests.post(
+                    settings.PAYMENT_INITIATE_URL,
+                    json=initiate_khalti_payload,
+                    headers=headers,
+                    timeout=15,
+                )
+            except requests.RequestException as exc:
+                messages.error(request, f'Failed to connect to Khalti: {exc}')
+                return redirect(reverse('payments:patient_payment_list'))
+
+            try:
+                response_data = response.json()
+            except ValueError:
+                response_data = {'detail': response.text}
+
+            if response.ok:
+                payment_url = response_data.get('payment_url')
+                if not payment_url:
+                    messages.error(request, 'Khalti payment URL not found in response.')
+                    return redirect(reverse('payments:patient_payment_list'))
+
+                payment.transaction_reference = response_data.get('pidx')
+                payment.save(update_fields=['payment_method', 'status', 'transaction_reference', 'modified'])
+                return redirect(payment_url)
+
+            messages.error(request, f'Failed to initiate Khalti payment. {response_data}')
+            return redirect(reverse('payments:patient_payment_list'))
+
+        messages.error(request, 'Please choose a valid payment method.')
+        return redirect(reverse('payments:patient_payment_list'))

@@ -121,6 +121,44 @@
                     {% endif %}
                 </div>
 
+                <!-- Payment Details -->
+                <div class="mb-8 pb-8 border-b border-gray-200">
+                    <h4 class="text-xl font-bold text-gray-900 mb-4">Payment Details</h4>
+
+                    {% if payment %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Payment Status</p>
+                            <p class="text-lg font-bold {% if payment.status == 'PAID' %}text-green-700{% elif payment.status == 'FAILED' %}text-red-700{% else %}text-amber-700{% endif %}">
+                                {{ payment.get_status_display }}
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Amount</p>
+                            <p class="text-lg font-bold text-gray-900">NPR {{ payment.amount }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Payment Method</p>
+                            <p class="text-lg font-bold text-gray-900">{{ payment.get_payment_method_display }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-600 font-semibold mb-2">Paid At</p>
+                            <p class="text-lg font-bold text-gray-900">
+                                {% if payment.paid_at %}
+                                    {{ payment.paid_at|date:'M d, Y h:i A' }}
+                                {% else %}
+                                    Not paid yet
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-700">Payment record not found for this appointment.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
                 <!-- Edit Form (Initially Hidden) -->
                 <div id="edit-form" class="hidden">
                     <h4 class="text-xl font-bold text-gray-900 mb-6">Edit Appointment</h4>
@@ -177,14 +215,27 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div id="action-buttons" class="flex gap-4">
-                    {% if appointment.status not in 'COMPLETED,CANCELLED' %}
+                <div id="action-buttons" class="flex flex-col md:flex-row gap-4">
+                    {% if appointment.status != 'COMPLETED' and appointment.status != 'CANCELLED' %}
                     <button type="button" onclick="toggleEditForm()" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
                         <span class="inline-flex items-center gap-2">
                             <span class="material-symbols-outlined text-base">edit</span> Edit Appointment
                         </span>
                     </button>
                     {% endif %}
+
+                    {% if show_khalti_pay_button %}
+                    <form method="post" action="{% url 'payments:patient_payment_process' %}" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                        <button type="submit" name="payment_method" value="KHALTI" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
+                            <span class="inline-flex items-center justify-center gap-2">
+                                Pay with Khalti
+                            </span>
+                        </button>
+                    </form>
+                    {% endif %}
+
                     <a href="{% url 'appointments:doctor_list' %}" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors text-center">
                         <span class="inline-flex items-center justify-center gap-2">
                             Back to Doctors
