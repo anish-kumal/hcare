@@ -193,3 +193,4 @@ PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
 
 KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='')
 KHALTI_PUBLIC_KEY = config('KHALTI_PUBLIC_KEY', default='')
+

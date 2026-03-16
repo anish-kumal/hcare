@@ -6,15 +6,17 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
-
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
 from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
 
 ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP']
+
+
+
 
 
 class PatientAccessMixin(LoginRequiredMixin):
@@ -75,50 +77,6 @@ def has_existing_active_booking(patient, doctor):
 
 
 
-
-
-class DoctorListView(PatientAccessMixin, ListView):
-    """List all available doctors for booking"""
-    template_name = 'appointments/doctor_list.html'
-    context_object_name = 'doctors'
-    paginate_by = 12
-    
-    def get_queryset(self):
-        queryset = Doctor.objects.filter(
-            is_available=True,
-            is_active=True
-        ).select_related('user', 'hospital').prefetch_related('schedules')
-        
-        # Filter by specialization if provided
-        specialization_id = self.request.GET.get('specialization')
-        if specialization_id:
-            queryset = queryset.filter(specialization=specialization_id)
-        
-        # Filter by search query
-        search_query = self.request.GET.get('q')
-        if search_query:
-            queryset = queryset.filter(
-                user__first_name__icontains=search_query
-            ) | queryset.filter(
-                user__last_name__icontains=search_query
-            ) | queryset.filter(
-                specialization__icontains=search_query
-            )
-        
-        return queryset.order_by('user__first_name')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Get unique specialization values (CharField), filter out empty ones
-        specs = Doctor.objects.filter(
-            specialization__isnull=False
-        ).exclude(
-            specialization=''
-        ).values_list('specialization', flat=True).distinct().order_by('specialization')
-        context['specializations'] = specs
-        context['selected_specialization'] = self.request.GET.get('specialization')
-        context['search_query'] = self.request.GET.get('q')
-        return context
 
 
 class DoctorDetailView(PatientAccessMixin, DetailView):

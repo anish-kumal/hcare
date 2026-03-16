@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    DoctorListView,
+
     DoctorDetailView,
     AppointmentCreateView,
     BookingConfirmationView,
@@ -12,6 +12,8 @@ from .views import (
     AdminAppointmentDetailView,
     AdminAppointmentUpdateView,
 )
+
+from apps.ai.views import  DoctorListView
 
 app_name = 'appointments'
 
