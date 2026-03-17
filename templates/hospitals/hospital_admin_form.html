@@ -86,83 +86,96 @@
                         <div class="pb-8 border-b border-gray-200">
                             <h2 class="text-xl font-bold text-gray-900 mb-6">Basic Information</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Admin User Selection -->
+                                <!-- Username -->
                                 <div>
-                                    <label for="{{ form.user.id_for_label }}"
+                                    <label for="{{ form.username.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Admin User *
+                                        Username *
                                     </label>
-                                    {{ form.user }}
-                                    {% if form.user.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.user.errors.0 }}</p>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
                                     {% endif %}
                                 </div>
 
-                                <!-- Designation -->
+                                <!-- Email -->
                                 <div>
-                                    <label for="{{ form.designation.id_for_label }}"
+                                    <label for="{{ form.email.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Designation *
+                                        Email *
                                     </label>
-                                    {{ form.designation }}
-                                    {% if form.designation.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.designation.errors.0 }}</p>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
                                     {% endif %}
                                 </div>
 
-                                <!-- Employee ID -->
+                                <!-- First Name -->
                                 <div>
-                                    <label for="{{ form.employee_id.id_for_label }}"
+                                    <label for="{{ form.first_name.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Employee ID *
+                                        First Name
                                     </label>
-                                    {{ form.employee_id }}
-                                    {% if form.employee_id.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.employee_id.errors.0 }}</p>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
                                     {% endif %}
                                 </div>
 
-                                <!-- Department -->
+                                <!-- Last Name -->
                                 <div>
-                                    <label for="{{ form.department.id_for_label }}"
+                                    <label for="{{ form.last_name.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Department *
+                                        Last Name
                                     </label>
-                                    {{ form.department }}
-                                    {% if form.department.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.department.errors.0 }}</p>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
                                     {% endif %}
                                 </div>
 
-                                <!-- Joining Date -->
-                                <div class="md:col-span-2">
-                                    <label for="{{ form.joining_date.id_for_label }}"
+                                <!-- Phone Number -->
+                                <div>
+                                    <label for="{{ form.phone_number.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Joining Date *
+                                        Phone Number
                                     </label>
-                                    {{ form.joining_date }}
-                                    {% if form.joining_date.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.joining_date.errors.0 }}</p>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
                                     {% endif %}
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Section 2: Permissions -->
-                        <div class="pb-8">
-                            <h2 class="text-xl font-bold text-gray-900 mb-6">Permissions (JSON Format)</h2>
-                            <div>
-                                <label for="{{ form.permissions.id_for_label }}"
-                                    class="block text-sm font-medium text-gray-700 mb-2">
-                                    Permissions
-                                </label>
-                                {{ form.permissions }}
-                                {% if form.permissions.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.permissions.errors.0 }}</p>
-                                {% endif %}
-                                <p class="text-gray-600 text-xs mt-2">
-                                    Example: {"manage_doctors": true, "manage_patients": true, "view_reports": true}
-                                </p>
+                                <!-- Password -->
+                                <div>
+                                    <label for="{{ form.password.id_for_label }}"
+                                        class="block text-sm font-medium text-gray-700 mb-2">
+                                        {% if form.instance.pk %}New Password{% else %}Password *{% endif %}
+                                    </label>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1">
+                                                {{ form.password }}
+                                            </div>
+                                            <button type="button" id="togglePasswordBtn"
+                                                class="inline-flex items-center justify-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                                                title="Show/Hide Password" aria-label="Show/Hide Password">
+                                                <span id="togglePasswordIcon" class="material-symbols-outlined text-[18px]">visibility</span>
+                                            </button>
+                                        </div>
+                                        <button type="button" id="generatePasswordBtn"
+                                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[16px]">password</span>
+                                            Generate Random Password
+                                        </button>
+                                    </div>
+                                    {% if form.password.help_text %}
+                                    <p class="mt-1 text-xs text-gray-500">{{ form.password.help_text }}</p>
+                                    {% endif %}
+                                    {% if form.password.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
 
@@ -188,30 +201,61 @@
 </div>
 
 <script>
-    // Mobile menu toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    const menuOverlay = document.getElementById('menuOverlay');
+    document.addEventListener('DOMContentLoaded', function () {
+        var generateBtn = document.getElementById('generatePasswordBtn');
+        var toggleBtn = document.getElementById('togglePasswordBtn');
+        var toggleIcon = document.getElementById('togglePasswordIcon');
+        var passwordInput = document.getElementById('{{ form.password.id_for_label }}');
 
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        menuOverlay.classList.toggle('hidden');
-    });
+        if (!passwordInput) {
+            return;
+        }
 
-    menuOverlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
-    });
+        function generatePassword(length) {
+            var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            var lower = 'abcdefghijkmnpqrstuvwxyz';
+            var numbers = '23456789';
+            var symbols = '!@#$%^&*()_+-=[]{}';
+            var allChars = upper + lower + numbers + symbols;
 
-    // Close sidebar when a link is clicked on mobile
-    document.querySelectorAll('#sidebar a').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-                menuOverlay.classList.add('hidden');
+            var result = [
+                upper[Math.floor(Math.random() * upper.length)],
+                lower[Math.floor(Math.random() * lower.length)],
+                numbers[Math.floor(Math.random() * numbers.length)],
+                symbols[Math.floor(Math.random() * symbols.length)],
+            ];
+
+            for (var i = result.length; i < length; i++) {
+                result.push(allChars[Math.floor(Math.random() * allChars.length)]);
             }
-        });
+
+            for (var j = result.length - 1; j > 0; j--) {
+                var k = Math.floor(Math.random() * (j + 1));
+                var temp = result[j];
+                result[j] = result[k];
+                result[k] = temp;
+            }
+
+            return result.join('');
+        }
+
+        if (generateBtn) {
+            generateBtn.addEventListener('click', function () {
+                passwordInput.value = generatePassword(12);
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.focus();
+            });
+        }
+
+        if (toggleBtn && toggleIcon) {
+            toggleBtn.addEventListener('click', function () {
+                var isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+            });
+        }
     });
 </script>
+
 
 {% endblock content %}

@@ -94,11 +94,6 @@ class Command(BaseCommand):
                 user=admin_user,
                 defaults={
                     'hospital': hospitals[index - 1],
-                    'designation': 'Hospital Administrator',
-                    'employee_id': f'ADM-{index:04d}',
-                    'department': 'Operations',
-                    'joining_date': date(2023, 1, 1) + timedelta(days=index),
-                    'permissions': {'manage_users': True, 'manage_departments': True},
                 },
             )
 

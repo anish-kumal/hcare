@@ -19,6 +19,6 @@ class HospitalDepartmentAdmin(admin.ModelAdmin):
 
 @admin.register(HospitalAdmin)
 class HospitalAdminAdmin(admin.ModelAdmin):
-	list_display = ('user', 'hospital', 'designation', 'employee_id', 'joining_date')
-	list_filter = ('hospital', 'joining_date')
-	search_fields = ('user__username', 'user__email', 'employee_id')
+	list_display = ('user', 'hospital', 'created')
+	list_filter = ('hospital', 'created')
+	search_fields = ('user__username', 'user__email', 'hospital__name')

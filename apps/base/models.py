@@ -1,7 +1,7 @@
 from django.db import models
-from model_utils.models import TimeStampedModel, SoftDeletableModel
+from model_utils.models import TimeStampedModel
 
-class BaseModel(TimeStampedModel, SoftDeletableModel):
+class BaseModel(TimeStampedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:

@@ -82,14 +82,6 @@
                                 <span class="text-gray-600 font-medium">Email:</span>
                                 <span class="text-gray-900">{{ object.user.email }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 font-medium">Designation:</span>
-                                <span class="text-gray-900">{{ object.designation }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 font-medium">Employee ID:</span>
-                                <span class="text-gray-900">{{ object.employee_id }}</span>
-                            </div>
                         </div>
 
                         <!-- Warning Message -->
@@ -105,12 +97,12 @@
                             {% csrf_token %}
                             <div class="flex gap-3">
                                 <a href="javascript:history.back()"
-                                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-semibold text-sm text-center hover:bg-gray-50 transition-colors\">
+                                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-semibold text-sm text-center hover:bg-gray-50 transition-colors">
                                     Cancel
                                 </a>
                                 <button type="submit"
-                                    class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-lg transition-colors flex items-center justify-center gap-2\">
-                                    <span class="material-symbols-outlined text-[18px]\">delete</span>
+                                    class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
                                     Remove Admin
                                 </button>
                             </div>
@@ -123,31 +115,5 @@
 
 </div>
 
-<script>
-    // Mobile menu toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    const menuOverlay = document.getElementById('menuOverlay');
-
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        menuOverlay.classList.toggle('hidden');
-    });
-
-    menuOverlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
-    });
-
-    // Close sidebar when a link is clicked on mobile
-    document.querySelectorAll('#sidebar a').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-                menuOverlay.classList.add('hidden');
-            }
-        });
-    });
-</script>
 
 {% endblock content %}

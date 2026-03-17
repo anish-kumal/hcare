@@ -199,38 +199,10 @@ class HospitalAdmin(BaseModel):
         help_text="Hospital managed by this admin"
     )
     
-    designation = models.CharField(
-        max_length=100,
-        help_text="Admin designation/title"
-    )
-    
-    employee_id = models.CharField(
-        max_length=50,
-        unique=True,
-        help_text="Employee ID"
-    )
-    
-    department = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Department"
-    )
-    
-    joining_date = models.DateField(
-        help_text="Date when admin joined"
-    )
-    
-    permissions = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Custom permissions for this admin"
-    )
-    
     class Meta:
         verbose_name = 'Hospital Admin'
         verbose_name_plural = 'Hospital Admins'
-        ordering = ['-joining_date']
+        ordering = ['-created']
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.hospital.name}"

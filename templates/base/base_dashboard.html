@@ -31,43 +31,8 @@
 {% block body_attribute %} id="body"{% endblock body_attribute %}
 
 
+    {% block content %}
+    
 
-{% block javascript %}
-
-<!-- JavaScript for responsive menu toggle -->
-<script>
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    const menuOverlay = document.getElementById('menuOverlay');
-
-    // Toggle menu on button click
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        menuOverlay.classList.toggle('hidden');
-    });
-
-    // Close menu when clicking overlay
-    menuOverlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
-    });
-
-    // Close menu when clicking on a link
-    const navLinks = sidebar.querySelectorAll('a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            menuOverlay.classList.add('hidden');
-        });
-    });
-
-    // Close menu when window resizes to large screen
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 1024) {
-            sidebar.classList.add('-translate-x-full');
-            menuOverlay.classList.add('hidden');
-        }
-    });
-</script>
-
-{% endblock javascript %}
+    
+    {% endblock content %}

@@ -86,31 +86,5 @@
 
 </div>
 
-<script>
-  // Mobile menu toggle
-  const menuToggle = document.getElementById('menuToggle');
-  const sidebar = document.getElementById('sidebar');
-  const menuOverlay = document.getElementById('menuOverlay');
-
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
-    menuOverlay.classList.toggle('hidden');
-  });
-
-  menuOverlay.addEventListener('click', () => {
-    sidebar.classList.add('-translate-x-full');
-    menuOverlay.classList.add('hidden');
-  });
-
-  // Close sidebar when a link is clicked on mobile
-  document.querySelectorAll('#sidebar a').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth < 1024) {
-        sidebar.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
-      }
-    });
-  });
-</script>
 
 {% endblock content %}

@@ -271,7 +271,7 @@
             <!-- Section 3: Verification Status -->
             <div class="pb-8">
               <h2 class="text-xl font-bold text-gray-900 mb-6">Verification Status</h2>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-8 flex-wrap">
                 <div class="flex items-center">
                   {{ form.is_verified }}
                   <label for="{{ form.is_verified.id_for_label }}"
@@ -282,7 +282,31 @@
                 {% if form.is_verified.errors %}
                 <p class="text-sm text-red-600">{{ form.is_verified.errors.0 }}</p>
                 {% endif %}
+
+                <div class="flex items-center">
+                  {{ form.is_active }}
+                  <label for="{{ form.is_active.id_for_label }}"
+                    class="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                    Active Hospital
+                  </label>
+                </div>
+                {% if form.is_active.errors %}
+                <p class="text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
               </div>
+
+              {% if form.instance.pk %}
+              <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Created Date</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ form.instance.created|date:"M d, Y h:i A" }}</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Last Updated Date</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ form.instance.modified|date:"M d, Y h:i A" }}</p>
+                </div>
+              </div>
+              {% endif %}
             </div>
 
             <!-- Form Actions -->
@@ -311,31 +335,5 @@
 
 </div>
 
-<script>
-  // Mobile menu toggle
-  const menuToggle = document.getElementById('menuToggle');
-  const sidebar = document.getElementById('sidebar');
-  const menuOverlay = document.getElementById('menuOverlay');
-
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
-    menuOverlay.classList.toggle('hidden');
-  });
-
-  menuOverlay.addEventListener('click', () => {
-    sidebar.classList.add('-translate-x-full');
-    menuOverlay.classList.add('hidden');
-  });
-
-  // Close sidebar when a link is clicked on mobile
-  document.querySelectorAll('#sidebar a').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth < 1024) {
-        sidebar.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
-      }
-    });
-  });
-</script>
 
 {% endblock content %}
