@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from apps.base.views import (
     IndexView, 
+    AboutView,
     AdministrView,
     SuperAdminDashboardView, 
     AdminDashboardView,
@@ -33,6 +34,7 @@ from apps.base.views import (
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
+    path('about/', AboutView.as_view(), name='about'),
     path('administer/', AdministrView.as_view(), name='administer'),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls')),

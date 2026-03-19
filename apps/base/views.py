@@ -30,6 +30,11 @@ class AdministrView(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
 
+class AboutView(TemplateView):
+    """Render the public About page"""
+    template_name = 'base/about.html'
+
+
 class SuperAdminDashboardView(LoginRequiredMixin, TemplateView):
     """Super Admin Dashboard"""
     template_name = 'super_admin/dashboard.html'
