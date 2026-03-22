@@ -24,7 +24,7 @@ class Patient(BaseModel):
 
     hospital = models.ForeignKey(
         Hospital,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name='patients',
         blank=True,
         null=True,
@@ -188,18 +188,28 @@ class PatientAppointment(BaseModel):
     
     patient = models.ForeignKey(
         Patient,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='appointments',
         help_text="Patient"
     )
     
     doctor = models.ForeignKey(
         Doctor,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='patient_appointments',
+        null=True,
         help_text="Doctor"
     )
-    
+
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.PROTECT,
+        related_name='patient_appointments',
+        blank=True,
+        null=True,
+        help_text="Hospital associated with this patient"
+    )
+
     appointment_date = models.DateField(
         help_text="Appointment date"
     )

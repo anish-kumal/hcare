@@ -10,6 +10,7 @@ dependencies = [
     "django-model-utils>=5.0.0",
     "langchain>=1.2.12",
     "langchain-google-genai>=4.2.1",
+    "langdetect>=1.0.9",
     "pillow>=12.1.0",
     "pydantic>=2.12.5",
     "python-decouple>=3.8",

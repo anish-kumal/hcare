@@ -216,6 +216,7 @@ class AppointmentCreateView(PatientAccessMixin, CreateView):
         appointment = form.save(commit=False)
         appointment.patient = patient
         appointment.doctor = doctor
+        appointment.hospital = doctor.hospital
         appointment.appointment_date = appointment_date
         appointment.appointment_time = appointment_time
         appointment.status = get_booking_status(
@@ -227,10 +228,13 @@ class AppointmentCreateView(PatientAccessMixin, CreateView):
         )
         appointment.save()
 
+        # Set fee: 10 Rs for follow-up, consultation fee otherwise
+        appointment_fee = 10 if appointment.status == 'FOLLOW_UP' else doctor.consultation_fee
+
         AppointmentPayment.objects.get_or_create(
             appointment=appointment,
             defaults={
-                'amount': doctor.consultation_fee,
+                'amount': appointment_fee,
                 'status': AppointmentPayment.PaymentStatus.PENDING,
                 'payment_method': AppointmentPayment.PaymentMethod.CASH,
             },
@@ -597,6 +601,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.patient = patient
         self.object.doctor = doctor
+        self.object.hospital = doctor.hospital
         self.object.status = get_booking_status(
             patient=patient,
             doctor=doctor,
@@ -606,10 +611,13 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         )
         self.object.save()
 
+        # Set fee: 10 Rs for follow-up, consultation fee otherwise
+        appointment_fee = 10 if self.object.status == 'FOLLOW_UP' else doctor.consultation_fee
+
         AppointmentPayment.objects.get_or_create(
             appointment=self.object,
             defaults={
-                'amount': doctor.consultation_fee,
+                'amount': appointment_fee,
                 'status': AppointmentPayment.PaymentStatus.PENDING,
                 'payment_method': AppointmentPayment.PaymentMethod.CASH,
             },
