@@ -1,0 +1,124 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Medical Reports - Admin{% endblock %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1400px] mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Medical Reports</h1>
+                        <p class="text-sm text-gray-500 mt-1">Manage and view all medical reports.</p>
+                    </div>
+                    <a href="{% url 'medical_report:staff_medical_report_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                        Upload Report
+                    </a>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[1000px]">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Patient</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Hospital</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Report Name</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Uploaded By</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Date</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for report in medical_reports %}
+                                <tr class="hover:bg-gray-50/80">
+                                    <td class="px-6 py-4">
+                                        <p class="font-semibold text-gray-900">{{ report.patient.user.get_full_name }}</p>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ report.primary_hospital.name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ report.report_name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ report.uploaded_by.get_full_name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ report.created|date:"M d, Y" }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="inline-flex items-center gap-3">
+                                            <a href="{% url 'medical_report:admin_medical_report_detail' report.pk %}" class="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline">
+                                                <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                            </a>
+                                            <a href="{% url 'medical_report:admin_medical_report_update' report.pk %}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                                            </a>
+                                            <a href="{% url 'medical_report:admin_medical_report_delete' report.pk %}" class="inline-flex items-center gap-1 text-sm font-semibold text-red-600 hover:underline">
+                                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                                        No medical reports found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {% if is_paginated %}
+                <div class="flex justify-center gap-2 mt-6">
+                    <nav class="flex items-center gap-1">
+                        {% if page_obj.has_previous %}
+                        <a href="?page=1" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Previous</a>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <span class="px-3 py-2 rounded-lg bg-primary text-white font-medium text-sm">{{ num }}</span>
+                            {% else %}
+                            <a href="?page={{ num }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Last</a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8;
+    }
+</style>
+{% endblock %}

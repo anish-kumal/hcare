@@ -8,14 +8,13 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.utils.dateparse import parse_time
 from django.utils.html import strip_tags
-from django.views.generic import TemplateView, UpdateView
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import update_session_auth_hash
 
 from .models import Doctor, DoctorSchedule
-from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorPasswordChangeForm, DoctorSelfProfileForm
+from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorPasswordChangeForm, DoctorSelfProfileForm, DoctorScheduleForm
 from apps.hospitals.models import Hospital, HospitalAdmin
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
@@ -35,21 +34,29 @@ class DoctorOnlyMixin(LoginRequiredMixin):
 		return super().dispatch(request, *args, **kwargs)
 
 
-class DoctorScheduleListView(DoctorOnlyMixin, TemplateView):
+class DoctorScheduleListView(DoctorOnlyMixin, ListView):
 	"""List doctor schedules"""
 	template_name = 'doctor/schedule_list.html'
+	context_object_name = 'schedules'
+
+	def get_queryset(self):
+		doctor = Doctor.objects.filter(user=self.request.user).first()
+		if doctor:
+			return DoctorSchedule.objects.filter(doctor=doctor).order_by('weekday', 'start_time')
+		return DoctorSchedule.objects.none()
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = Doctor.objects.filter(user=self.request.user).first()
-		context['doctor'] = doctor
-		context['schedules'] = DoctorSchedule.objects.filter(doctor=doctor).order_by('weekday', 'start_time') if doctor else []
+		context['doctor'] = Doctor.objects.filter(user=self.request.user).first()
 		return context
 
 
-class DoctorScheduleCreateView(DoctorOnlyMixin, TemplateView):
+class DoctorScheduleCreateView(DoctorOnlyMixin, CreateView):
 	"""Create doctor schedule"""
+	model = DoctorSchedule
+	form_class = DoctorScheduleForm
 	template_name = 'doctor/schedule_form.html'
+	success_url = reverse_lazy('doctors:doctor_schedule_list')
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
@@ -58,149 +65,87 @@ class DoctorScheduleCreateView(DoctorOnlyMixin, TemplateView):
 		context['weekday_choices'] = DoctorSchedule.WEEKDAY_CHOICES
 		return context
 
-	def post(self, request, *args, **kwargs):
-		doctor = Doctor.objects.filter(user=request.user).first()
+	def form_valid(self, form):
+		doctor = Doctor.objects.filter(user=self.request.user).first()
 		if not doctor:
-			messages.error(request, 'Doctor profile not found.')
+			messages.error(self.request, 'Doctor profile not found.')
 			return redirect('doctor_dashboard')
-
-		schedule_data = self._extract_schedule_data(request)
-		if schedule_data is None:
-			return redirect('doctors:doctor_schedule_create')
 
 		try:
 			DoctorSchedule.objects.update_or_create(
 				doctor=doctor,
-				weekday=schedule_data['weekday'],
-				start_time=schedule_data['start_time'],
+				weekday=form.cleaned_data['weekday'],
+				start_time=form.cleaned_data['start_time'],
 				defaults={
-					'end_time': schedule_data['end_time'],
-					'slot_duration': schedule_data['slot_duration'],
-					'max_patients': schedule_data['max_patients'],
-					'is_available': schedule_data['is_available'],
+					'end_time': form.cleaned_data['end_time'],
+					'slot_duration': form.cleaned_data['slot_duration'],
+					'max_patients': form.cleaned_data['max_patients'],
+					'is_available': form.cleaned_data['is_available'],
 				}
 			)
 		except IntegrityError:
-			messages.error(request, 'A schedule already exists for that day and start time.')
-			return redirect('doctors:doctor_schedule_create')
+			messages.error(self.request, 'A schedule already exists for that day and start time.')
+			return self.form_invalid(form)
 
-		messages.success(request, 'Schedule created successfully.')
-		return redirect('doctors:doctor_schedule_list')
-
-	def _extract_schedule_data(self, request):
-		weekday_raw = request.POST.get('weekday', '').strip()
-		start_time_raw = request.POST.get('start_time', '').strip()
-		end_time_raw = request.POST.get('end_time', '').strip()
-		slot_duration_raw = request.POST.get('slot_duration', '').strip()
-		max_patients_raw = request.POST.get('max_patients', '').strip()
-		is_available = request.POST.get('is_available') == 'on'
-
-		try:
-			weekday = int(weekday_raw)
-		except ValueError:
-			messages.error(request, 'Please select a valid weekday.')
-			return None
-
-		start_time = parse_time(start_time_raw)
-		end_time = parse_time(end_time_raw)
-
-		if not start_time or not end_time:
-			messages.error(request, 'Start time and end time are required.')
-			return None
-
-		if end_time <= start_time:
-			messages.error(request, 'End time must be later than start time.')
-			return None
-
-		try:
-			slot_duration = int(slot_duration_raw) if slot_duration_raw else 30
-			max_patients = int(max_patients_raw) if max_patients_raw else 20
-		except ValueError:
-			messages.error(request, 'Slot duration and max patients must be valid numbers.')
-			return None
-
-		if slot_duration <= 0 or max_patients <= 0:
-			messages.error(request, 'Slot duration and max patients must be greater than zero.')
-			return None
-
-		return {
-			'weekday': weekday,
-			'start_time': start_time,
-			'end_time': end_time,
-			'slot_duration': slot_duration,
-			'max_patients': max_patients,
-			'is_available': is_available,
-		}
+		messages.success(self.request, 'Schedule created successfully.')
+		return redirect(self.success_url)
 
 
-class DoctorScheduleDetailView(DoctorOnlyMixin, TemplateView):
+class DoctorScheduleDetailView(DoctorOnlyMixin, DetailView):
 	"""Schedule detail view"""
+	model = DoctorSchedule
 	template_name = 'doctor/schedule_detail.html'
+	context_object_name = 'schedule'
+
+	def get_queryset(self):
+		doctor = Doctor.objects.filter(user=self.request.user).first()
+		return DoctorSchedule.objects.filter(doctor=doctor)
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = Doctor.objects.filter(user=self.request.user).first()
-		schedule = DoctorSchedule.objects.filter(doctor=doctor, pk=kwargs.get('pk')).first()
-		if not schedule:
-			messages.error(self.request, 'Schedule not found.')
-			return context
-		context['doctor'] = doctor
-		context['schedule'] = schedule
+		context['doctor'] = Doctor.objects.filter(user=self.request.user).first()
 		return context
 
 
-class DoctorScheduleUpdateView(DoctorOnlyMixin, TemplateView):
+class DoctorScheduleUpdateView(DoctorOnlyMixin, UpdateView):
 	"""Edit doctor schedule"""
+	model = DoctorSchedule
+	form_class = DoctorScheduleForm
 	template_name = 'doctor/schedule_edit.html'
+	context_object_name = 'schedule'
+
+	def get_queryset(self):
+		doctor = Doctor.objects.filter(user=self.request.user).first()
+		return DoctorSchedule.objects.filter(doctor=doctor)
+
+	def get_success_url(self):
+		return reverse_lazy('doctors:doctor_schedule_detail', kwargs={'pk': self.object.pk})
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = Doctor.objects.filter(user=self.request.user).first()
-		schedule = DoctorSchedule.objects.filter(doctor=doctor, pk=kwargs.get('pk')).first()
-		if not schedule:
-			messages.error(self.request, 'Schedule not found.')
-			return context
-		context['doctor'] = doctor
-		context['schedule'] = schedule
+		context['doctor'] = Doctor.objects.filter(user=self.request.user).first()
 		context['weekday_choices'] = DoctorSchedule.WEEKDAY_CHOICES
 		return context
 
-	def post(self, request, *args, **kwargs):
-		doctor = Doctor.objects.filter(user=request.user).first()
-		schedule = DoctorSchedule.objects.filter(doctor=doctor, pk=kwargs.get('pk')).first()
-		if not schedule:
-			messages.error(request, 'Schedule not found.')
-			return redirect('doctors:doctor_schedule_list')
-
-		schedule_data = DoctorScheduleCreateView()._extract_schedule_data(request)
-		if schedule_data is None:
-			return redirect('doctors:doctor_schedule_edit', pk=schedule.pk)
-
-		schedule.weekday = schedule_data['weekday']
-		schedule.start_time = schedule_data['start_time']
-		schedule.end_time = schedule_data['end_time']
-		schedule.slot_duration = schedule_data['slot_duration']
-		schedule.max_patients = schedule_data['max_patients']
-		schedule.is_available = schedule_data['is_available']
-
+	def form_valid(self, form):
 		try:
-			schedule.save()
+			return super().form_valid(form)
 		except IntegrityError:
-			messages.error(request, 'Another schedule already exists for that day and start time.')
-			return redirect('doctors:doctor_schedule_edit', pk=schedule.pk)
-
-		messages.success(request, 'Schedule updated successfully.')
-		return redirect('doctors:doctor_schedule_detail', pk=schedule.pk)
+			messages.error(self.request, 'Another schedule already exists for that day and start time.')
+			return self.form_invalid(form)
 
 
-class DoctorProfileUpdateView(DoctorOnlyMixin, TemplateView):
+class DoctorProfileUpdateView(DoctorOnlyMixin, DetailView):
 	"""Display doctor's current profile"""
+	model = Doctor
 	template_name = 'doctor/profile_detail.html'
+	context_object_name = 'doctor'
+
+	def get_object(self, queryset=None):
+		return get_object_or_404(Doctor, user=self.request.user)
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = get_object_or_404(Doctor, user=self.request.user)
-		context['doctor'] = doctor
 		context['user'] = self.request.user
 		return context
 
@@ -267,39 +212,42 @@ class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 		)
 
 
-class DoctorPasswordChangeView(DoctorOnlyMixin, TemplateView):
+class DoctorPasswordChangeView(DoctorOnlyMixin, FormView):
 	"""Dedicated doctor password change page."""
 	template_name = 'doctor/password_change.html'
+	form_class = DoctorPasswordChangeForm
+	success_url = reverse_lazy('doctors:doctor_profile')
 
-	def get_context_data(self, **kwargs):
-		context = super().get_context_data(**kwargs)
-		context['password_form'] = kwargs.get('password_form') or DoctorPasswordChangeForm(user=self.request.user)
-		return context
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['user'] = self.request.user
+		return kwargs
 
-	def post(self, request, *args, **kwargs):
-		password_form = DoctorPasswordChangeForm(user=request.user, data=request.POST)
+	def form_valid(self, form):
+		new_password = form.cleaned_data.get('new_password')
+		if new_password:
+			self.request.user.set_password(new_password)
+			self.request.user.is_default_password = False
+			self.request.user.save(update_fields=['password', 'is_default_password'])
+			update_session_auth_hash(self.request, self.request.user)
+			messages.success(self.request, 'Password changed successfully.')
+		return super().form_valid(form)
 
-		if password_form.is_valid():
-			new_password = password_form.cleaned_data.get('new_password')
-			if new_password:
-				request.user.set_password(new_password)
-				request.user.is_default_password = False
-				request.user.save(update_fields=['password', 'is_default_password'])
-				update_session_auth_hash(request, request.user)
-				messages.success(request, 'Password changed successfully.')
-				return redirect('doctors:doctor_profile')
-
-		messages.error(request, 'Please correct the password errors below.')
-		return self.render_to_response(self.get_context_data(password_form=password_form))
+	def form_invalid(self, form):
+		messages.error(self.request, 'Please correct the password errors below.')
+		return super().form_invalid(form)
 
 
-class DoctorCreateView(LoginRequiredMixin, TemplateView):
+class DoctorCreateView(LoginRequiredMixin, CreateView):
 	"""
 	Create Doctor - Both User and Doctor Profile in one page
 	Hospital Admin can create doctors for their hospital
 	Super Admin can create doctors for any hospital
 	"""
+	model = Doctor
 	template_name = 'doctors/doctor_create.html'
+	form_class = DoctorProfileForm
+	success_url = reverse_lazy('doctors:doctor_list')
 	login_url = 'users:login'
 	
 	def dispatch(self, request, *args, **kwargs):
@@ -317,7 +265,7 @@ class DoctorCreateView(LoginRequiredMixin, TemplateView):
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		user_form = kwargs.get('user_form') or DoctorUserForm()
-		doctor_form = kwargs.get('doctor_form') or DoctorProfileForm()
+		doctor_form = kwargs.get('doctor_form') or context.get('form')
 		
 		context['user_form'] = user_form
 		context['doctor_form'] = doctor_form
@@ -440,12 +388,14 @@ class DoctorCreateView(LoginRequiredMixin, TemplateView):
 			)
 
 
-class DoctorListView(SuperAdminAndAdminOnlyMixin, TemplateView):
+class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 	"""List doctors for admins"""
+	model = Doctor
 	template_name = 'doctors/doctor_list.html'
+	context_object_name = 'doctors'
 
 	def get_queryset(self):
-		queryset = Doctor.objects.select_related('user', 'hospital', 'department').order_by('-created')
+		queryset = super().get_queryset().select_related('user', 'hospital', 'department').order_by('-created')
 
 		if self.request.user.is_admin:
 			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
@@ -468,56 +418,50 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, TemplateView):
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		context['doctors'] = self.get_queryset()
 		context['search_query'] = self.request.GET.get('search', '').strip()
 		return context
 
 
-class DoctorDetailView(SuperAdminAndAdminOnlyMixin, TemplateView):
+class DoctorDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
 	"""Doctor detail view for admins"""
+	model = Doctor
 	template_name = 'doctors/doctor_detail.html'
+	context_object_name = 'doctor'
 
-	def get_doctor(self):
-		doctor = get_object_or_404(
-			Doctor.objects.select_related('user', 'hospital', 'department'),
-			pk=self.kwargs.get('pk'),
-		)
+	def get_queryset(self):
+		return Doctor.objects.select_related('user', 'hospital', 'department')
 
+	def get_object(self, queryset=None):
+		obj = super().get_object(queryset)
 		if self.request.user.is_admin:
 			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
 				raise PermissionDenied
-
-		return doctor
-
-	def get_context_data(self, **kwargs):
-		context = super().get_context_data(**kwargs)
-		context['doctor'] = self.get_doctor()
-		return context
+		return obj
 
 
-class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, TemplateView):
+class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
 	"""Delete doctor user and profile"""
+	model = Doctor
 	template_name = 'partials/delete.html'
+	success_url = reverse_lazy('doctors:doctor_list')
+	context_object_name = 'doctor'
 
-	def get_doctor(self):
-		doctor = get_object_or_404(
-			Doctor.objects.select_related('user', 'hospital'),
-			pk=self.kwargs.get('pk'),
-		)
+	def get_queryset(self):
+		return Doctor.objects.select_related('user', 'hospital')
 
+	def get_object(self, queryset=None):
+		obj = super().get_object(queryset)
 		if self.request.user.is_admin:
 			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
 				raise PermissionDenied
-
-		return doctor
+		return obj
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = self.get_doctor()
+		doctor = self.object
 		context.update({
-			'doctor': doctor,
 			'delete_page_title': 'Delete Doctor - Health Care',
 			'delete_confirm_title': 'Delete Doctor?',
 			'delete_confirm_message': (
@@ -532,8 +476,8 @@ class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, TemplateView):
 		})
 		return context
 
-	def post(self, request, *args, **kwargs):
-		doctor = self.get_doctor()
+	def delete(self, request, *args, **kwargs):
+		doctor = self.get_object()
 		doctor_name = doctor.user.get_full_name() or doctor.user.username
 
 		try:
@@ -544,25 +488,26 @@ class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, TemplateView):
 			messages.error(request, f'Could not delete doctor: {exc}')
 			return redirect('doctors:doctor_detail', pk=doctor.pk)
 
-		return redirect('doctors:doctor_list')
+		return redirect(self.success_url)
 
 
-class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
+class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 	"""Update doctor user and profile details"""
+	model = Doctor
 	template_name = 'doctors/doctor_edit.html'
+	form_class = DoctorProfileForm
+	success_url = reverse_lazy('doctors:doctor_list')
 
-	def get_doctor(self):
-		doctor = get_object_or_404(
-			Doctor.objects.select_related('user', 'hospital', 'department'),
-			pk=self.kwargs.get('pk'),
-		)
+	def get_queryset(self):
+		return Doctor.objects.select_related('user', 'hospital', 'department')
 
+	def get_object(self, queryset=None):
+		obj = super().get_object(queryset)
 		if self.request.user.is_admin:
 			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or doctor.hospital_id != hospital_admin.hospital_id:
+			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
 				raise PermissionDenied
-
-		return doctor
+		return obj
 
 	def get_hospitals(self):
 		if self.request.user.is_super_admin:
@@ -576,9 +521,9 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
-		doctor = kwargs.get('doctor') or self.get_doctor()
+		doctor = self.object
 		user_form = kwargs.get('user_form') or DoctorUserUpdateForm(instance=doctor.user)
-		doctor_form = kwargs.get('doctor_form') or DoctorProfileForm(instance=doctor)
+		doctor_form = kwargs.get('doctor_form') or context.get('form')
 
 		context['doctor'] = doctor
 		context['user_form'] = user_form
@@ -588,13 +533,13 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
 		return context
 
 	def post(self, request, *args, **kwargs):
-		doctor = self.get_doctor()
+		doctor = self.get_object()
 
 		if request.user.is_super_admin:
 			hospital_id = request.POST.get('hospital')
 			if not hospital_id:
 				messages.error(request, 'Please select a hospital.')
-				return self.get(request, doctor=doctor, *args, **kwargs)
+				return self.get(request, *args, **kwargs)
 			hospital = get_object_or_404(Hospital, id=hospital_id)
 		else:
 			hospital_admin = HospitalAdmin.objects.filter(user=request.user).select_related('hospital').first()
@@ -616,14 +561,13 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, TemplateView):
 					updated_doctor.save()
 
 				messages.success(request, 'Doctor profile updated successfully.')
-				return redirect('doctors:doctor_list')
+				return redirect(self.success_url)
 			except IntegrityError as exc:
 				messages.error(request, f'Error updating doctor: {exc}')
 
 		messages.error(request, 'Please correct the errors below.')
 		return self.get(
 			request,
-			doctor=doctor,
 			user_form=user_form,
 			doctor_form=doctor_form,
 			*args,

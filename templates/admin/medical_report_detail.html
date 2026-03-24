@@ -1,0 +1,125 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ medical_report.report_name }} - Medical Report Detail{% endblock %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1200px] mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{{ medical_report.report_name }}</h1>
+                        <p class="text-sm text-gray-500 mt-1">Medical report details and information.</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <a href="{% url 'medical_report:admin_medical_report_list' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back
+                        </a>
+                        <a href="{% url 'medical_report:admin_medical_report_update' medical_report.pk %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit
+                        </a>
+                        <a href="{% url 'medical_report:admin_medical_report_delete' medical_report.pk %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white border border-red-600 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                            Delete
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report Information</h2>
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Patient</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.patient.user.get_full_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Hospital</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.primary_hospital.name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Report Name</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.report_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Uploaded By</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.uploaded_by.get_full_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Created</dt>
+                            <dd class="text-gray-900">{{ medical_report.created|date:"M d, Y H:i" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Modified</dt>
+                            <dd class="text-gray-900">{{ medical_report.modified|date:"M d, Y H:i" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                {% if medical_report.description %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Description</h2>
+                    <p class="text-gray-900 whitespace-pre-line">{{ medical_report.description }}</p>
+                </div>
+                {% endif %}
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report File</h2>
+                    {% if medical_report.report_file %}
+                        <a href="{{ medical_report.report_file.url }}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors" target="_blank">
+                            <span class="material-symbols-outlined text-[20px]">download</span>
+                            Download Report
+                        </a>
+                    {% else %}
+                        <p class="text-gray-500">No report file attached.</p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Shared With</h2>
+                    {% if medical_report.shared_with.all %}
+                        <div class="space-y-2">
+                            {% for hospital in medical_report.shared_with.all %}
+                            <div class="px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p class="text-gray-900 font-medium">{{ hospital.name }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">This report is not shared with any other hospitals.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8;
+    }
+</style>
+{% endblock %}

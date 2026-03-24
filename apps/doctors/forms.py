@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from datetime import date
-from .models import Doctor
+from .models import Doctor, DoctorSchedule
 
 User = get_user_model()
 
@@ -204,6 +204,38 @@ class DoctorProfileForm(forms.ModelForm):
         if employee_id and queryset.exists():
             raise forms.ValidationError("This employee ID is already registered.")
         return employee_id
+
+
+class DoctorScheduleForm(forms.ModelForm):
+    """Form for creating/editing doctor schedule"""
+    
+    class Meta:
+        model = DoctorSchedule
+        fields = ['weekday', 'start_time', 'end_time', 'slot_duration', 'max_patients', 'is_available']
+        widgets = {
+            'weekday': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition'
+            }),
+            'start_time': forms.TimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'type': 'time'
+            }),
+            'end_time': forms.TimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'type': 'time'
+            }),
+            'slot_duration': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'min': 1
+            }),
+            'max_patients': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'min': 1
+            }),
+            'is_available': forms.CheckboxInput(attrs={
+                'class': 'w-4 h-4 text-primary bg-gray-100 border border-gray-300 rounded cursor-pointer'
+            }),
+        }
 
 
 class DoctorSelfProfileForm(DoctorProfileForm):

@@ -5,7 +5,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from django.views.generic import ListView
 from apps.appointments.views import PatientAccessMixin
-from langdetect import detect, LangDetectException
 from django.contrib import messages
 
 load_dotenv()
@@ -21,15 +20,7 @@ llm = ChatGoogleGenerativeAI(
 
 
 def ai_specialty_search(query: str) -> str | None:
-    # Check if query is in English only
-    try:
-        detected_lang = detect(query)
-        if detected_lang != 'en':
-            return "Only use English language"
-    except LangDetectException:
-        # If language detection fails, allow it to proceed
-        pass
-    
+
     # Use stored doctor specializations as the only allowed output values.
     available_specialties = list(
         Doctor.objects.filter(
@@ -48,13 +39,13 @@ def ai_specialty_search(query: str) -> str | None:
             The user said: "{query}"
 
             Instructions:
-            - The text may be in English, Nepali, or contain spelling mistakes.
+            - The text may be in English, or contain spelling mistakes.
             - If the input seems random, meaningless, or unrelated to health, respond with: "No valid medical concern detected."
             - If the input describes a medical symptom, return only **one** specialty from this list: "{available_specialties}"
         
 
             Guidelines:
-            - Use your understanding of common health terms in both English and Nepali.
+            - Use your understanding of common health terms in  English.
             - Choose the specialty that best fits the described symptom (e.g., heart → Cardiologist, mental health → Psychiatrist, ear/nose/throat → ENT, etc.).
             - Do not explain or add extra text. Return only the specialty name or "No valid medical concern detected."
         """

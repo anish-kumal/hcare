@@ -277,13 +277,14 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             amount_paisa = int(payment.amount * 100)
             patient_user = appointment.patient.user
             purchase_order_id = f'APPT-{appointment.id}-{payment.id}'
+            purchase_order_name = f'Appointment #{appointment.id}'
 
             initiate_khalti_payload = {
                 'return_url': return_url,
                 'website_url': website_url,
                 'amount': amount_paisa,
                 'purchase_order_id': purchase_order_id,
-                'purchase_order_name': f'Appointment #{appointment.id}',
+                'purchase_order_name': purchase_order_name,
                 'customer_info': {
                     'name': patient_user.get_full_name() or patient_user.username,
                     'email': patient_user.email or 'no-email@example.com',

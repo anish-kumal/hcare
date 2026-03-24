@@ -63,6 +63,7 @@ LOCAL_APPS = [
     "apps.appointments",
     "apps.payments",
     "apps.seed",
+    "apps.medical_report",
 ]
 
 INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -100,13 +101,23 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD': config('DB_PASSWORD'),
+#         'HOST': config('DB_HOST'),
+#         'PORT': config('DB_PORT'),
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -192,5 +203,3 @@ SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.co
 PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
 
 KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='')
-KHALTI_PUBLIC_KEY = config('KHALTI_PUBLIC_KEY', default='')
-

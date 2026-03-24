@@ -125,6 +125,12 @@
         <span class="font-medium text-sm">Department</span>
       </a>
 
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'admin_medical_report_list admin_medical_report_detail admin_medical_report_update admin_medical_report_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'medical_report:admin_medical_report_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">description</span>
+        <span class="font-medium text-sm">Medical Reports</span>
+      </a>
+
     {% endif %}
     <a class="group flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all duration-200"
       href="#">
