@@ -261,7 +261,7 @@ class DoctorPasswordChangeForm(forms.Form):
     
     old_password = forms.CharField(
         label='Current Password',
-        required=False,
+        required=True,
         widget=forms.PasswordInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
             'placeholder': 'Enter current password',
@@ -271,7 +271,8 @@ class DoctorPasswordChangeForm(forms.Form):
     
     new_password = forms.CharField(
         label='New Password',
-        required=False,
+        required=True,
+        min_length=8,
         widget=forms.PasswordInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
             'placeholder': 'Enter new password',
@@ -281,7 +282,7 @@ class DoctorPasswordChangeForm(forms.Form):
     
     confirm_password = forms.CharField(
         label='Confirm Password',
-        required=False,
+        required=True,
         widget=forms.PasswordInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
             'placeholder': 'Confirm new password',
@@ -295,29 +296,17 @@ class DoctorPasswordChangeForm(forms.Form):
     
     def clean(self):
         cleaned_data = super().clean()
-        old_password = cleaned_data.get('old_password', '')
-        new_password = cleaned_data.get('new_password', '')
-        confirm_password = cleaned_data.get('confirm_password', '')
-        
-        # If any password field is provided, all must be provided
-        if old_password or new_password or confirm_password:
-            if not old_password:
-                self.add_error('old_password', 'Current password is required to change password.')
-            if not new_password:
-                self.add_error('new_password', 'New password is required.')
-            if not confirm_password:
-                self.add_error('confirm_password', 'Password confirmation is required.')
-            
-            # Verify old password
-            if old_password and not self.user.check_password(old_password):
-                self.add_error('old_password', 'Current password is incorrect.')
-            
-            # Check new password length
-            if new_password and len(new_password) < 8:
-                self.add_error('new_password', 'New password must be at least 8 characters long.')
-            
-            # Check passwords match
-            if new_password and confirm_password and new_password != confirm_password:
-                self.add_error('confirm_password', 'Passwords do not match.')
-        
+        old_password = cleaned_data.get('old_password')
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if old_password and not self.user.check_password(old_password):
+            self.add_error('old_password', 'Current password is incorrect.')
+
+        if new_password and confirm_password and new_password != confirm_password:
+            self.add_error('confirm_password', 'Passwords do not match.')
+
+        if new_password and old_password and new_password == old_password:
+            self.add_error('new_password', 'New password must be different from the current password.')
+
         return cleaned_data
