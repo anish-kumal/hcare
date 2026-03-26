@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('doctors', '0005_doctorschedule_time_slots'),
-        ('hospitals', '0004_hospitalstaff_department_hospitalstaff_employee_id_and_more'),
+        ('hospitals', '0003_remove_hospitaldepartment_available_beds_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -13,6 +13,11 @@ class AdminMedicalReportCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
     template_name = 'admin/medical_report_form.html'
     success_url = reverse_lazy('medical_report:admin_medical_report_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
 # Admin Views
 class AdminMedicalReportListView(SuperAdminAndAdminOnlyMixin, ListView):
     """
@@ -47,6 +52,11 @@ class AdminMedicalReportUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
     form_class = AdminMedicalReportForm
     template_name = 'admin/medical_report_form.html'
     success_url = reverse_lazy('medical_report:admin_medical_report_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_queryset(self):
         return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()

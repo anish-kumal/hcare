@@ -43,6 +43,14 @@
 
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
+                
+                {% if form.non_form_errors %}
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    {% for error in form.non_form_errors %}
+                    <p class="text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <div>
                     <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-400 mb-1">Username</label>
@@ -69,7 +77,7 @@
                 </div>
 
                 <div>
-                    <label for="{{ form.last_name.id_for_label }}" class="block textsm font-medium text-gray-400 mb-1">Last Name</label>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-400 mb-1">Last Name</label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>

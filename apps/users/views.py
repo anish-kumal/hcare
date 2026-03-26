@@ -2,51 +2,31 @@ from django.shortcuts import redirect
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout, update_session_auth_hash
-from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.contrib import messages
 from .forms import PasswordChangeForm, UserRegistrationForm, UserLoginForm, UserManagementForm
 from .models import User
 from apps.hospitals.models import HospitalAdmin
 
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminOnlyMixin
 
+
 class UserRegisterView(CreateView):
     """
     Class-based view for user registration
     """
+    model = User
     form_class = UserRegistrationForm
     template_name = 'patient/register.html'
     success_url = reverse_lazy('users:login')
-    
-    def dispatch(self, request, *args, **kwargs):
-        # Redirect to home if user is already authenticated
-        if request.user.is_authenticated:
-            return redirect('index')
-        return super().dispatch(request, *args, **kwargs)
-    
     def form_valid(self, form):
-        """
-        If the form is valid, save the user and log them in
-        """
         response = super().form_valid(form)
-        messages.success(
-            self.request,
-            'Account created successfully! Please log in.'
-        )
+        messages.success(self.request, 'Registration successful! Please log in with your new account.')
         return response
-    
     def form_invalid(self, form):
-        """
-        If the form is invalid, display error messages
-        """
-        messages.error(
-            self.request,
-            'There was an error creating your account. Please check the form.'
-        )
+        messages.error(self.request, 'Registration failed.')
         return super().form_invalid(form)
-
 
 class UserLoginView(LoginView):
     """
