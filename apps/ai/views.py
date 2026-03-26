@@ -65,7 +65,7 @@ def ai_specialty_search(query: str) -> str | None:
 
 
 
-class DoctorListView(PatientAccessMixin, ListView):
+class DoctorListView( ListView):
     """List all available doctors for booking"""
     template_name = 'appointments/doctor_list.html'
     context_object_name = 'doctors'

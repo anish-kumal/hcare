@@ -79,7 +79,7 @@ def has_existing_active_booking(patient, doctor):
 
 
 
-class DoctorDetailView(PatientAccessMixin, DetailView):
+class DoctorDetailView( DetailView):
     """Show doctor details and available appointment slots"""
     model = Doctor
     template_name = 'appointments/doctor_detail.html'
@@ -104,7 +104,7 @@ class DoctorDetailView(PatientAccessMixin, DetailView):
         return context
 
 
-class AppointmentCreateView(PatientAccessMixin, CreateView):
+class AppointmentCreateView(LoginRequiredMixin, CreateView):
     """Create an appointment booking"""
     model = PatientAppointment
     form_class = AppointmentBookingForm
@@ -112,7 +112,11 @@ class AppointmentCreateView(PatientAccessMixin, CreateView):
     success_url = reverse_lazy('appointments:booking_confirmation')
     
     def dispatch(self, request, *args, **kwargs):
-        """Check if patient profile exists"""
+        """Check if user is authenticated and has patient profile"""
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please log in first to continue.')
+            return redirect('users:login')
+        
         try:
             Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
