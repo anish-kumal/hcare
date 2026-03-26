@@ -331,7 +331,12 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
         appointment = self.object
         payment = getattr(appointment, 'payment', None)
 
-        context['doctor_full_name'] = f"Dr. {appointment.doctor.user.get_full_name()}"
+        # Safely handle case where doctor might be None
+        if appointment.doctor and appointment.doctor.user:
+            context['doctor_full_name'] = f"Dr. {appointment.doctor.user.get_full_name()}"
+        else:
+            context['doctor_full_name'] = "Doctor"
+        
         context['payment'] = payment
         context['show_khalti_pay_button'] = bool(
             payment and payment.status != AppointmentPayment.PaymentStatus.PAID

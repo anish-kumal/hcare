@@ -2,9 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager
 from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
 import re
 from apps.base.models import BaseModel
+from apps.hospitals.models import Hospital, HospitalDepartment
 
 
 class CustomUserManager(UserManager):
@@ -57,6 +57,7 @@ class User(AbstractUser, BaseModel):
         null=True,
         help_text="Residential address"
     )
+
 
     is_default_password = models.BooleanField(
         default=True,
@@ -144,3 +145,5 @@ class User(AbstractUser, BaseModel):
             self.validate_password_strength(self._password)
         
         super().save(*args, **kwargs)
+
+

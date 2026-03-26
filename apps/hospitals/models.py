@@ -195,7 +195,7 @@ class HospitalStaff(BaseModel):
     """
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='hospital_staff_profile',
         limit_choices_to={
             'user_type__in': ['STAFF', 'LAB_ASSISTANT', 'PHARMACIST']
@@ -205,11 +205,11 @@ class HospitalStaff(BaseModel):
     
     hospital = models.ForeignKey(
         Hospital,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='staff',
         help_text="Hospital where this staff member works"
     )
-    
+
     class Meta:
         verbose_name = 'Hospital Staff'
         verbose_name_plural = 'Hospital Staff'

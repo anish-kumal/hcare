@@ -67,12 +67,20 @@
                                 {% for appointment in appointments %}
                                 <tr>
                                     <td class="px-6 py-4 text-sm text-gray-800">
+                                        {% if appointment.patient and appointment.patient.user %}
                                         <p class="font-semibold">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
+                                        {% else %}
+                                        <p class="font-semibold">-</p>
+                                        {% endif %}
                                         <p class="text-xs text-gray-500">UUID: {{ appointment.patient.booking_uuid }}</p>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-800">
-                                        <p class="font-semibold">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</p>
-                                        <p class="text-xs text-gray-500">{{ appointment.doctor.hospital.name }}</p>
+                                        {% if appointment.doctor and appointment.doctor.user %}
+                                        <p class="font-semibold">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username|default:"-" }}</p>
+                                        {% else %}
+                                        <p class="font-semibold">-</p>
+                                        {% endif %}
+
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-700">
                                         <p>{{ appointment.appointment_date|date:"M d, Y" }}</p>

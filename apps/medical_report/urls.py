@@ -10,4 +10,5 @@ urlpatterns = [
     path('admin/<int:pk>/', views.AdminMedicalReportDetailView.as_view(), name='admin_medical_report_detail'),
     path('admin/<int:pk>/edit/', views.AdminMedicalReportUpdateView.as_view(), name='admin_medical_report_update'),
     path('admin/<int:pk>/delete/', views.AdminMedicalReportDeleteView.as_view(), name='admin_medical_report_delete'),
+    path('admin/create/', views.AdminMedicalReportCreateView.as_view(), name='admin_medical_report_create'),
 ]

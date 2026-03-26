@@ -51,9 +51,6 @@
         </div>
 
         <div data-tab-panel="normal" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 {% if request.GET.ai_query %}hidden{% endif %}">
-            <h2 class="text-xl md:text-2xl font-semibold text-gray-900 text-center mb-8">
-                Normal Search for Doctors
-            </h2>
             <form method="get" class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="flex-1">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">
@@ -104,9 +101,6 @@
         </div>
 
         <div data-tab-panel="ai" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 {% if not request.GET.ai_query %}hidden{% endif %}">
-            <h2 class="text-xl md:text-2xl font-semibold text-gray-900 text-center mb-8">
-                AI Search for Doctors
-            </h2>
             <form method="get" class="space-y-6">
                 <div class="flex flex-col md:flex-row gap-3 items-end">
                     <div class="flex-1">

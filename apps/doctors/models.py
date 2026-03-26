@@ -14,7 +14,7 @@ class Doctor(BaseModel):
     """
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='doctor_profile',
         limit_choices_to={'user_type': 'DOCTOR'},
         help_text="User account for this doctor"
@@ -22,7 +22,7 @@ class Doctor(BaseModel):
     
     hospital = models.ForeignKey(
         Hospital,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='doctors',
         help_text="Primary hospital"
     )

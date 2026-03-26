@@ -6,15 +6,6 @@
 <div class="max-w-5xl mx-auto px-4 py-6">
   <h1 class="text-2xl font-bold mb-4">My Appointment Payments</h1>
 
-  {% if messages %}
-    <div class="space-y-2 mb-4">
-      {% for message in messages %}
-        <div class="p-3 rounded border {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-green-300 bg-green-50 text-green-700{% else %}border-gray-300 bg-gray-50 text-gray-700{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   {% if payments %}
     <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
@@ -34,7 +25,13 @@
               <td class="p-3">
                 {{ payment.appointment.appointment_date }} {{ payment.appointment.appointment_time|time:'H:i' }}
               </td>
-              <td class="p-3">Dr. {{ payment.appointment.doctor.user.get_full_name }}</td>
+              <td class="p-3">
+                {% if payment.appointment.doctor %}
+                  Dr. {{ payment.appointment.doctor.user.get_full_name }}
+                {% else %}
+                  <span class="text-gray-500">Not Assigned</span>
+                {% endif %}
+              </td>
               <td class="p-3">NPR {{ payment.amount }}</td>
               <td class="p-3">{{ payment.get_status_display }}</td>
               <td class="p-3">
