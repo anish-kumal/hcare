@@ -14,7 +14,8 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth import update_session_auth_hash
 
 from .models import Doctor, DoctorSchedule
-from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorPasswordChangeForm, DoctorSelfProfileForm, DoctorScheduleForm
+from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorSelfProfileForm, DoctorScheduleForm
+from apps.users.forms import PasswordChangeForm
 from apps.hospitals.models import Hospital, HospitalAdmin
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
@@ -211,31 +212,6 @@ class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 			)
 		)
 
-
-class DoctorPasswordChangeView(DoctorOnlyMixin, FormView):
-	"""Dedicated doctor password change page."""
-	template_name = 'doctor/password_change.html'
-	form_class = DoctorPasswordChangeForm
-	success_url = reverse_lazy('doctors:doctor_profile')
-
-	def get_form_kwargs(self):
-		kwargs = super().get_form_kwargs()
-		kwargs['user'] = self.request.user
-		return kwargs
-
-	def form_valid(self, form):
-		new_password = form.cleaned_data.get('new_password')
-		if new_password:
-			self.request.user.set_password(new_password)
-			self.request.user.is_default_password = False
-			self.request.user.save(update_fields=['password', 'is_default_password'])
-			update_session_auth_hash(self.request, self.request.user)
-			messages.success(self.request, 'Password changed successfully.')
-		return super().form_valid(form)
-
-	def form_invalid(self, form):
-		messages.error(self.request, 'Please correct the password errors below.')
-		return super().form_invalid(form)
 
 
 class DoctorCreateView(LoginRequiredMixin, CreateView):

@@ -1,12 +1,12 @@
 from django.shortcuts import redirect
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth import logout
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import UserRegistrationForm, UserLoginForm, UserManagementForm
+from .forms import PasswordChangeForm, UserRegistrationForm, UserLoginForm, UserManagementForm
 from .models import User
 from apps.hospitals.models import HospitalAdmin
 
@@ -312,3 +312,28 @@ class UserDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
         messages.success(request, 'User deleted successfully!')
         return super().delete(request, *args, **kwargs)
 
+
+class PasswordChangeView(LoginRequiredMixin, UpdateView):
+	"""Dedicated doctor password change page."""
+	template_name = 'doctor/password_change.html'
+	form_class = PasswordChangeForm
+	success_url = reverse_lazy('doctors:doctor_profile')
+
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['user'] = self.request.user
+		return kwargs
+
+	def form_valid(self, form):
+		new_password = form.cleaned_data.get('new_password')
+		if new_password:
+			self.request.user.set_password(new_password)
+			self.request.user.is_default_password = False
+			self.request.user.save(update_fields=['password', 'is_default_password'])
+			update_session_auth_hash(self.request, self.request.user)
+			messages.success(self.request, 'Password changed successfully.')
+		return super().form_valid(form)
+
+	def form_invalid(self, form):
+		messages.error(self.request, 'Please correct the password errors below.')
+		return super().form_invalid(form)
