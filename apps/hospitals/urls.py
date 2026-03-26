@@ -16,6 +16,7 @@ from .views import (
     HospitalDepartmentCreateView,
     HospitalDepartmentUpdateView,
     HospitalDepartmentDeleteView,
+    HospitalRegistartionView,
 )
 
 app_name = 'hospitals'
@@ -42,4 +43,6 @@ urlpatterns = [
     path('admin/hospital/departments/add/', HospitalDepartmentCreateView.as_view(), name='hospital_department_create'),
     path('admin/hospital/departments/<int:pk>/edit/', HospitalDepartmentUpdateView.as_view(), name='hospital_department_update'),
     path('admin/hospital/departments/<int:pk>/delete/', HospitalDepartmentDeleteView.as_view(), name='hospital_department_delete'),
+    # Public hospital registration
+    path('register/', HospitalRegistartionView.as_view(), name='hospital_registration'),
 ]

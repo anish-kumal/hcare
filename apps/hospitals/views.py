@@ -1,3 +1,5 @@
+
+
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -426,3 +428,26 @@ class HospitalDepartmentDeleteView(HospitalAdminOnlyMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Department deleted successfully!')
         return super().delete(request, *args, **kwargs)
+
+
+class HospitalRegistartionView(CreateView):
+    """Hospital registration view for new hospitals to sign up"""
+    model = Hospital
+    form_class = HospitalForm
+    template_name = 'hospitals/hospital_registration.html'
+    success_url = reverse_lazy('administer')
+    
+    def form_valid(self, form):
+        # Ensure public signups start as pending and inactive for admin review.
+        form.instance.is_verified = False
+        form.instance.is_active = False
+
+        messages.success(
+            self.request,
+            'Registration successful! Your hospital will be reviewed and verified by our team shortly. A yearly fee of NRs 10,000 applies for listing approval.'
+        )
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)

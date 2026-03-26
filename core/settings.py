@@ -62,7 +62,6 @@ LOCAL_APPS = [
     "apps.patients",
     "apps.appointments",
     "apps.payments",
-    "apps.seed",
     "apps.medical_report",
 ]
 

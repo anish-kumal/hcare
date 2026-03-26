@@ -262,3 +262,100 @@ class HospitalDepartmentForm(forms.ModelForm):
                 'rows': 4,
             }),
         }
+
+class HospitalRegistrationForm(forms.ModelForm):
+    """Form for hospital registration by new hospitals"""
+
+    class Meta:
+        model = Hospital
+        fields = [
+            'name',
+            'registration_number',
+            'email',
+            'phone_number',
+            'address',
+            'city',
+            'state',
+            'country',
+            'postal_code',
+            'description',
+            'logo',
+            'website',
+            'established_date',
+            'total_beds',
+            'emergency_contact',
+        ]
+
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter hospital name',
+                'required': 'required'
+            }),
+            'registration_number': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter registration number',
+                'required': 'required'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter hospital email',
+                'required': 'required'
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter phone number',
+                'required': 'required'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter hospital address',
+                'rows': 3,
+                'required': 'required'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter city',
+                'required': 'required'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter state/province',
+                'required': 'required'
+            }),
+            'country': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter country',
+                'value': 'Nepal'
+            }),
+            'postal_code': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter postal code'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter hospital description and facilities',
+                'rows': 4
+            }),
+            'logo': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'accept': 'image/*'
+            }),
+            'website': forms.URLInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'https://example.com'
+            }),
+            'established_date': forms.DateInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'type': 'date'
+            }),
+            'total_beds': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter total beds',
+                'min': '0'
+            }),
+            'emergency_contact': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter emergency contact number'
+            }),
+        }   

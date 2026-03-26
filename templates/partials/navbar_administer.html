@@ -7,7 +7,7 @@
 
     <ul class="hidden lg:flex gap-8 list-none">
         <li>
-            <a href="{% url 'index' %}"
+            <a href="{% url 'administer' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Home</a>
         </li>
         <li>
@@ -50,7 +50,7 @@
             class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Log in
         </a>
-        <a href="#"
+        <a href="{% url 'hospitals:hospital_registration' %}"
             class="hidden md:block px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Join us
         </a>
