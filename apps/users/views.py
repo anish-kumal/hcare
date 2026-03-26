@@ -1,5 +1,5 @@
 from django.shortcuts import redirect
-from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib import messages
@@ -313,7 +313,7 @@ class UserDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-class PasswordChangeView(LoginRequiredMixin, UpdateView):
+class PasswordChangeView(LoginRequiredMixin, FormView):
 	"""Dedicated doctor password change page."""
 	template_name = 'doctor/password_change.html'
 	form_class = PasswordChangeForm
