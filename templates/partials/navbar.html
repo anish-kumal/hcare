@@ -48,8 +48,8 @@
     <div class="hidden lg:flex gap-3">
         {% if user.is_authenticated %}
         <a href="{% url 'patients:patient_profile' %}"
-            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">person</span>
+            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300" >
+            Profile
         </a>
         <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
             {% csrf_token %}
