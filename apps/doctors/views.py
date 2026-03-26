@@ -17,6 +17,7 @@ from .models import Doctor, DoctorSchedule
 from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorSelfProfileForm, DoctorScheduleForm
 from apps.users.forms import PasswordChangeForm
 from apps.hospitals.models import Hospital, HospitalAdmin
+from apps.patients.models import PatientAppointment
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 
 User = get_user_model()
@@ -455,17 +456,34 @@ class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
 	def delete(self, request, *args, **kwargs):
 		doctor = self.get_object()
 		doctor_name = doctor.user.get_full_name() or doctor.user.username
+		
+		# Check if doctor has incomplete appointments
+		incomplete_appointment_statuses = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED']
+		incomplete_appointments = PatientAppointment.objects.filter(
+			doctor=doctor,
+			status__in=incomplete_appointment_statuses
+		).exists()
+		
+		if incomplete_appointments:
+			messages.error(
+				request, 
+				f'Cannot delete Dr. {doctor_name} because they have incomplete appointments. '
+				'Please complete or cancel all appointments first.'
+			)
+			return redirect('doctors:doctor_detail', pk=doctor.pk)
+		
+		user = doctor.user  # Keep reference to user before deleting doctor
 
 		try:
 			with transaction.atomic():
-				doctor.user.delete()
+				doctor.delete()  # Delete doctor profile first
+				user.delete()    # Then delete the user
 			messages.success(request, f'Doctor {doctor_name} deleted successfully.')
 		except IntegrityError as exc:
 			messages.error(request, f'Could not delete doctor: {exc}')
 			return redirect('doctors:doctor_detail', pk=doctor.pk)
 
 		return redirect(self.success_url)
-
 
 class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 	"""Update doctor user and profile details"""

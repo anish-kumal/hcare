@@ -229,21 +229,6 @@
                             {% endif %}
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Employee ID -->
-                                <div>
-                                    <label for="{{ doctor_form.employee_id.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        Employee ID *
-                                    </label>
-                                    {{ doctor_form.employee_id }}
-                                    {% if doctor_form.employee_id.errors %}
-                                    <p class="mt-1 text-sm text-red-600">
-                                        {% for error in doctor_form.employee_id.errors %}
-                                        {{ error }}
-                                        {% endfor %}
-                                    </p>
-                                    {% endif %}
-                                </div>
 
                                 <!-- Qualification -->
                                 <div>

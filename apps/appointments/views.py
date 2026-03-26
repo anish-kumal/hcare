@@ -6,6 +6,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
+
+from tenacity import P
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
@@ -64,15 +66,20 @@ def get_booking_status(patient, doctor, appointment_date, appointment_time, defa
 
 
 def has_existing_active_booking(patient, doctor):
-    """Return True when patient already has an upcoming active booking with this doctor."""
+    """Return True when patient already has an active booking within past 24 hours or upcoming with this doctor."""
     now = timezone.localtime()
+    past_24_hours = now - timedelta(hours=24)
+    
     return PatientAppointment.objects.filter(
         patient_id=patient.id,
         doctor_id=doctor.id,
         status__in=ACTIVE_BOOKING_STATUSES,
     ).filter(
-        Q(appointment_date__gt=now.date())
-        | Q(appointment_date=now.date(), appointment_time__gte=now.time())
+        Q(appointment_date__gt=past_24_hours.date())  # Dates after past 24hrs
+        | Q(appointment_date=past_24_hours.date(), appointment_time__gte=past_24_hours.time())  # Today at or after past 24hrs time
+    ).exclude(
+        appointment_date__lt=now.date(),  # Exclude past dates
+        appointment_time__lt=now.time()  # And past times
     ).exists()
 
 
@@ -416,6 +423,7 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
 
         today = timezone.now().date()
         end_date = today + timedelta(days=selected_days - 1)
+        now = timezone.now()
 
         schedules = doctor.schedules.filter(is_available=True).order_by('weekday', 'start_time')
         schedules_by_weekday = {}
@@ -448,16 +456,33 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
                 ]
                 booked_count = len(session_bookings)
                 slots_left = max(schedule.max_patients - booked_count, 0)
+                
+                # Check if session end time has passed
+                session_end_dt = timezone.make_aware(datetime.combine(current_date, schedule.end_time))
+                is_past = session_end_dt <= now
+                
+                # Skip sessions that have already passed
+                if is_past:
+                    continue
+                
+                # Check if session is fully booked
+                is_fully_booked = booked_count >= schedule.max_patients
 
                 session_rows.append({
                     'schedule': schedule,
                     'booked_count': booked_count,
                     'slots_left': slots_left,
                     'bookings': session_bookings,
+                    'is_fully_booked': is_fully_booked,
+                    'is_bookable': not is_fully_booked,
                 })
 
             daily_max_patients = sum(session['schedule'].max_patients for session in session_rows)
             daily_booked_count = sum(session['booked_count'] for session in session_rows)
+            daily_slots_left = max(daily_max_patients - daily_booked_count, 0)
+            
+            # Day is bookable if at least one session is bookable
+            day_is_bookable = any(session['is_bookable'] for session in session_rows)
 
             weekly_schedule.append({
                 'date': current_date,
@@ -466,7 +491,8 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
                 'has_schedule': bool(day_schedules),
                 'daily_max_patients': daily_max_patients,
                 'daily_booked_count': daily_booked_count,
-                'daily_slots_left': max(daily_max_patients - daily_booked_count, 0),
+                'daily_slots_left': daily_slots_left,
+                'day_is_bookable': day_is_bookable,
                 'all_bookings': day_bookings,
             })
 
@@ -494,89 +520,62 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['hospital'] = self.get_doctor().hospital
+        
+        # Pre-populate form data with date/time from URL parameters
+        if self.request.method == 'GET':
+            initial_data = {}
+            date_param = self.request.GET.get('date', '').strip()
+            time_param = self.request.GET.get('time', '').strip()
+            
+            if date_param:
+                initial_data['appointment_date'] = date_param
+            if time_param:
+                initial_data['appointment_time'] = time_param
+            
+            if initial_data:
+                kwargs['initial'] = initial_data
+        
         return kwargs
 
-    def get_available_slot_map(self, doctor):
-        """Return available session start times keyed by date string (YYYY-MM-DD)."""
-        today = timezone.now().date()
-        now = timezone.now()
-
-        schedules = doctor.schedules.filter(is_available=True).order_by('weekday', 'start_time')
-        schedules_by_weekday = {}
-        for schedule in schedules:
-            schedules_by_weekday.setdefault(schedule.weekday, []).append(schedule)
-
-        available_slot_map = {}
-        for offset in range(self.slot_window_days):
-            appointment_date = today + timedelta(days=offset)
-            day_schedules = schedules_by_weekday.get(appointment_date.weekday(), [])
-            if not day_schedules:
-                continue
-
-            day_slots = []
-            for schedule in day_schedules:
-                session_start_dt = timezone.make_aware(datetime.combine(appointment_date, schedule.start_time))
-                if session_start_dt <= now:
-                    continue
-
-                booked_count = PatientAppointment.objects.filter(
-                    doctor=doctor,
-                    appointment_date=appointment_date,
-                    appointment_time__gte=schedule.start_time,
-                    appointment_time__lte=schedule.end_time,
-                    status__in=ACTIVE_BOOKING_STATUSES,
-                ).count()
-
-                if booked_count < schedule.max_patients:
-                    day_slots.append(schedule.start_time.strftime('%H:%M'))
-
-            if day_slots:
-                available_slot_map[appointment_date.strftime('%Y-%m-%d')] = sorted(set(day_slots))
-
-        return available_slot_map
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         doctor = self.get_doctor()
-        available_slot_map = self.get_available_slot_map(doctor)
-
-        selected_date = self.request.POST.get('appointment_date') or self.request.GET.get('date', '')
-        if selected_date not in available_slot_map:
-            selected_date = next(iter(available_slot_map), '')
-
-        date_slots = available_slot_map.get(selected_date, [])
-        selected_time = self.request.POST.get('appointment_time') or self.request.GET.get('time', '')
-        if selected_time not in date_slots:
-            selected_time = date_slots[0] if date_slots else ''
-
+        
+        # Get date and time from URL parameters or form data
+        appointment_date = self.request.POST.get('appointment_date') or self.request.GET.get('date', '')
+        appointment_time = self.request.POST.get('appointment_time') or self.request.GET.get('time', '')
+        
+        # Parse date
+        if appointment_date:
+            try:
+                if isinstance(appointment_date, str):
+                    appointment_date = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                appointment_date = None
+        
+        # Parse time
+        if appointment_time:
+            try:
+                if isinstance(appointment_time, str):
+                    appointment_time = datetime.strptime(appointment_time, '%H:%M').time()
+            except (ValueError, TypeError):
+                appointment_time = None
+        
+    
         context['doctor'] = doctor
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
-        context['available_slot_map'] = available_slot_map
-        context['available_dates'] = list(available_slot_map.keys())
-        context['appointment_date'] = selected_date
-        context['appointment_time'] = selected_time
+        context['appointment_date'] = appointment_date
+        context['appointment_time'] = appointment_time
         return context
 
     def form_valid(self, form):
         doctor = self.get_doctor()
         patient = form.cleaned_data.get('patient')
-
         appointment_date = form.cleaned_data.get('appointment_date')
         appointment_time = form.cleaned_data.get('appointment_time')
 
-        available_slot_map = self.get_available_slot_map(doctor)
-        date_key = appointment_date.strftime('%Y-%m-%d')
-        time_key = appointment_time.strftime('%H:%M')
-        if time_key not in available_slot_map.get(date_key, []):
-            form.add_error('appointment_time', 'Please choose a valid available slot for this doctor.')
-            return self.form_invalid(form)
-
-        appointment_datetime = datetime.combine(appointment_date, appointment_time)
-        appointment_datetime = timezone.make_aware(appointment_datetime)
-        if appointment_datetime < timezone.now():
-            form.add_error('appointment_time', 'Appointment date/time must be in the future.')
-            return self.form_invalid(form)
-
+        # Check for existing active booking
         if has_existing_active_booking(patient=patient, doctor=doctor):
             form.add_error(
                 'appointment_time',
@@ -584,6 +583,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             )
             return self.form_invalid(form)
 
+        # Verify doctor has schedule for this time
         weekday = appointment_date.weekday()
         schedule = doctor.schedules.filter(
             weekday=weekday,
@@ -595,6 +595,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             form.add_error('appointment_time', 'Doctor is not available at this selected day/time.')
             return self.form_invalid(form)
 
+        # Check slot availability
         existing_appointments = PatientAppointment.objects.filter(
             doctor=doctor,
             appointment_date=appointment_date,
@@ -607,6 +608,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             form.add_error('appointment_time', 'This time slot is fully booked.')
             return self.form_invalid(form)
 
+        # Create appointment
         self.object = form.save(commit=False)
         self.object.patient = patient
         self.object.doctor = doctor
@@ -620,9 +622,8 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         )
         self.object.save()
 
-        # Set fee: 10 Rs for follow-up, consultation fee otherwise
+        # Create payment record
         appointment_fee = 10 if self.object.status == 'FOLLOW_UP' else doctor.consultation_fee
-
         AppointmentPayment.objects.get_or_create(
             appointment=self.object,
             defaults={
@@ -634,7 +635,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
 
         messages.success(
             self.request,
-            f'Appointment booked for {patient.user.get_full_name() or patient.user.username} with booking UUID {patient.booking_uuid}.',
+            f'Appointment booked for {patient.user.get_full_name() or patient.user.username}.',
         )
         return redirect('payments:appointment_payment', appointment_id=self.object.id)
 

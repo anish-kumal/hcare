@@ -89,14 +89,14 @@ class AdminAppointmentBookingForm(forms.ModelForm):
         model = PatientAppointment
         fields = ['patient', 'booking_uuid', 'appointment_date', 'appointment_time', 'reason', 'notes']
         widgets = {
-            'appointment_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
+            'appointment_date': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed',
+                'readonly': True,
                 'required': True,
             }),
-            'appointment_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'form-control',
+            'appointment_time': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed',
+                'readonly': True,
                 'required': True,
             }),
             'reason': forms.Textarea(attrs={
@@ -115,8 +115,9 @@ class AdminAppointmentBookingForm(forms.ModelForm):
         self.hospital = kwargs.pop('hospital', None)
         super().__init__(*args, **kwargs)
 
-        hospital_patients = Patient.objects.filter(hospital=self.hospital).select_related('user').order_by('user__first_name', 'user__last_name')
-        self.fields['patient'].queryset = hospital_patients
+        # Show ALL patients in dropdown (not restricted by hospital)
+        all_patients = Patient.objects.select_related('user').order_by('user__first_name', 'user__last_name')
+        self.fields['patient'].queryset = all_patients
 
         self.fields['patient'].widget.attrs.update({
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
@@ -130,6 +131,8 @@ class AdminAppointmentBookingForm(forms.ModelForm):
         self.fields['notes'].widget.attrs.update({
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
         })
+        
+        # appointment_date and appointment_time are read-only (set in widgets)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -149,13 +152,6 @@ class AdminAppointmentBookingForm(forms.ModelForm):
                 self.add_error('booking_uuid', 'No patient found for this booking UUID.')
                 return cleaned_data
 
-            if selected_patient.hospital_id != getattr(self.hospital, 'id', None):
-                self.add_error('booking_uuid', 'Patient does not belong to this doctor hospital.')
-                return cleaned_data
-
             cleaned_data['patient'] = selected_patient
-
-        if selected_patient and selected_patient.hospital_id != getattr(self.hospital, 'id', None):
-            self.add_error('patient', 'Selected patient does not belong to this doctor hospital.')
 
         return cleaned_data
