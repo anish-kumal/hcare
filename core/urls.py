@@ -38,6 +38,7 @@ urlpatterns = [
     path('administer/', AdministrView.as_view(), name='administer'),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls')),
+    path('social-auth/', include('allauth.urls')),
     path('otp/', include('apps.otp.urls')),
     path('hospitals/', include('apps.hospitals.urls')),
     path('doctors/', include('apps.doctors.urls')),

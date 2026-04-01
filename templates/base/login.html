@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load socialaccount %}
 
 {% block title %}Home - Health Care{% endblock title %}
 
@@ -78,7 +79,7 @@
                 <div class="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            <button
+            <a href="{% provider_login_url 'google' process='login' %}"
                 class="w-full flex items-center justify-center gap-3 bg-gray-50 border border-gray-200 text-gray-600 font-medium py-3 rounded-lg hover:bg-gray-100 transition">
                 <svg class="w-5 h-5" viewBox="0 0 24 24">
                     <path
@@ -95,7 +96,7 @@
                         fill="#EA4335" />
                 </svg>
                 <span class="text-sm">Log In with Google</span>
-            </button>
+            </a>
 
             <p class="text-center text-sm text-gray-500 mt-8">
                 Don't have an account?
