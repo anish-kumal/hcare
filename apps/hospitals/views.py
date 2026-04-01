@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils import timezone
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -69,6 +70,9 @@ class HospitalCreateView(SuperAdminOnlyMixin, CreateView):
     success_url = reverse_lazy('hospitals:hospital_list')
     
     def form_valid(self, form):
+        if form.cleaned_data.get('is_verified'):
+            form.instance.verified_by = self.request.user
+            form.instance.verified_at = timezone.now()
         messages.success(self.request, 'Hospital created successfully!')
         return super().form_valid(form)
     
@@ -87,6 +91,14 @@ class HospitalUpdateView(SuperAdminOnlyMixin, UpdateView):
     slug_url_kwarg = 'pk'
     
     def form_valid(self, form):
+        if form.cleaned_data.get('is_verified'):
+            if not self.object.verified_at:
+                form.instance.verified_at = timezone.now()
+            if not self.object.verified_by:
+                form.instance.verified_by = self.request.user
+        else:
+            form.instance.verified_at = None
+            form.instance.verified_by = None
         messages.success(self.request, 'Hospital updated successfully!')
         return super().form_valid(form)
     

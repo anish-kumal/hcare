@@ -12,8 +12,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config
-import os
+import base64
+import hashlib
 import cloudinary
+from cryptography.fernet import Fernet
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,6 +26,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("DJANGO_SECRET_KEY")
+
+# Function to convert raw key to a valid Fernet key
+def _to_fernet_key(raw_value: str) -> str:
+    """Return a valid Fernet key from either a Fernet key or plain text input."""
+    try:
+        Fernet(raw_value.encode("utf-8"))
+        return raw_value
+    except Exception:
+        return base64.urlsafe_b64encode(
+            hashlib.sha256(raw_value.encode("utf-8")).digest()
+        ).decode("utf-8")
+
+# Field encryption key for encrypting sensitive data in the database
+FIELD_ENCRYPTION_KEY = _to_fernet_key(
+    config("FIELD_ENCRYPTION_KEY", default=SECRET_KEY)
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)

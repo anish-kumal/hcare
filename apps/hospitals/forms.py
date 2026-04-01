@@ -5,6 +5,12 @@ from apps.users.models import User
 
 class HospitalForm(forms.ModelForm):
     """Form for creating and updating hospital information"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['khalti_secret_key'].help_text = 'Leave blank to keep the existing secret key.'
+            self.fields['khalti_public_key'].help_text = 'Leave blank to keep the existing public key.'
     
     class Meta:
         model = Hospital
@@ -24,6 +30,8 @@ class HospitalForm(forms.ModelForm):
             'established_date',
             'total_beds',
             'emergency_contact',
+            'khalti_secret_key',
+            'khalti_public_key',
             'is_verified',
             'is_active',
         ]
@@ -100,6 +108,14 @@ class HospitalForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'placeholder': 'Enter emergency contact number'
             }),
+            'khalti_secret_key': forms.PasswordInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter Khalti secret key'
+            }, render_value=False),
+            'khalti_public_key': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Enter Khalti public key'
+            }),
             'is_verified': forms.CheckboxInput(attrs={
                 'class': 'w-4 h-4 text-primary bg-gray-100 border border-gray-300 rounded cursor-pointer'
             }),
@@ -107,6 +123,18 @@ class HospitalForm(forms.ModelForm):
                 'class': 'w-4 h-4 text-primary bg-gray-100 border border-gray-300 rounded cursor-pointer'
             }),
         }
+
+    def clean_khalti_secret_key(self):
+        secret_key = self.cleaned_data.get('khalti_secret_key')
+        if not secret_key and self.instance and self.instance.pk:
+            return self.instance.khalti_secret_key
+        return secret_key
+
+    def clean_khalti_public_key(self):
+        public_key = self.cleaned_data.get('khalti_public_key')
+        if not public_key and self.instance and self.instance.pk:
+            return self.instance.khalti_public_key
+        return public_key
 
 
 class HospitalAdminForm(forms.ModelForm):

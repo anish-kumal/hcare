@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from apps.base.models import BaseModel
 from cloudinary.models import CloudinaryField
+from encrypted_model_fields.fields import EncryptedCharField
 
 class Hospital(BaseModel):
     """
@@ -92,6 +93,20 @@ class Hospital(BaseModel):
         help_text="Emergency contact number"
     )
     
+    khalti_secret_key = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Khalti secret key for payment processing"
+    )
+
+    khalti_public_key = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Khalti public key for payment processing"
+    )
+
     is_verified = models.BooleanField(
         default=False,
         help_text="Whether hospital is verified by super admin"
