@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base/base_dashboard.html" %}
 {% load static %}
 {% block title %}Manage Doctor Appointments - Health Care{% endblock title %}
 
@@ -73,9 +73,11 @@
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-3">
                                                 {% if doctor.profile_picture %}
-                                                    <img src="{{ doctor.profile_picture.url }}" 
-                                                        class="w-10 h-10 rounded-full object-cover"
+                                                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0  overflow-hidden">
+                                                        <img src="{{ doctor.profile_picture.url }}" 
+                                                        class="w-9 h-9 rounded-full object-cover"
                                                         alt="Dr. {{ doctor.user.get_full_name }}">
+                                                    </div>
                                                 {% else %}
                                                     <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                                                         <span class="material-symbols-outlined text-white text-sm">person</span>
