@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from apps.base.models import BaseModel
 from apps.hospitals.models import Hospital, HospitalDepartment
-
+from cloudinary.models import CloudinaryField
 
 class Doctor(BaseModel):
     """
@@ -76,12 +76,13 @@ class Doctor(BaseModel):
         help_text="Consultation fee"
     )
     
-    profile_picture = models.ImageField(
-        upload_to='doctors/profiles/',
+    profile_picture = CloudinaryField(
+        'image',
+        folder='health_care/doctors/profiles/',
         blank=True,
-        null=True,
-        help_text="Profile picture"
+        null=True
     )
+    
     
     is_available = models.BooleanField(
         default=True,

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import cloudinary
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -50,18 +51,20 @@ PRELOAD_APPS = [
 
 
 THIRD_PARTY_APPS = [
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 LOCAL_APPS = [
-    "apps.users",
-    "apps.otp",
-    "apps.base",
-    "apps.doctors",
-    "apps.hospitals",
-    "apps.patients",
-    "apps.appointments",
-    "apps.payments",
-    "apps.medical_report",
+    'apps.users',
+    'apps.otp',
+    'apps.base',
+    'apps.doctors',
+    'apps.hospitals',
+    'apps.patients',
+    'apps.appointments',
+    'apps.payments',
+    'apps.medical_report',
 ]
 
 INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -156,9 +159,21 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files (user uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True,
+)
+
+
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
@@ -179,7 +194,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email Configuration
 # For development: use console backend
 if DEBUG:
-    EMAIL_BACKEND = default='django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For production: use SMTP
 else:
@@ -193,12 +208,11 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@healthcare.com')
 
 # OTP Settings
-OTP_LENGTH = 6
-OTP_VALIDITY_MINUTES = 5
-OTP_MAX_ATTEMPTS = 5
+OTP_LENGTH = config('OTP_LENGTH', cast=int)
+OTP_VALIDITY_MINUTES = config('OTP_VALIDITY_MINUTES', cast=int)
+OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', cast=int)
 
-
+# Khalti Payment Gateway Configuration
 SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')
 PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
-
 KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='')

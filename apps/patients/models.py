@@ -4,7 +4,7 @@ from django.utils.crypto import get_random_string
 from apps.base.models import BaseModel
 from apps.doctors.models import Doctor
 from apps.hospitals.models import Hospital
-
+from cloudinary.models import CloudinaryField
 
 def generate_booking_code(prefix='BK'):
     return f"{prefix}{get_random_string(10, allowed_chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789')}"
@@ -132,11 +132,11 @@ class Patient(BaseModel):
         help_text="Insurance policy number"
     )
     
-    profile_picture = models.ImageField(
-        upload_to='patients/profiles/',
+    profile_picture = CloudinaryField(
+        'image',
+        folder='health_care/patients/profiles/',
         blank=True,
-        null=True,
-        help_text="Profile picture"
+        null=True
     )
     
     is_verified = models.BooleanField(

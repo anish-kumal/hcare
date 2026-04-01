@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from apps.base.models import BaseModel
+from cloudinary.models import CloudinaryField
 
 class Hospital(BaseModel):
     """
@@ -60,11 +61,11 @@ class Hospital(BaseModel):
         help_text="Hospital description and facilities"
     )
     
-    logo = models.ImageField(
-        upload_to='hospitals/logos/',
+    logo = CloudinaryField(
+        'image',
+        folder='health_care/hospitals/logos/',
         blank=True,
-        null=True,
-        help_text="Hospital logo"
+        null=True
     )
     
     website = models.URLField(

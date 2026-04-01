@@ -156,7 +156,9 @@ class AdministerLogoutView(LoginRequiredMixin, LogoutView):
 
 
 class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
-    """List all users for Super Admin"""
+    """List all users for Super Admin
+    Admin can only see users from their hospital
+    """
     model = User
     template_name = 'users/user_list.html'
     context_object_name = 'users'
@@ -210,7 +212,9 @@ class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
         return context
 
 class UserCreateView(AdminOnlyMixin, CreateView):
-    """Create user for Super Admin"""
+    """Create user for Super Admin
+    Admin can only create users for their hospital
+    """
     model = User
     form_class = UserManagementForm
     template_name = 'users/user_form.html'
@@ -227,7 +231,8 @@ class UserCreateView(AdminOnlyMixin, CreateView):
     
     
 class UserDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
-    """View user details for Super Admin"""
+    """View user details for Super Admin
+    Admin can only view users from their hospital"""
     model = User
     template_name = 'users/user_detail.html'
     context_object_name = 'user_obj'
@@ -245,7 +250,8 @@ class UserDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
 
 
 class UserUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
-    """Update user for Super Admin"""
+    """Update user for Super Admin
+    Admin can only update users from their hospital"""
     model = User
     form_class = UserManagementForm
     template_name = 'users/user_form.html'
@@ -266,7 +272,8 @@ class UserUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 
 
 class UserDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
-    """Delete user for Super Admin"""
+    """Delete user for Super Admin
+    Admin can only delete users from their hospital"""
     model = User
     template_name = 'partials/delete.html'
     slug_field = 'id'
@@ -303,7 +310,7 @@ class PasswordChangeView(LoginRequiredMixin, FormView):
 		kwargs = super().get_form_kwargs()
 		kwargs['user'] = self.request.user
 		return kwargs
-
+    
 	def form_valid(self, form):
 		new_password = form.cleaned_data.get('new_password')
 		if new_password:

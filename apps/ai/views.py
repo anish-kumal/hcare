@@ -4,7 +4,6 @@ from .schemas import DoctorSchema
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from django.views.generic import ListView
-from apps.appointments.views import PatientAccessMixin
 from django.contrib import messages
 
 load_dotenv()

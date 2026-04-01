@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from apps import hospitals
 from apps.base.models import BaseModel
+from cloudinary.models import CloudinaryField
 
 # Create your models here.
 class MedicalReport(BaseModel):
@@ -27,9 +28,9 @@ class MedicalReport(BaseModel):
         help_text="Name/title of the medical report"
     )
 
-    report_file = models.FileField(
-        upload_to='medical_reports/',
-        help_text="Uploaded medical report file (PDF, images, etc.)"
+    report_file = CloudinaryField(
+        resource_type='raw',
+        folder='health_care/patients/reports/'
     )
 
     description = models.TextField(
