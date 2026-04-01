@@ -243,7 +243,7 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
 
         # Fetch appointment with required relations
         appointment = get_object_or_404(
-            PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'doctor'),
+            PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'doctor', 'doctor__hospital'),
             pk=appointment_id,
             patient__user=request.user,
         )
@@ -293,9 +293,13 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             }
 
             headers = {
-                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Authorization': f'Key {getattr(appointment.doctor.hospital, "khalti_secret_key", None)}',
                 'Content-Type': 'application/json',
             }
+
+            if not headers['Authorization'].replace('Key ', '').strip():
+                messages.error(request, 'Khalti secret key is not configured for this hospital.')
+                return redirect(reverse('payments:patient_payment_list'))
 
             try:
                 response = requests.post(

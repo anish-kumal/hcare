@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth import logout, update_session_auth_hash, login
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -115,6 +115,16 @@ class AdministerLoginView(LoginView):
                 'Please change your default password before continuing.'
             )
             return redirect(f"{reverse('otp:request')}?source=administer")
+
+        # Check if admin needs to set up Khalti payment keys
+        if user.is_admin and hasattr(user, 'hospital_admin_profile'):
+            hospital = user.hospital_admin_profile.hospital
+            if not hospital.khalti_secret_key or not hospital.khalti_public_key:
+                # Log in the user first
+                login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+                # Then redirect to Khalti setup
+                success_url = reverse('admin_dashboard')
+                return redirect(f"{reverse('hospitals:khalti_setup')}?next={success_url}")
 
         messages.success(
             self.request,

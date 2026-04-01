@@ -233,4 +233,3 @@ OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', cast=int)
 # Khalti Payment Gateway Configuration
 SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')
 PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
-KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='')

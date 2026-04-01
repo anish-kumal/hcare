@@ -112,10 +112,10 @@ class HospitalForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'placeholder': 'Enter Khalti secret key'
             }, render_value=False),
-            'khalti_public_key': forms.TextInput(attrs={
+            'khalti_public_key': forms.PasswordInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'placeholder': 'Enter Khalti public key'
-            }),
+            }, render_value=False),
             'is_verified': forms.CheckboxInput(attrs={
                 'class': 'w-4 h-4 text-primary bg-gray-100 border border-gray-300 rounded cursor-pointer'
             }),
@@ -386,4 +386,44 @@ class HospitalRegistrationForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'placeholder': 'Enter emergency contact number'
             }),
-        }   
+        }
+
+
+class KhaltiSetupForm(forms.ModelForm):
+    """Form for setting up Khalti payment keys - Only khalti_secret_key and khalti_public_key"""
+    
+    khalti_secret_key = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+            'placeholder': 'Enter Khalti Secret Key',
+            'required': 'required',
+        }),
+        label='Khalti Secret Key'
+    )
+    
+    khalti_public_key = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+            'placeholder': 'Enter Khalti Public Key',
+            'required': 'required',
+        }),
+        label='Khalti Public Key'
+    )
+    
+    class Meta:
+        model = Hospital
+        fields = ['khalti_secret_key', 'khalti_public_key']
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        secret_key = cleaned_data.get('khalti_secret_key')
+        public_key = cleaned_data.get('khalti_public_key')
+        
+        if not secret_key or not public_key:
+            raise forms.ValidationError('Both Khalti keys are required.')
+        
+        return cleaned_data

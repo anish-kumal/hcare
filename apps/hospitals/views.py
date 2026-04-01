@@ -1,7 +1,7 @@
 
 
-from django.shortcuts import get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -9,10 +9,10 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.conf import settings
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from .models import Hospital, HospitalAdmin, HospitalDepartment
-from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm
+from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm, KhaltiSetupForm
 from apps.base.mixin import SuperAdminOnlyMixin
 
 
@@ -355,6 +355,9 @@ class AdminOwnHospitalUpdateView(HospitalAdminOnlyMixin, UpdateView):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
 
+    def get_success_url(self):
+        return reverse_lazy('hospitals:admin_hospital_detail')
+
 class HospitalDepartmentListView(HospitalAdminOnlyMixin, ListView):
     """List all departments for the hospital admin's hospital"""
     model = HospitalDepartment
@@ -461,5 +464,59 @@ class HospitalRegistartionView(CreateView):
         return super().form_valid(form)
     
     def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+
+class KhaltiSetupView(LoginRequiredMixin, FormView):
+    """
+    View for hospital admins to set up Khalti payment keys.
+    Only shows khalti_secret_key and khalti_public_key fields.
+    This is displayed when the admin first logs in if keys are empty.
+    """
+    form_class = KhaltiSetupForm
+    template_name = 'hospitals/khalti_setup.html'
+    login_url = reverse_lazy('users:administer_login')
+    
+    def get_object(self):
+        """Get the hospital associated with the admin"""
+        if hasattr(self.request.user, 'hospital_admin_profile'):
+            return self.request.user.hospital_admin_profile.hospital
+        raise PermissionDenied("You are not a hospital admin.")
+    
+    def get_initial(self):
+        """Pre-populate form if keys already exist"""
+        initial = super().get_initial()
+        hospital = self.get_object()
+        initial['khalti_secret_key'] = hospital.khalti_secret_key or ''
+        initial['khalti_public_key'] = hospital.khalti_public_key or ''
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        """Add hospital info to context"""
+        context = super().get_context_data(**kwargs)
+        hospital = self.get_object()
+        context['hospital'] = hospital
+        context['page_title'] = f'Khalti Payment Setup - {hospital.name}'
+        return context
+    
+    def form_valid(self, form):
+        """Save khalti keys to the hospital"""
+        hospital = self.get_object()
+        hospital.khalti_secret_key = form.cleaned_data['khalti_secret_key']
+        hospital.khalti_public_key = form.cleaned_data['khalti_public_key']
+        hospital.save()
+        
+        messages.success(
+            self.request,
+            'Khalti payment keys have been set up successfully! You can now proceed.'
+        )
+        
+        # Redirect to admin dashboard or next page
+        next_url = self.request.GET.get('next', reverse_lazy('admin_dashboard'))
+        return redirect(next_url)
+    
+    def form_invalid(self, form):
+        """Show form errors"""
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
