@@ -9,13 +9,11 @@ from django.template.loader import render_to_string
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.html import strip_tags
-from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
-from django.contrib.auth import update_session_auth_hash
 
 from .models import Doctor, DoctorSchedule
 from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorSelfProfileForm, DoctorScheduleForm
-from apps.users.forms import PasswordChangeForm
 from apps.hospitals.models import Hospital, HospitalAdmin
 from apps.patients.models import PatientAppointment
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
@@ -168,8 +166,10 @@ class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 		doctor = self.object
 		context['doctor_form'] = kwargs.get('doctor_form') or context.get('form')
 		
-		# Initialize user form
-		if 'user_form' not in context:
+		# Initialize user form - explicitly get from kwargs or create new one
+		if 'user_form' in kwargs:
+			context['user_form'] = kwargs['user_form']
+		elif 'user_form' not in context:
 			if self.request.method == 'POST':
 				context['user_form'] = DoctorUserUpdateForm(self.request.POST, instance=doctor.user)
 			else:
@@ -246,6 +246,7 @@ class DoctorCreateView(LoginRequiredMixin, CreateView):
 		
 		context['user_form'] = user_form
 		context['doctor_form'] = doctor_form
+		context['selected_hospital_id'] = kwargs.get('hospital_id') or self.request.POST.get('hospital')
 		
 		# Get hospitals based on user type
 		if self.request.user.is_super_admin:
@@ -261,18 +262,37 @@ class DoctorCreateView(LoginRequiredMixin, CreateView):
 	
 	def post(self, request, *args, **kwargs):
 		"""Handle doctor creation"""
+		self.object = None
+		user_form = DoctorUserForm(request.POST)
+		doctor_form = DoctorProfileForm(request.POST, request.FILES)
+		selected_hospital_id = request.POST.get('hospital')
+
+		# Validate forms first so field-level errors are preserved on any failure.
+		forms_are_valid = user_form.is_valid() and doctor_form.is_valid()
+
 		# Validate hospital selection
-		hospital_id = request.POST.get('hospital')
-		if not hospital_id:
+		if not selected_hospital_id:
 			messages.error(request, 'Please select a hospital.')
-			return self.get(request, *args, **kwargs)
+			return self.render_to_response(
+				self.get_context_data(
+					user_form=user_form,
+					doctor_form=doctor_form,
+					hospital_id=selected_hospital_id,
+				)
+			)
 		
 		try:
-			hospital_id = int(hospital_id)
+			hospital_id = int(selected_hospital_id)
 			hospital = Hospital.objects.get(id=hospital_id)
 		except (ValueError, Hospital.DoesNotExist):
 			messages.error(request, 'Selected hospital does not exist.')
-			return self.get(request, *args, **kwargs)
+			return self.render_to_response(
+				self.get_context_data(
+					user_form=user_form,
+					doctor_form=doctor_form,
+					hospital_id=selected_hospital_id,
+				)
+			)
 		
 		# Validate hospital admin permissions
 		if request.user.is_admin:
@@ -281,12 +301,8 @@ class DoctorCreateView(LoginRequiredMixin, CreateView):
 				messages.error(request, 'You can only create doctors for your hospital.')
 				raise PermissionDenied
 		
-		# Create forms
-		user_form = DoctorUserForm(request.POST)
-		doctor_form = DoctorProfileForm(request.POST, request.FILES)
-		
-		# Validate both forms
-		if user_form.is_valid() and doctor_form.is_valid():
+
+		if forms_are_valid:
 			try:
 				with transaction.atomic():
 					# 1. Save User first
@@ -346,22 +362,22 @@ class DoctorCreateView(LoginRequiredMixin, CreateView):
 			
 			except IntegrityError as e:
 				messages.error(request, f'Error creating doctor: {str(e)}')
-				return self.get(
-					request, 
-					user_form=user_form, 
-					doctor_form=doctor_form,
-					*args, 
-					**kwargs
+				return self.render_to_response(
+					self.get_context_data(
+						user_form=user_form,
+						doctor_form=doctor_form,
+						hospital_id=selected_hospital_id,
+					)
 				)
 		else:
 			# Forms not valid, return with errors
-			messages.error(request, 'Please correct the errors below.')
-			return self.get(
-				request, 
-				user_form=user_form, 
-				doctor_form=doctor_form,
-				*args, 
-				**kwargs
+			messages.error(request, 'Please correct the highlighted errors below.')
+			return self.render_to_response(
+				self.get_context_data(
+					user_form=user_form,
+					doctor_form=doctor_form,
+					hospital_id=selected_hospital_id,
+				)
 			)
 
 
@@ -528,12 +544,18 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 
 	def post(self, request, *args, **kwargs):
 		doctor = self.get_object()
+		self.object = doctor  # Set self.object for get_context_data()
 
 		if request.user.is_super_admin:
 			hospital_id = request.POST.get('hospital')
 			if not hospital_id:
 				messages.error(request, 'Please select a hospital.')
-				return self.get(request, *args, **kwargs)
+				return self.render_to_response(
+					self.get_context_data(
+						user_form=DoctorUserUpdateForm(instance=doctor.user),
+						doctor_form=DoctorProfileForm(instance=doctor),
+					)
+				)
 			hospital = get_object_or_404(Hospital, id=hospital_id)
 		else:
 			hospital_admin = HospitalAdmin.objects.filter(user=request.user).select_related('hospital').first()
@@ -558,14 +580,19 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 				return redirect(self.success_url)
 			except IntegrityError as exc:
 				messages.error(request, f'Error updating doctor: {exc}')
+				return self.render_to_response(
+					self.get_context_data(
+						user_form=user_form,
+						doctor_form=doctor_form,
+					)
+				)
 
 		messages.error(request, 'Please correct the errors below.')
-		return self.get(
-			request,
-			user_form=user_form,
-			doctor_form=doctor_form,
-			*args,
-			**kwargs,
+		return self.render_to_response(
+			self.get_context_data(
+				user_form=user_form,
+				doctor_form=doctor_form,
+			)
 		)
 
 

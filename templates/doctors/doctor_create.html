@@ -63,12 +63,11 @@
                                         class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
                                         <option value="">-- Select a Hospital --</option>
                                         {% for hospital in hospitals %}
-                                        <option value="{{ hospital.id }}">{{ hospital.name }}</option>
+                                        <option value="{{ hospital.id }}" {% if selected_hospital_id|stringformat:"s" == hospital.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ hospital.name }}
+                                        </option>
                                         {% endfor %}
                                     </select>
-                                    {% if hospital_id %}
-                                        <input type="hidden" name="hospital" value="{{ hospital_id }}">
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -304,38 +303,6 @@
                                     {% if doctor_form.employee_id.errors %}
                                     <p class="mt-1 text-sm text-red-600">
                                         {% for error in doctor_form.employee_id.errors %}
-                                        {{ error }}
-                                        {% endfor %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Qualification -->
-                                <div>
-                                    <label for="{{ doctor_form.qualification.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        Qualification *
-                                    </label>
-                                    {{ doctor_form.qualification }}
-                                    {% if doctor_form.qualification.errors %}
-                                    <p class="mt-1 text-sm text-red-600">
-                                        {% for error in doctor_form.qualification.errors %}
-                                        {{ error }}
-                                        {% endfor %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Experience Years -->
-                                <div>
-                                    <label for="{{ doctor_form.experience_years.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        Years of Experience *
-                                    </label>
-                                    {{ doctor_form.experience_years }}
-                                    {% if doctor_form.experience_years.errors %}
-                                    <p class="mt-1 text-sm text-red-600">
-                                        {% for error in doctor_form.experience_years.errors %}
                                         {{ error }}
                                         {% endfor %}
                                     </p>

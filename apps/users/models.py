@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager
-from django.core.exceptions import ValidationError
-import re
 from apps.base.models import BaseModel
 
 
@@ -102,16 +100,5 @@ class User(AbstractUser, BaseModel):
     @property
     def is_pharmacist(self):
         return self.user_type == self.UserType.PHARMACIST
-    
-    def clean(self):
-        """Validates the user instance before saving"""
-        super().clean()
-        # Validate password if it has been changed
-        # Removed password strength validation
-    
-    def save(self, *args, **kwargs):
-        """Saves the user instance with validation"""
-        # Removed password strength validation
-        super().save(*args, **kwargs)
 
 

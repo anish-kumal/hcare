@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from datetime import date
+import re
 from .models import Doctor, DoctorSchedule
 
 User = get_user_model()
@@ -75,6 +76,44 @@ class DoctorUserForm(forms.ModelForm):
         if queryset.exists():
             raise forms.ValidationError("This email is already registered.")
         return email
+
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > date.today():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return date_of_birth
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number', '').strip()
+        
+        if not phone_number:
+            return phone_number
+        
+        # Remove spaces and hyphens for validation
+        phone_number_digits = re.sub(r'[\s\-]', '', phone_number)
+        
+        # Nepal mobile number: 10 digits starting with 98, 97, 96 (e.g., 9841234567)
+        if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
+            return phone_number
+        
+        # Nepal international format: +977 followed by 9 digits (e.g., +9779841234567)
+        if re.match(r'^\+977\d{9}$', phone_number_digits):
+            return phone_number
+        
+        # Nepal landline: +977 with area code (5-7 digits) (e.g., +97714-1234567)
+        if re.match(r'^\+977\d{6,7}$', phone_number_digits):
+            return phone_number
+        
+        # Local landline format: area code + hyphen + local number (e.g., 061-563200, 01-4123456)
+        if re.match(r'^0\d{1,2}-\d{5,7}$', phone_number):
+            return phone_number
+        
+        raise forms.ValidationError(
+            "Please enter a valid Nepal phone number. "
+            "Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456"
+        )
+        
+
 
 
 class DoctorUserUpdateForm(DoctorUserForm):
@@ -204,6 +243,12 @@ class DoctorProfileForm(forms.ModelForm):
         if employee_id and queryset.exists():
             raise forms.ValidationError("This employee ID is already registered.")
         return employee_id
+
+    def clean_experience_years(self):
+        experience_years = self.cleaned_data.get('experience_years')
+        if experience_years is not None and experience_years > 100:
+            raise forms.ValidationError("Experience years cannot be more than 100.")
+        return experience_years
 
 
 class DoctorScheduleForm(forms.ModelForm):
