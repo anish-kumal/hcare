@@ -387,7 +387,7 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 	template_name = 'doctors/doctor_list.html'
 	context_object_name = 'doctors'
 
-	def get_queryset(self):
+	def get_base_queryset(self):
 		queryset = super().get_queryset().select_related('user', 'hospital', 'department').order_by('-created')
 
 		if self.request.user.is_admin:
@@ -395,6 +395,11 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 			if not hospital_admin:
 				return Doctor.objects.none()
 			queryset = queryset.filter(hospital=hospital_admin.hospital)
+
+		return queryset
+
+	def get_queryset(self):
+		queryset = self.get_base_queryset()
 
 		search_query = self.request.GET.get('search', '').strip()
 		if search_query:
@@ -407,11 +412,23 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 				| Q(license_number__icontains=search_query)
 			)
 
+		status_query = self.request.GET.get('status', '').strip().lower()
+		if status_query == 'available':
+			queryset = queryset.filter(is_available=True)
+		elif status_query == 'unavailable':
+			queryset = queryset.filter(is_available=False)
+
 		return queryset
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		context['search_query'] = self.request.GET.get('search', '').strip()
+		context['status_query'] = self.request.GET.get('status', '').strip().lower()
+
+		base_queryset = self.get_base_queryset()
+		context['total_doctors_count'] = base_queryset.count()
+		context['available_doctors_count'] = base_queryset.filter(is_available=True).count()
+		context['unavailable_doctors_count'] = base_queryset.filter(is_available=False).count()
 		return context
 
 
