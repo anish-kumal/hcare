@@ -1,8 +1,38 @@
+from datetime import date
+import re
+
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from apps.patients.models import Patient
 
 User = get_user_model()
+
+
+def validate_nepal_phone_number(phone_number):
+    phone_number = (phone_number or '').strip()
+
+    if not phone_number:
+        return phone_number
+
+    phone_number_digits = re.sub(r'[\s\-]', '', phone_number)
+
+    if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
+        return phone_number
+
+    if re.match(r'^\+977\d{9}$', phone_number_digits):
+        return phone_number
+
+    if re.match(r'^\+977\d{6,7}$', phone_number_digits):
+        return phone_number
+
+    if re.match(r'^0\d{1,2}-\d{5,7}$', phone_number):
+        return phone_number
+
+    raise forms.ValidationError(
+        'Please enter a valid Nepal phone number. '
+        'Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456'
+    )
 
 
 class PatientUserForm(forms.ModelForm):
@@ -73,7 +103,44 @@ class PatientUserForm(forms.ModelForm):
         password = self.cleaned_data.get('password', '')
         if len(password) < 8:
             raise forms.ValidationError('Password must be at least 8 characters long.')
+
+        if not re.search(r'[A-Z]', password):
+            raise forms.ValidationError('Password must contain at least one uppercase letter.')
+
+        if not re.search(r'[a-z]', password):
+            raise forms.ValidationError('Password must contain at least one lowercase letter.')
+
+        if not re.search(r'\d', password):
+            raise forms.ValidationError('Password must contain at least one number.')
+
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise forms.ValidationError('Password must contain at least one special character.')
+
+        user = User(
+            username=self.cleaned_data.get('username', ''),
+            email=self.cleaned_data.get('email', ''),
+            first_name=self.cleaned_data.get('first_name', ''),
+            last_name=self.cleaned_data.get('last_name', ''),
+        )
+
+        try:
+            validate_password(password, user=user)
+        except forms.ValidationError as error:
+            raise forms.ValidationError(error.messages)
+
         return password
+
+
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > date.today():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return date_of_birth
+
+    def clean_phone_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
+        
+
 
 
 class PatientCreateProfileForm(forms.ModelForm):
@@ -166,6 +233,18 @@ class PatientCreateProfileForm(forms.ModelForm):
             }),
         }
 
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > date.today():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return date_of_birth
+
+    def clean_contact_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('contact_number'))
+
+    def clean_emergency_contact(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
+
 
 class PatientProfileForm(forms.ModelForm):
     """Form for patients to edit their profile"""
@@ -215,3 +294,9 @@ class PatientProfileForm(forms.ModelForm):
                 'placeholder': 'Country',
             }),
         }
+
+    def clean_contact_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('contact_number'))
+
+    def clean_emergency_contact(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))

@@ -66,6 +66,7 @@
                         <div class="flex items-center gap-2">
                           <a href="{% url 'doctors:doctor_schedule_detail' schedule.pk %}" class="text-primary text-xs font-semibold hover:underline">View</a>
                           <a href="{% url 'doctors:doctor_schedule_edit' schedule.pk %}" class="text-gray-600 text-xs font-semibold hover:underline">Edit</a>
+                          <a href="{% url 'doctors:doctor_schedule_delete' schedule.pk %}" class="text-red-600 text-xs font-semibold hover:underline">Delete</a>
                         </div>
                       </td>
                     </tr>

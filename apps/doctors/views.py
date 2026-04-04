@@ -58,6 +58,11 @@ class DoctorScheduleCreateView(DoctorOnlyMixin, CreateView):
 	template_name = 'doctor/schedule_form.html'
 	success_url = reverse_lazy('doctors:doctor_schedule_list')
 
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['doctor'] = Doctor.objects.filter(user=self.request.user).first()
+		return kwargs
+
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		doctor = Doctor.objects.filter(user=self.request.user).first()
@@ -72,23 +77,14 @@ class DoctorScheduleCreateView(DoctorOnlyMixin, CreateView):
 			return redirect('doctor_dashboard')
 
 		try:
-			DoctorSchedule.objects.update_or_create(
-				doctor=doctor,
-				weekday=form.cleaned_data['weekday'],
-				start_time=form.cleaned_data['start_time'],
-				defaults={
-					'end_time': form.cleaned_data['end_time'],
-					'slot_duration': form.cleaned_data['slot_duration'],
-					'max_patients': form.cleaned_data['max_patients'],
-					'is_available': form.cleaned_data['is_available'],
-				}
-			)
+			form.instance.doctor = doctor
+			response = super().form_valid(form)
 		except IntegrityError:
 			messages.error(self.request, 'A schedule already exists for that day and start time.')
 			return self.form_invalid(form)
 
 		messages.success(self.request, 'Schedule created successfully.')
-		return redirect(self.success_url)
+		return response
 
 
 class DoctorScheduleDetailView(DoctorOnlyMixin, DetailView):
@@ -99,7 +95,9 @@ class DoctorScheduleDetailView(DoctorOnlyMixin, DetailView):
 
 	def get_queryset(self):
 		doctor = Doctor.objects.filter(user=self.request.user).first()
-		return DoctorSchedule.objects.filter(doctor=doctor)
+		if doctor:
+			return DoctorSchedule.objects.filter(doctor=doctor)
+		return DoctorSchedule.objects.none()
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
@@ -113,6 +111,11 @@ class DoctorScheduleUpdateView(DoctorOnlyMixin, UpdateView):
 	form_class = DoctorScheduleForm
 	template_name = 'doctor/schedule_edit.html'
 	context_object_name = 'schedule'
+
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['doctor'] = Doctor.objects.filter(user=self.request.user).first()
+		return kwargs
 
 	def get_queryset(self):
 		doctor = Doctor.objects.filter(user=self.request.user).first()
@@ -133,6 +136,47 @@ class DoctorScheduleUpdateView(DoctorOnlyMixin, UpdateView):
 		except IntegrityError:
 			messages.error(self.request, 'Another schedule already exists for that day and start time.')
 			return self.form_invalid(form)
+
+class DoctorScheduleDeleteView(DoctorOnlyMixin, DeleteView):
+	"""Delete doctor schedule"""
+	model = DoctorSchedule
+	template_name = 'partials/delete.html'
+	context_object_name = 'schedule'
+	success_url = reverse_lazy('doctors:doctor_schedule_list')
+
+	def get_queryset(self):
+		doctor = Doctor.objects.filter(user=self.request.user).first()
+		return DoctorSchedule.objects.filter(doctor=doctor)
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		schedule = self.object
+		context.update({
+			'delete_page_title': 'Delete Schedule - Health Care',
+			'delete_confirm_title': 'Delete Schedule Slot?',
+			'delete_confirm_message': (
+				f'Are you sure you want to delete your {schedule.get_weekday_display()} slot '
+				f'({schedule.start_time.strftime("%H:%M")} - {schedule.end_time.strftime("%H:%M")})? '
+				'This action cannot be undone.'
+			),
+			'delete_warning_text': (
+				'Deleting this schedule slot will remove this availability from booking.'
+			),
+			'delete_button_label': 'Delete Schedule',
+			'cancel_url': self.request.META.get('HTTP_REFERER') or reverse_lazy('doctors:doctor_schedule_detail', kwargs={'pk': schedule.pk}),
+		})
+		return context
+
+	def form_valid(self, form):
+		schedule = self.object
+		slot_label = (
+			f"{schedule.get_weekday_display()} "
+			f"({schedule.start_time.strftime('%H:%M')} - {schedule.end_time.strftime('%H:%M')})"
+		)
+		response = super().form_valid(form)
+		messages.success(self.request, f'Schedule slot {slot_label} deleted successfully.')
+		return response
+	
 
 
 class DoctorProfileUpdateView(DoctorOnlyMixin, DetailView):
@@ -181,6 +225,7 @@ class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 	def post(self, request, *args, **kwargs):
 		"""Handle updates for user and doctor profile details."""
 		doctor = self.get_object()
+		self.object = doctor  # Required by UpdateView/DetailMixin context handling on POST
 		
 		# Create forms
 		user_form = DoctorUserUpdateForm(request.POST, instance=doctor.user)
@@ -212,6 +257,9 @@ class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 				user_form=user_form,
 			)
 		)
+
+
+		
 
 
 

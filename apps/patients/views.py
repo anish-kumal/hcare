@@ -196,16 +196,18 @@ class PatientCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['user_form'] = kwargs.get('user_form') or PatientUserForm()
-        context['patient_form'] = kwargs.get('patient_form') or PatientCreateProfileForm()
+        context['user_form'] = kwargs.get('user_form') or PatientUserForm(prefix='user')
+        context['patient_form'] = kwargs.get('patient_form') or PatientCreateProfileForm(prefix='patient')
 
         return context
 
     def post(self, request, *args, **kwargs):
-        user_form = PatientUserForm(request.POST)
+        self.object = None
+        user_form = PatientUserForm(request.POST, prefix='user')
         patient_form = PatientCreateProfileForm(
             request.POST,
             request.FILES,
+            prefix='patient',
         )
 
         if user_form.is_valid() and patient_form.is_valid():
@@ -265,12 +267,11 @@ class PatientCreateView(LoginRequiredMixin, CreateView):
                 messages.error(request, f'Error creating patient: {exc}')
 
         messages.error(request, 'Please correct the errors below.')
-        return self.get(
-            request,
-            user_form=user_form,
-            patient_form=patient_form,
-            *args,
-            **kwargs,
+        return self.render_to_response(
+            self.get_context_data(
+                user_form=user_form,
+                patient_form=patient_form,
+            )
         )
 
 class PatientDetailView(PatientHospitalScopedMixin, DetailView):

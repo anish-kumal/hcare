@@ -38,6 +38,14 @@
                 Back to list
               </a>
             </div>
+hgiu
+            {% if form.non_field_errors %}
+              <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-1">
+                {% for error in form.non_field_errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
@@ -45,28 +53,43 @@
                 <select id="weekday" name="weekday" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30">
                   <option value="">Select day</option>
                   {% for value, label in weekday_choices %}
-                    <option value="{{ value }}">{{ label }}</option>
+                    <option value="{{ value }}" {% if form.weekday.value and value|stringformat:'s' == form.weekday.value|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
                   {% endfor %}
                 </select>
+                {% for error in form.weekday.errors %}
+                  <p class="text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-semibold text-gray-700" for="slot_duration">Slot Duration (minutes)</label>
-                <input id="slot_duration" name="slot_duration" type="number" min="5" step="5" value="30" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input id="slot_duration" name="slot_duration" type="number" min="5" step="5" value="{{ form.slot_duration.value|default:30 }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                {% for error in form.slot_duration.errors %}
+                  <p class="text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-semibold text-gray-700" for="start_time">Start Time</label>
-                <input id="start_time" name="start_time" type="time" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input id="start_time" name="start_time" type="time" value="{{ form.start_time.value|default:'' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                {% for error in form.start_time.errors %}
+                  <p class="text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-semibold text-gray-700" for="end_time">End Time</label>
-                <input id="end_time" name="end_time" type="time" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input id="end_time" name="end_time" type="time" value="{{ form.end_time.value|default:'' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                {% for error in form.end_time.errors %}
+                  <p class="text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-semibold text-gray-700" for="max_patients">Max Patients</label>
-                <input id="max_patients" name="max_patients" type="number" min="1" value="20" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input id="max_patients" name="max_patients" type="number" min="1" value="{{ form.max_patients.value|default:20 }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                {% for error in form.max_patients.errors %}
+                  <p class="text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
               </div>
               <div class="flex items-center gap-3 mt-7">
-                <input id="is_available" name="is_available" type="checkbox" checked class="size-4 text-primary border-gray-300 rounded" />
+                <input id="is_available" name="is_available" type="checkbox" {% if form.is_bound %}{% if form.is_available.value %}checked{% endif %}{% else %}checked{% endif %} class="size-4 text-primary border-gray-300 rounded" />
                 <label for="is_available" class="text-sm font-semibold text-gray-700">Active</label>
               </div>
             </div>

@@ -11,6 +11,7 @@ from .views import (
     DoctorScheduleDetailView,
     DoctorScheduleListView,
     DoctorScheduleUpdateView,
+    DoctorScheduleDeleteView,
     DoctorUpdateView,
 )
 
@@ -26,6 +27,7 @@ urlpatterns = [
     path('schedule/create/', DoctorScheduleCreateView.as_view(), name='doctor_schedule_create'),
     path('schedule/<int:pk>/', DoctorScheduleDetailView.as_view(), name='doctor_schedule_detail'),
     path('schedule/<int:pk>/edit/', DoctorScheduleUpdateView.as_view(), name='doctor_schedule_edit'),
+    path('schedule/<int:pk>/delete/', DoctorScheduleDeleteView.as_view(), name='doctor_schedule_delete'),
     path('profile/', DoctorProfileUpdateView.as_view(), name='doctor_profile'),
     path('profile/edit/', DoctorProfileEditView.as_view(), name='doctor_profile_edit'),
 ]

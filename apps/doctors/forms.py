@@ -253,6 +253,14 @@ class DoctorProfileForm(forms.ModelForm):
 
 class DoctorScheduleForm(forms.ModelForm):
     """Form for creating/editing doctor schedule"""
+
+    def __init__(self, *args, **kwargs):
+        self.doctor = kwargs.pop('doctor', None)
+        super().__init__(*args, **kwargs)
+        if not self.doctor and self.instance and self.instance.pk:
+            self.doctor = self.instance.doctor
+
+    
     
     class Meta:
         model = DoctorSchedule
@@ -261,11 +269,11 @@ class DoctorScheduleForm(forms.ModelForm):
             'weekday': forms.Select(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition'
             }),
-            'start_time': forms.TimeInput(attrs={
+            'start_time': forms.TimeInput(format='%H:%M', attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
                 'type': 'time'
             }),
-            'end_time': forms.TimeInput(attrs={
+            'end_time': forms.TimeInput(format='%H:%M', attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
                 'type': 'time'
             }),
@@ -281,6 +289,54 @@ class DoctorScheduleForm(forms.ModelForm):
                 'class': 'w-4 h-4 text-primary bg-gray-100 border border-gray-300 rounded cursor-pointer'
             }),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        weekday = cleaned_data.get('weekday')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        slot_duration = cleaned_data.get('slot_duration')
+
+        if not start_time or not end_time:
+            return cleaned_data
+
+        start_minutes = (start_time.hour * 60) + start_time.minute
+        end_minutes = (end_time.hour * 60) + end_time.minute
+        duration_minutes = end_minutes - start_minutes
+
+        if duration_minutes == 0:
+            self.add_error('end_time', 'Start time and end time cannot be the same.')
+            return cleaned_data
+
+        if duration_minutes < 0:
+            self.add_error('end_time', 'End time must be after start time.')
+            return cleaned_data
+
+        if duration_minutes > 240:
+            self.add_error('end_time', 'Schedule duration cannot be more than 4 hours.')
+
+        if slot_duration:
+            if slot_duration > duration_minutes:
+                self.add_error('slot_duration', 'Slot duration cannot be greater than the total schedule duration.')
+            elif duration_minutes % slot_duration != 0:
+                self.add_error('slot_duration', 'Total schedule duration must be divisible by slot duration.')
+
+        if self.doctor and weekday is not None:
+            conflicting_schedules = DoctorSchedule.objects.filter(
+                doctor=self.doctor,
+                weekday=weekday,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            )
+
+            if self.instance and self.instance.pk:
+                conflicting_schedules = conflicting_schedules.exclude(pk=self.instance.pk)
+
+            if conflicting_schedules.exists():
+                self.add_error('start_time', 'This time range overlaps with another schedule for the same day.')
+                self.add_error('end_time', 'Please choose a non-overlapping end time.')
+
+        return cleaned_data
 
 
 class DoctorSelfProfileForm(DoctorProfileForm):
