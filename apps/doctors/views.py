@@ -163,7 +163,7 @@ class DoctorScheduleDeleteView(DoctorOnlyMixin, DeleteView):
 				'Deleting this schedule slot will remove this availability from booking.'
 			),
 			'delete_button_label': 'Delete Schedule',
-			'cancel_url': self.request.META.get('HTTP_REFERER') or reverse_lazy('doctors:doctor_schedule_detail', kwargs={'pk': schedule.pk}),
+			'cancel_url': reverse_lazy('doctors:doctor_schedule_list'),
 		})
 		return context
 

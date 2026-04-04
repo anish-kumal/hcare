@@ -316,10 +316,11 @@ class DoctorScheduleForm(forms.ModelForm):
             self.add_error('end_time', 'Schedule duration cannot be more than 4 hours.')
 
         if slot_duration:
+            slot_count = duration_minutes / slot_duration
             if slot_duration > duration_minutes:
                 self.add_error('slot_duration', 'Slot duration cannot be greater than the total schedule duration.')
-            elif duration_minutes % slot_duration != 0:
-                self.add_error('slot_duration', 'Total schedule duration must be divisible by slot duration.')
+            elif slot_count <= 1 :
+                self.add_error('slot_duration', 'Schedule must contain at least one slot.')
 
         if self.doctor and weekday is not None:
             conflicting_schedules = DoctorSchedule.objects.filter(
