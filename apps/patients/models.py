@@ -249,6 +249,11 @@ class PatientAppointment(BaseModel):
         null=True,
         help_text="Cancellation reason"
     )
+
+    is_follow_up = models.BooleanField(
+        default=False,
+        help_text="Is this appointment a follow-up?"
+    )
     
     class Meta:
         verbose_name = 'Patient Appointment'

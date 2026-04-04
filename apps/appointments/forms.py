@@ -40,32 +40,65 @@ class AppointmentBookingForm(forms.ModelForm):
 
 class AppointmentEditForm(forms.ModelForm):
     """Form for patients to edit their appointments"""
-    
+
     class Meta:
         model = PatientAppointment
-        fields = ['appointment_date', 'appointment_time', 'reason', 'notes']
+        fields = ['appointment_date', 'appointment_time', 'status', 'reason', 'notes']
         widgets = {
             'appointment_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'form-control',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed',
+                'readonly': True,
                 'required': True,
             }),
             'appointment_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'form-control',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed',
+                'readonly': True,
                 'required': True,
             }),
+            'status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+            }),
             'reason': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'rows': 3,
                 'placeholder': 'Please describe the reason for your visit',
             }),
             'notes': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'rows': 3,
                 'placeholder': 'Any additional notes (optional)',
             }),
         }
+
+
+    def clean_status(self):
+        new_status = self.cleaned_data.get('status')
+        current_status = getattr(self.instance, 'status', None)
+
+        restricted_transitions = {
+            ('FOLLOW_UP', 'SCHEDULED'),
+            ('FOLLOW_UP', 'RESCHEDULED'),
+            ('SCHEDULED', 'FOLLOW_UP'),
+            ('SCHEDULED', 'RESCHEDULED'),
+            ('RESCHEDULED', 'FOLLOW_UP'),
+            ('RESCHEDULED', 'SCHEDULED'),
+        }
+
+        if current_status and new_status and (current_status, new_status) in restricted_transitions:
+            raise forms.ValidationError(
+                f"Cannot change status from {current_status} to {new_status}. Please contact support for assistance."
+            )
+
+        return new_status
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk and self.instance.status in ['COMPLETED', 'CANCELLED']:
+            for field_name in ['appointment_date', 'appointment_time', 'status', 'reason', 'notes']:
+                self.fields[field_name].disabled = True
 
 
 class AdminAppointmentBookingForm(forms.ModelForm):

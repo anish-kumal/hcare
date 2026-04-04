@@ -13,6 +13,6 @@ class PatientAdmin(admin.ModelAdmin):
 
 @admin.register(PatientAppointment)
 class PatientAppointmentAdmin(admin.ModelAdmin):
-	list_display = ('patient', 'doctor', 'appointment_date', 'appointment_time', 'status')
-	list_filter = ('status', 'appointment_date')
-	search_fields = ('patient__user__username', 'patient__user__email', 'doctor__user__username')
+	list_display = ('patient', 'doctor', 'appointment_date', 'appointment_time', 'status', 'is_follow_up')
+	list_filter = ('status', 'appointment_date', 'is_follow_up')
+	search_fields = ('patient__user__username', 'patient__user__email', 'doctor__user__username', )

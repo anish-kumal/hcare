@@ -6,8 +6,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
-
-from tenacity import P
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
@@ -43,6 +41,7 @@ def get_booking_status(patient, doctor, appointment_date, appointment_time, defa
         patient_id=patient.id,
         doctor_id=doctor.id,
         status='COMPLETED',
+        is_follow_up=False,
     ).filter(
         Q(appointment_date__lt=appointment_date)
         | Q(appointment_date=appointment_date, appointment_time__lt=appointment_time)
@@ -237,6 +236,7 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
             appointment_time=appointment_time,
             default_status='SCHEDULED',
         )
+        appointment.is_follow_up = appointment.status == 'FOLLOW_UP'
         appointment.save()
 
         # Set fee: 10 Rs for follow-up, consultation fee otherwise
@@ -609,23 +609,24 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             return self.form_invalid(form)
 
         # Create appointment
-        self.object = form.save(commit=False)
-        self.object.patient = patient
-        self.object.doctor = doctor
-        self.object.hospital = doctor.hospital
-        self.object.status = get_booking_status(
+        appointment = form.save(commit=False)
+        appointment.patient = patient
+        appointment.doctor = doctor
+        appointment.hospital = doctor.hospital
+        appointment.status = get_booking_status(
             patient=patient,
             doctor=doctor,
             appointment_date=appointment_date,
             appointment_time=appointment_time,
             default_status='SCHEDULED',
         )
-        self.object.save()
+        appointment.is_follow_up = appointment.status == 'FOLLOW_UP'
+        appointment.save()
 
         # Create payment record
-        appointment_fee = 10 if self.object.status == 'FOLLOW_UP' else doctor.consultation_fee
+        appointment_fee = 10 if appointment.status == 'FOLLOW_UP' else doctor.consultation_fee
         AppointmentPayment.objects.get_or_create(
-            appointment=self.object,
+            appointment=appointment,
             defaults={
                 'amount': appointment_fee,
                 'status': AppointmentPayment.PaymentStatus.PENDING,
@@ -637,7 +638,7 @@ class AdminAppointmentCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
             self.request,
             f'Appointment booked for {patient.user.get_full_name() or patient.user.username}.',
         )
-        return redirect('payments:appointment_payment', appointment_id=self.object.id)
+        return redirect('payments:appointment_payment', appointment_id=appointment.id)
 
 
 class AdminAppointmentListView(SuperAdminAndAdminOnlyMixin, ListView):
@@ -715,3 +716,4 @@ class AdminAppointmentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Appointment updated successfully.')
         return super().form_valid(form)
+
