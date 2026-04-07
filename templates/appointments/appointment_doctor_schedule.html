@@ -60,7 +60,6 @@
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Max Patients</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booked</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Slots Left</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Booking Date/Time</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Action</th>
                                 </tr>
                             </thead>
@@ -72,18 +71,6 @@
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ session.schedule.max_patients }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ session.booked_count }}</td>
                                     <td class="px-6 py-4 text-sm font-semibold {% if session.slots_left <= 0 %}text-red-700{% elif session.slots_left <= 3 %}text-amber-600{% else %}text-green-700{% endif %}">{{ session.slots_left }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">
-                                        {% if session.bookings %}
-                                            {% for booking in session.bookings %}
-                                            <div class="mb-1">
-                                                <span class="font-semibold">{{ booking.appointment_date|date:"M d" }} {{ booking.appointment_time|time:"h:i A" }}</span>
-                                                <span class="text-gray-500">- {{ booking.patient.user.get_full_name|default:booking.patient.user.username }} ({{ booking.status }})</span>
-                                            </div>
-                                            {% endfor %}
-                                        {% else %}
-                                            <span class="text-gray-500">No bookings</span>
-                                        {% endif %}
-                                    </td>
                                     <td class="px-6 py-4 text-sm">
                                         {% if session.is_bookable %}
                                         <a href="{% url 'appointments:appointment_admin_book' doctor.pk %}?date={{ day.date|date:'Y-m-d' }}&time={{ session.schedule.start_time|time:'H:i' }}"
@@ -109,3 +96,70 @@
     </div>
 </div>
 {% endblock content %}
+
+{% block javascript %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const doctorId = '{{ doctor.pk }}';
+        if (!doctorId) {
+            return;
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const socketUrl = `${protocol}://${window.location.host}/ws/appointments/doctors/${doctorId}/slots/`;
+
+        let socket = null;
+        let reconnectTimer = null;
+        let reloadTimer = null;
+
+        const scheduleReload = function () {
+            if (reloadTimer) {
+                return;
+            }
+            reloadTimer = window.setTimeout(function () {
+                window.location.reload();
+            }, 250);
+        };
+
+        const connect = function () {
+            socket = new WebSocket(socketUrl);
+
+            socket.onmessage = function (event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'slots.updated' && String(payload.doctor_id) === String(doctorId)) {
+                        scheduleReload();
+                    }
+                } catch (error) {
+                    console.error('Failed to parse slots update payload.', error);
+                }
+            };
+
+            socket.onclose = function () {
+                if (reconnectTimer) {
+                    return;
+                }
+                reconnectTimer = window.setTimeout(function () {
+                    reconnectTimer = null;
+                    connect();
+                }, 2000);
+            };
+
+            socket.onerror = function () {
+                socket.close();
+            };
+        };
+
+        connect();
+
+        window.addEventListener('beforeunload', function () {
+            if (reconnectTimer) {
+                window.clearTimeout(reconnectTimer);
+            }
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        });
+    });
+</script>
+{% endblock javascript %}

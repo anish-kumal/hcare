@@ -63,6 +63,7 @@ PRELOAD_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne',
     'django.contrib.staticfiles',
     'django.contrib.sites',
 ]
@@ -71,6 +72,7 @@ PRELOAD_APPS = [
 THIRD_PARTY_APPS = [
     'cloudinary',
     'cloudinary_storage',
+    'channels',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -104,6 +106,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
+ASGI_APPLICATION = 'core.asgi.application'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -120,6 +124,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 
 # Database

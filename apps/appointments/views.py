@@ -22,6 +22,7 @@ from .models import Prescription
 
 
 ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED']
+BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED', 'COMPLETED']
 
 
 
@@ -112,7 +113,7 @@ class DoctorDetailView( DetailView):
         context['available_slots'] = doctor.get_available_slots_by_date(
             days=7,
             now=timezone.now(),
-            active_statuses=ACTIVE_BOOKING_STATUSES,
+            active_statuses=BOOKING_STATUSES,
         )
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         return context
@@ -404,7 +405,7 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
     model = Doctor
     template_name = 'appointments/appointment_doctor_schedule.html'
     context_object_name = 'doctor'
-    booking_statuses = ACTIVE_BOOKING_STATUSES
+    # booking_statuses = ACTIVE_BOOKING_STATUSES
     days_to_show = 7
     allowed_day_filters = (7, 14)
     
@@ -441,7 +442,8 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
         appointments = PatientAppointment.objects.filter(
             doctor=doctor,
             appointment_date__range=(today, end_date),
-            status__in=self.booking_statuses,
+        ).exclude(
+            status='CANCELLED'
         ).select_related('patient', 'patient__user').order_by('appointment_date', 'appointment_time')
 
         appointments_by_date = {}
@@ -503,6 +505,7 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
                 'day_is_bookable': day_is_bookable,
                 'all_bookings': day_bookings,
             })
+        
 
         context['weekly_schedule'] = weekly_schedule
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
@@ -727,6 +730,13 @@ class AdminAppointmentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
         return reverse('appointments:appointment_manage_detail', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
+        selected_status = form.cleaned_data.get('status')
+        appointment_date = form.cleaned_data.get('appointment_date') or self.object.appointment_date
+
+        if selected_status == 'COMPLETED' and appointment_date != timezone.localdate():
+            form.add_error('status', 'Only today\'s appointments can be marked as completed.')
+            return self.form_invalid(form)
+
         messages.success(self.request, 'Appointment updated successfully.')
         return super().form_valid(form)
 
@@ -860,7 +870,7 @@ class AdminAppointmentRescheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
         context['available_slots'] = doctor.get_available_slots_by_date(
             days=self.slot_window_days,
             now=self._get_slots_window_now(appointment=appointment, now=timezone.now()),
-            active_statuses=ACTIVE_BOOKING_STATUSES,
+            active_statuses=BOOKING_STATUSES,
         )
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         context['can_reschedule'] = True

@@ -171,7 +171,13 @@ class PatientPaymentListView(LoginRequiredMixin, ListView):
         ).order_by('-created')
 
     def get(self, request, *args, **kwargs):
-        pidx = request.GET.get('pidx', '').strip()
+        # Khalti may return the payment identifier in different query keys.
+        pidx = (
+            request.GET.get('pidx', '')
+            or request.GET.get('transaction_id', '')
+            or request.GET.get('tidx', '')
+            or request.GET.get('txnId', '')
+        ).strip()
         khalti_status = request.GET.get('status', '').strip().upper()
 
         if pidx:
@@ -271,7 +277,8 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             if payment.status != AppointmentPayment.PaymentStatus.PAID:
                 payment.status = AppointmentPayment.PaymentStatus.PENDING
 
-            return_url = request.build_absolute_uri(reverse('payments:patient_payment_list'))
+            # Keep callback URL canonical and explicit to avoid provider slash normalization issues.
+            return_url = request.build_absolute_uri('/payments/patient/')
             website_url = request.build_absolute_uri('/')
 
             amount_paisa = int(payment.amount * 100)

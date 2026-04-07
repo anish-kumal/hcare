@@ -57,9 +57,7 @@
                             <div>
                                 <label for="id_status" class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                                 {{ form.status }}
-                                <p class="mt-1 text-xs text-amber-700">
-                                    You cannot switch between Scheduled, Follow Up, and Rescheduled once the appointment has moved to one of those states.
-                                </p>
+                
                                 {% if form.status.errors %}
                                     {% for error in form.status.errors %}
                                     <p class="text-sm font-medium text-red-600">{{ error }}</p>
@@ -98,13 +96,13 @@
                             <span class="material-symbols-outlined text-amber-700 mt-0.5">info</span>
                             <div>
                                 <h2 class="text-base font-bold text-amber-900">Edit notice</h2>
-                                <p class="mt-2 text-sm text-amber-800 leading-6">
+                                <p class="mt-2 text-sm text-amber-800 text-justify leading-6">
                                     If this appointment status is <span class="font-semibold">Completed</span> or <span class="font-semibold">Cancelled</span>, the form becomes read-only and you cannot edit the appointment fields.
                                 </p>
-                                <p class="mt-3 text-sm text-amber-800 leading-6">
-                                    The current status is <span class="font-semibold">{{ appointment.status|title }}</span>.
+                                <p class="mt-3 text-sm text-amber-800 text-justify leading-6">
+                                    Only today's appointments can be marked as completed.
                                 </p>
-                                <p class="mt-3 text-sm text-amber-800 leading-6">
+                                <p class="mt-3 text-sm text-amber-800 text-justify leading-6">
                                     Status changes between Scheduled, Follow Up, and Rescheduled are blocked by the form rules.
                                 </p>
                             </div>
