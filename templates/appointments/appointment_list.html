@@ -18,10 +18,16 @@
             <div class="max-w-[1400px] mx-auto space-y-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Appointments</h1>
-                    <a href="{% url 'appointments:appointment_doctor_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">event_available</span>
-                        Manage Doctor Slots
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'appointments:appointment_prescription_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">prescriptions</span>
+                            View Prescriptions
+                        </a>
+                        <a href="{% url 'appointments:appointment_doctor_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">event_available</span>
+                            Manage Doctor Slots
+                        </a>
+                    </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

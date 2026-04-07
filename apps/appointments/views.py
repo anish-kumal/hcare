@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -10,7 +11,14 @@ from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
-from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
+from .forms import (
+    AppointmentBookingForm,
+    AppointmentEditForm,
+    AdminAppointmentBookingForm,
+    PrescriptionForm,
+    MedicineFormSet,
+)
+from .models import Prescription
 
 
 ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED']
@@ -695,6 +703,11 @@ class AdminAppointmentDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
             'payment',
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['has_prescription'] = Prescription.objects.filter(appointment=self.object).exists()
+        return context
+
 
 class AdminAppointmentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
     """Edit appointment for admin/super-admin."""
@@ -854,3 +867,199 @@ class AdminAppointmentRescheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
         context['selected_date'] = self.request.GET.get('date', '').strip()
         context['selected_time'] = self.request.GET.get('time', '').strip()
         return context
+
+
+class AdminPrescriptionCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
+    """Create prescription and medicine rows for an appointment."""
+    model = Prescription
+    form_class = PrescriptionForm
+    template_name = 'appointments/prescription_form.html'
+
+    def get_appointment(self):
+        return get_object_or_404(
+            PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'hospital'),
+            pk=self.kwargs.get('appointment_id'),
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        appointment = self.get_appointment()
+        if hasattr(appointment, 'prescription_record'):
+            messages.warning(request, 'Prescription already exists for this appointment.')
+            return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['appointment'] = self.get_appointment()
+        if self.request.POST:
+            context['medicine_formset'] = MedicineFormSet(self.request.POST)
+        else:
+            context['medicine_formset'] = MedicineFormSet()
+        return context
+
+    def form_valid(self, form):
+        appointment = self.get_appointment()
+        context = self.get_context_data(form=form)
+        medicine_formset = context['medicine_formset']
+
+        if not medicine_formset.is_valid():
+            messages.error(self.request, 'Please correct medicine form errors below.')
+            return self.render_to_response(context)
+
+        with transaction.atomic():
+            form.instance.appointment = appointment
+            form.instance.created_by = self.request.user
+            self.object = form.save()
+
+            medicine_formset.instance = self.object
+            medicines = medicine_formset.save(commit=False)
+            for medicine in medicines:
+                medicine.created_by = self.request.user
+                medicine.save()
+            for deleted_medicine in medicine_formset.deleted_objects:
+                deleted_medicine.delete()
+
+        messages.success(self.request, 'Prescription saved successfully.')
+        return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class AdminPrescriptionListView(SuperAdminAndAdminOnlyMixin, ListView):
+    """List prescriptions for admin/super-admin."""
+    model = Prescription
+    template_name = 'appointments/prescription_list.html'
+    context_object_name = 'prescriptions'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Prescription.objects.select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__hospital',
+            'created_by',
+        ).prefetch_related('medicines').order_by('-created')
+
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(appointment__patient__user__first_name__icontains=search)
+                | Q(appointment__patient__user__last_name__icontains=search)
+                | Q(appointment__patient__booking_uuid__icontains=search)
+                | Q(appointment__doctor__user__first_name__icontains=search)
+                | Q(appointment__doctor__user__last_name__icontains=search)
+                | Q(diagnosis__icontains=search)
+            )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '').strip()
+        return context
+
+
+class AdminPrescriptionDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+    """Show prescription detail for admin/super-admin."""
+    model = Prescription
+    template_name = 'appointments/prescription_detail.html'
+    context_object_name = 'prescription'
+
+    def get_queryset(self):
+        return Prescription.objects.select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__hospital',
+            'created_by',
+        ).prefetch_related('medicines')
+
+
+class AdminPrescriptionUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+    """Update prescription and medicine rows for admin/super-admin."""
+    model = Prescription
+    form_class = PrescriptionForm
+    template_name = 'appointments/prescription_form.html'
+    context_object_name = 'prescription'
+
+    def get_queryset(self):
+        return Prescription.objects.select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__hospital',
+            'created_by',
+        ).prefetch_related('medicines')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['appointment'] = self.object.appointment
+        context['is_edit'] = True
+        if self.request.POST:
+            context['medicine_formset'] = MedicineFormSet(self.request.POST, instance=self.object)
+        else:
+            context['medicine_formset'] = MedicineFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data(form=form)
+        medicine_formset = context['medicine_formset']
+
+        if not medicine_formset.is_valid():
+            messages.error(self.request, 'Please correct medicine form errors below.')
+            return self.render_to_response(context)
+
+        with transaction.atomic():
+            self.object = form.save()
+
+            medicine_formset.instance = self.object
+            medicines = medicine_formset.save(commit=False)
+            for medicine in medicines:
+                if not medicine.created_by:
+                    medicine.created_by = self.request.user
+                medicine.save()
+            for deleted_medicine in medicine_formset.deleted_objects:
+                deleted_medicine.delete()
+
+        messages.success(self.request, 'Prescription updated successfully.')
+        return redirect('appointments:appointment_prescription_detail', pk=self.object.pk)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class AdminPrescriptionDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+    """Delete prescription for admin/super-admin."""
+    model = Prescription
+    template_name = 'partials/delete.html'
+
+    def get_queryset(self):
+        return Prescription.objects.select_related('appointment__patient__user', 'appointment__doctor__user')
+
+    def get_success_url(self):
+        return reverse_lazy('appointments:appointment_prescription_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        patient_name = '-'
+        if self.object.appointment and self.object.appointment.patient and self.object.appointment.patient.user:
+            patient_name = self.object.appointment.patient.user.get_full_name() or self.object.appointment.patient.user.username
+
+        context.update({
+            'delete_page_title': 'Delete Prescription - Health Care',
+            'delete_confirm_title': f'Delete Prescription #{self.object.pk}?',
+            'delete_confirm_message': (
+                f'Are you sure you want to delete this prescription for {patient_name}?'
+            ),
+            'delete_warning_text': (
+                'Deleting this prescription will permanently remove all related medicine rows.'
+            ),
+            'delete_button_label': 'Delete Prescription',
+            'cancel_url': reverse_lazy('appointments:appointment_prescription_detail', kwargs={'pk': self.object.pk}),
+        })
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Prescription deleted successfully.')
+        return super().delete(request, *args, **kwargs)

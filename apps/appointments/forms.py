@@ -1,5 +1,7 @@
 from django import forms
+from django.forms import inlineformset_factory, BaseInlineFormSet
 from apps.patients.models import Patient, PatientAppointment
+from .models import Prescription, Medicine
 
 
 class HospitalPatientChoiceField(forms.ModelChoiceField):
@@ -188,3 +190,88 @@ class AdminAppointmentBookingForm(forms.ModelForm):
             cleaned_data['patient'] = selected_patient
 
         return cleaned_data
+
+
+class PrescriptionForm(forms.ModelForm):
+    class Meta:
+        model = Prescription
+        fields = ['diagnosis', 'notes']
+        widgets = {
+            'diagnosis': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'rows': 4,
+                'placeholder': 'Enter diagnosis and clinical findings',
+                'required': True,
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'rows': 3,
+                'placeholder': 'Additional notes (optional)',
+            }),
+        }
+
+
+class MedicineForm(forms.ModelForm):
+    class Meta:
+        model = Medicine
+        fields = ['name', 'dosage', 'frequency', 'duration', 'notes']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Medicine name',
+            }),
+            'dosage': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'e.g. 500mg',
+            }),
+            'frequency': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'e.g. 2 times a day',
+            }),
+            'duration': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'e.g. 5 days',
+            }),
+            'notes': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'placeholder': 'Medicine notes (optional)',
+            }),
+        }
+
+
+class BaseMedicineFormSet(BaseInlineFormSet):
+    """Validate medicine fields only when a medicine row is present in POST data."""
+
+    required_medicine_fields = ('name', 'dosage', 'frequency', 'duration')
+
+    def clean(self):
+        super().clean()
+
+        for form in self.forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+
+            if self.can_delete and self._should_delete_form(form):
+                continue
+
+            # For a posted medicine row, require core fields.
+            has_any_value = any((form.cleaned_data.get(field) or '').strip() for field in self.required_medicine_fields)
+            if not has_any_value:
+                form.add_error('name', 'Please fill medicine details or remove this row.')
+                continue
+
+            for field in self.required_medicine_fields:
+                if not (form.cleaned_data.get(field) or '').strip():
+                    form.add_error(field, 'This field is required.')
+
+
+MedicineFormSet = inlineformset_factory(
+    Prescription,
+    Medicine,
+    form=MedicineForm,
+    formset=BaseMedicineFormSet,
+    extra=0,
+    can_delete=True,
+    min_num=0,
+    validate_min=False,
+)

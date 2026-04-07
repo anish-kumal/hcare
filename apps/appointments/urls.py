@@ -12,6 +12,11 @@ from .views import (
     AdminAppointmentDetailView,
     AdminAppointmentUpdateView,
     AdminAppointmentRescheduleView,
+    AdminPrescriptionCreateView,
+    AdminPrescriptionListView,
+    AdminPrescriptionDetailView,
+    AdminPrescriptionUpdateView,
+    AdminPrescriptionDeleteView,
 )
 
 from apps.ai.views import  DoctorListView
@@ -31,4 +36,9 @@ urlpatterns = [
     path('manage/<int:pk>/', AdminAppointmentDetailView.as_view(), name='appointment_manage_detail'),
     path('manage/<int:pk>/edit/', AdminAppointmentUpdateView.as_view(), name='appointment_manage_edit'),
     path('manage/<int:pk>/reschedule/', AdminAppointmentRescheduleView.as_view(), name='appointment_manage_reschedule'),
+    path('manage/<int:appointment_id>/prescription/create/', AdminPrescriptionCreateView.as_view(), name='appointment_prescription_create'),
+    path('manage/prescriptions/', AdminPrescriptionListView.as_view(), name='appointment_prescription_list'),
+    path('manage/prescriptions/<int:pk>/', AdminPrescriptionDetailView.as_view(), name='appointment_prescription_detail'),
+    path('manage/prescriptions/<int:pk>/edit/', AdminPrescriptionUpdateView.as_view(), name='appointment_prescription_edit'),
+    path('manage/prescriptions/<int:pk>/delete/', AdminPrescriptionDeleteView.as_view(), name='appointment_prescription_delete'),
 ]

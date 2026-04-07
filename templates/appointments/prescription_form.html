@@ -1,0 +1,269 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} Prescription - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+  <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/side_bar.html" %}
+
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+    {% include "partials/header.html" %}
+
+    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+      <div class="max-w-[1000px] mx-auto space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+          <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{% if is_edit %}Edit{% else %}Add{% endif %} Prescription</h1>
+          <a href="{% if is_edit %}{% url 'appointments:appointment_prescription_detail' prescription.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            {% if is_edit %}Back to Prescription{% else %}Back to Appointment{% endif %}
+          </a>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg bg-gray-50 border border-gray-100 p-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Patient</p>
+              <p class="font-semibold text-gray-900">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Doctor</p>
+              <p class="font-semibold text-gray-900">
+                {% if appointment.doctor %}
+                  Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}
+                {% else %}
+                  Not assigned
+                {% endif %}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Appointment Date</p>
+              <p class="font-semibold text-gray-900">{{ appointment.appointment_date|date:"M d, Y" }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Appointment Time</p>
+              <p class="font-semibold text-gray-900">{{ appointment.appointment_time|time:"h:i A" }}</p>
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+          <div class="p-4 rounded-lg bg-red-100 text-red-700 border border-red-300">
+            {% for error in form.non_field_errors %}
+            <p class="text-sm">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form method="post" class="space-y-8">
+            {% csrf_token %}
+
+            <section class="space-y-4 pb-8 border-b border-gray-200">
+              <h2 class="text-xl font-bold text-gray-900">Consultation Summary</h2>
+
+              <div>
+                <label for="{{ form.diagnosis.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Diagnosis *
+                </label>
+                {{ form.diagnosis }}
+                {% if form.diagnosis.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.diagnosis.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <div>
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Notes
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                {% endif %}
+              </div>
+            </section>
+
+            <section class="space-y-4">
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="text-xl font-bold text-gray-900">Medicines</h2>
+                <button type="button" id="addMedicineRow" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">add</span>
+                  Add Medicine
+                </button>
+              </div>
+
+              <p id="medicineEmptyMessage" class="text-sm text-gray-500 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                No medicine added yet. Click "Add Medicine" to add one.
+              </p>
+
+              {{ medicine_formset.management_form }}
+              {% if medicine_formset.non_form_errors %}
+              <div class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
+                {% for error in medicine_formset.non_form_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              <div id="medicineRows" class="space-y-4">
+                {% for medicine_form in medicine_formset %}
+                <div class="medicine-form-row rounded-lg border border-gray-200 p-4 space-y-4 bg-gray-50" data-index="{{ forloop.counter0 }}">
+                  {% for hidden in medicine_form.hidden_fields %}{{ hidden }}{% endfor %}
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Name *</label>
+                      {{ medicine_form.name }}
+                      {% if medicine_form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ medicine_form.name.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Dosage *</label>
+                      {{ medicine_form.dosage }}
+                      {% if medicine_form.dosage.errors %}<p class="mt-1 text-xs text-red-600">{{ medicine_form.dosage.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Frequency *</label>
+                      {{ medicine_form.frequency }}
+                      {% if medicine_form.frequency.errors %}<p class="mt-1 text-xs text-red-600">{{ medicine_form.frequency.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Duration *</label>
+                      {{ medicine_form.duration }}
+                      {% if medicine_form.duration.errors %}<p class="mt-1 text-xs text-red-600">{{ medicine_form.duration.errors.0 }}</p>{% endif %}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Notes</label>
+                    {{ medicine_form.notes }}
+                    {% if medicine_form.notes.errors %}<p class="mt-1 text-xs text-red-600">{{ medicine_form.notes.errors.0 }}</p>{% endif %}
+                  </div>
+
+                  <div class="flex items-center justify-end gap-2">
+                    <button type="button" class="remove-medicine-row inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors">
+                      <span class="material-symbols-outlined text-[18px]">delete</span>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </section>
+
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">save</span>
+                {% if is_edit %}Update{% else %}Save{% endif %} Prescription
+              </button>
+              <a href="{% if is_edit %}{% url 'appointments:appointment_prescription_detail' prescription.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<template id="emptyMedicineFormTemplate">
+  <div class="medicine-form-row rounded-lg border border-gray-200 p-4 space-y-4 bg-gray-50" data-index="__prefix__">
+    {% for hidden in medicine_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Name *</label>
+        {{ medicine_formset.empty_form.name }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage *</label>
+        {{ medicine_formset.empty_form.dosage }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Frequency *</label>
+        {{ medicine_formset.empty_form.frequency }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Duration *</label>
+        {{ medicine_formset.empty_form.duration }}
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Notes</label>
+      {{ medicine_formset.empty_form.notes }}
+    </div>
+
+    <div class="flex items-center justify-end gap-2">
+      <button type="button" class="remove-medicine-row inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">delete</span>
+        Remove
+      </button>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function () {
+    const addButton = document.getElementById('addMedicineRow');
+    const rowsContainer = document.getElementById('medicineRows');
+    const totalFormsInput = document.getElementById('id_{{ medicine_formset.prefix }}-TOTAL_FORMS');
+    const emptyTemplate = document.getElementById('emptyMedicineFormTemplate');
+    const emptyMessage = document.getElementById('medicineEmptyMessage');
+
+    if (!addButton || !rowsContainer || !totalFormsInput || !emptyTemplate || !emptyMessage) {
+      return;
+    }
+
+    function updateEmptyState() {
+      emptyMessage.style.display = rowsContainer.children.length ? 'none' : 'block';
+    }
+
+    function reindexForms() {
+      const rows = rowsContainer.querySelectorAll('.medicine-form-row');
+      rows.forEach(function (row, index) {
+        row.dataset.index = String(index);
+        row.querySelectorAll('input, textarea, select, label').forEach(function (el) {
+          if (el.name) {
+            el.name = el.name.replace(/-\d+-/, '-' + index + '-');
+          }
+          if (el.id) {
+            el.id = el.id.replace(/-\d+-/, '-' + index + '-');
+          }
+          if (el.htmlFor) {
+            el.htmlFor = el.htmlFor.replace(/-\d+-/, '-' + index + '-');
+          }
+        });
+      });
+      totalFormsInput.value = String(rows.length);
+      updateEmptyState();
+    }
+
+    addButton.addEventListener('click', function () {
+      const currentIndex = parseInt(totalFormsInput.value, 10);
+      const templateHtml = emptyTemplate.innerHTML.replace(/__prefix__/g, String(currentIndex));
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = templateHtml.trim();
+      rowsContainer.appendChild(wrapper.firstElementChild);
+      reindexForms();
+    });
+
+    rowsContainer.addEventListener('click', function (event) {
+      const button = event.target.closest('.remove-medicine-row');
+      if (!button) {
+        return;
+      }
+      const row = button.closest('.medicine-form-row');
+      if (!row) {
+        return;
+      }
+      row.remove();
+      reindexForms();
+    });
+
+    updateEmptyState();
+  })();
+</script>
+{% endblock content %}

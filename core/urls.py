@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.appointments.views import AdminPrescriptionListView
 from apps.base.views import (
     IndexView, 
     AboutView,
@@ -44,6 +45,7 @@ urlpatterns = [
     path('doctors/', include('apps.doctors.urls')),
     path('patients/', include('apps.patients.urls')),
     path('appointments/', include('apps.appointments.urls')),
+    path('appointments/manage/prescriptions/', AdminPrescriptionListView.as_view(), name='appointment_prescription_list'),
     path('payments/', include('apps.payments.urls')),
     path('medical-reports/', include('apps.medical_report.urls')),
     # Dashboard routes based on role
