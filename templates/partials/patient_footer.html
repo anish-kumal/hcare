@@ -16,28 +16,28 @@
                 </p>
 
                 <div class="flex gap-3">
-                    <a href="#"
+                    <a target="_blank" href="https://www.facebook.com/"
                         class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary hover:bg-white transition-colors">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.17 6 13.91 6 15.23 6 16.5 6.22 16.5 6.22v2.53h-1.42c-1.29 0-1.69.8-1.69 1.62V12h3l-.48 3h-2.52v6.79C18.56 20.87 22 16.84 22 12z" />
                         </svg>
                     </a>
-                    <a href="#"
+                    <a target="_blank" href="https://x.com/"
                         class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary hover:bg-white transition-colors">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21-.36.1-.74.15-1.15.15-.27 0-.53-.02-.79-.06.53 1.71 2.12 2.95 4 2.99-1.48 1.15-3.32 1.83-5.33 1.83-.35 0-.69-.02-1.03-.06C3.17 20.29 5.5 21 8 21c7.88 0 12.21-6.54 12.21-12.21 0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
                         </svg>
                     </a>
-                    <a href="#"
+                    <a target="_blank" href="https://www.instagram.com/"
                         class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary hover:bg-white transition-colors">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
                         </svg>
                     </a>
-                    <a href="#"
+                    <a target="_blank" href="https://www.youtube.com/"
                         class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary hover:bg-white transition-colors">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path
@@ -51,16 +51,19 @@
                 <h3 class="text-lg font-bold mb-6">Quick Links</h3>
                 <ul class="space-y-3 text-gray-300 text-sm">
                     <li>
-                        <a href="#" class="hover:text-accent transition-colors">Home</a>
+                        <a href="{% url 'index' %}" class="hover:text-accent transition-colors">Home</a>
                     </li>
                     <li>
-                        <a href="#" class="hover:text-accent transition-colors">Services</a>
+                        <a href="{% url 'services' %}" class="hover:text-accent transition-colors">Services</a>
                     </li>
                     <li>
-                        <a href="#" class="hover:text-accent transition-colors">Find Doctors</a>
+                        <a href="{% url 'appointments:doctor_list' %}" class="hover:text-accent transition-colors">Find Doctors</a>
                     </li>
                     <li>
-                        <a href="#" class="hover:text-accent transition-colors">About us</a>
+                        <a href="{% url 'about' %}" class="hover:text-accent transition-colors">About us</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'contact' %}" class="hover:text-accent transition-colors">Contact</a>
                     </li>
                 </ul>
             </div>
@@ -69,14 +72,15 @@
                 <h3 class="text-lg font-bold mb-6">Service</h3>
                 <ul class="space-y-3 text-gray-300 text-sm">
                     <li>
-                        <a href="#" class="hover:text-accent transition-colors">Book Appointments</a>
-                    </li>
-                    <li>
-                        <a href="#" class="hover:text-accent transition-colors">Emergency Care</a>
+                        <a href="{% url 'appointments:doctor_list' %}" class="hover:text-accent transition-colors">Book Appointments</a>
                     </li>
                     <li>
                         <a href="#" class="hover:text-accent transition-colors">Health Records</a>
                     </li>
+                    <li>
+                        <a href="{% url 'appointments:doctor_list' %}" class="hover:text-accent transition-colors">AI Search</a>
+                    </li>
+                    
                 </ul>
             </div>
 
@@ -95,7 +99,10 @@
                             <path
                                 d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                         </svg>
-                        <span>Infohealthcare@gmail.com</span>
+
+                        <a href="mailto:hcare0139@gmail.com" class="text-gray-300 hover:underline">
+                            hcare0139@gmail.com
+                        </a>
                     </li>
                     <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -111,7 +118,7 @@
         <hr class="border-gray-600 mb-8" />
 
         <div class="text-center text-gray-400 text-sm">
-            &copy; 2022 Copyright reserved | Health Care
+            &copy; 2025 Healthcare System. All rights reserved. V 1.0.0
         </div>
     </div>
 </footer>

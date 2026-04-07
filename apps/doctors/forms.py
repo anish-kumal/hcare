@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from datetime import date
 import re
 from .models import Doctor, DoctorSchedule
+from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
 
@@ -113,6 +114,36 @@ class DoctorUserForm(forms.ModelForm):
             "Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456"
         )
         
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
+        if len(password) < 8:
+            raise forms.ValidationError('Password must be at least 8 characters long.')
+
+        if not re.search(r'[A-Z]', password):
+            raise forms.ValidationError('Password must contain at least one uppercase letter.')
+
+        if not re.search(r'[a-z]', password):
+            raise forms.ValidationError('Password must contain at least one lowercase letter.')
+
+        if not re.search(r'\d', password):
+            raise forms.ValidationError('Password must contain at least one number.')
+
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise forms.ValidationError('Password must contain at least one special character.')
+
+        user = User(
+            username=self.cleaned_data.get('username', ''),
+            email=self.cleaned_data.get('email', ''),
+            first_name=self.cleaned_data.get('first_name', ''),
+            last_name=self.cleaned_data.get('last_name', ''),
+        )
+
+        try:
+            validate_password(password, user=user)
+        except forms.ValidationError as error:
+            raise forms.ValidationError(error.messages)
+
+        return password
 
 
 
@@ -131,14 +162,41 @@ class DoctorUserUpdateForm(DoctorUserForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def clean(self):
-        cleaned_data = super().clean()
-        password = cleaned_data.get('password') or ''
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
 
-        if password and len(password) < 8:
-            self.add_error('password', 'Password must be at least 8 characters long.')
+        # Password update is optional. If provided, enforce strong password rules.
+        if not password:
+            return password
 
-        return cleaned_data
+        if len(password) < 8:
+            raise forms.ValidationError('Password must be at least 8 characters long.')
+
+        if not re.search(r'[A-Z]', password):
+            raise forms.ValidationError('Password must contain at least one uppercase letter.')
+
+        if not re.search(r'[a-z]', password):
+            raise forms.ValidationError('Password must contain at least one lowercase letter.')
+
+        if not re.search(r'\d', password):
+            raise forms.ValidationError('Password must contain at least one number.')
+
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise forms.ValidationError('Password must contain at least one special character.')
+
+        user = User(
+            username=self.cleaned_data.get('username', ''),
+            email=self.cleaned_data.get('email', ''),
+            first_name=self.cleaned_data.get('first_name', ''),
+            last_name=self.cleaned_data.get('last_name', ''),
+        )
+
+        try:
+            validate_password(password, user=user)
+        except forms.ValidationError as error:
+            raise forms.ValidationError(error.messages)
+
+        return password
 
     def save(self, commit=True):
         user = super().save(commit=False)

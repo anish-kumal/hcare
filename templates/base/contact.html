@@ -1,0 +1,156 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Contact - Health Care{% endblock title %}
+
+{% block content %}
+<section
+    class="relative min-h-[55vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
+    style="
+        background-image: linear-gradient(
+            rgba(36, 82, 88, 0.72),
+            rgba(36, 82, 88, 0.72)
+        ), url('{% static "images/background.png" %}');">
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+        {% include "partials/navbar.html" %}
+
+        <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
+            <div class="w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
+                <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">
+                    <span class="block">Contact Health Care</span>
+                </h1>
+                <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    Reach out to our team for support, partnership, or general questions. We are here to help you quickly.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 md:py-20 bg-white">
+    <div class="max-w-[1300px] mx-auto px-4 md:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+            <span class="inline-block bg-primary text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-full mb-5 tracking-wide">
+                Get in touch
+            </span>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                We would love to hear from you
+            </h2>
+            <p class="text-gray-600 text-base md:text-lg leading-relaxed">
+                Send us a message or contact us directly through phone, email, or location details below.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8 items-stretch">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-primary text-white rounded-2xl p-8 shadow-md">
+                    <h3 class="text-2xl font-bold mb-3">Let's start a conversation</h3>
+                    <p class="text-gray-100 leading-relaxed">
+                        Our support team answers quickly and helps with appointments, account issues, and platform questions.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary text-accent flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[24px]">call</span>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Call Us</h4>
+                            <p class="text-gray-600 mt-1">(+977) 9801823746</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary text-accent flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[24px]">mail</span>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Email</h4>
+                            <p class="text-gray-600 mt-1">hcare0139@gmail.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary text-accent flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[24px]">location_on</span>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Location</h4>
+                            <p class="text-gray-600 mt-1">Pokhara, Kaski</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 bg-gray-50 border border-gray-100 rounded-2xl p-6 md:p-8 shadow-sm">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Send a Message</h3>
+                <p class="text-gray-600 mb-6">Fill in the form and our team will contact you soon.</p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form class="grid grid-cols-1 md:grid-cols-2 gap-5" method="post">
+                    {% csrf_token %}
+                    <div>
+                        <label for="id_full_name" class="block text-sm font-semibold text-gray-800 mb-2">Full Name</label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                        <p class="text-red-600 text-sm mt-2">{{ form.full_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_email" class="block text-sm font-semibold text-gray-800 mb-2">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <p class="text-red-600 text-sm mt-2">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_phone_number" class="block text-sm font-semibold text-gray-800 mb-2">Phone Number</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                        <p class="text-red-600 text-sm mt-2">{{ form.phone_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div >
+                        <label for="id_subject" class="block text-sm font-semibold text-gray-800 mb-2">Subject</label>
+                        {{ form.subject }}
+                        {% if form.subject.errors %}
+                        <p class="text-red-600 text-sm mt-2">{{ form.subject.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="id_message" class="block text-sm font-semibold text-gray-800 mb-2">Message</label>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                        <p class="text-red-600 text-sm mt-2">{{ form.message.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <button type="submit" class="inline-flex items-center justify-center bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity duration-300">
+                            Submit Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include "partials/patient_footer.html" %}
+{% endblock content %}

@@ -22,6 +22,10 @@ from apps.appointments.views import AdminPrescriptionListView
 from apps.base.views import (
     IndexView, 
     AboutView,
+    TermsView,
+    PrivacyPolicyView,
+    ServicesView,
+    ContactView,
     AdministrView,
     SuperAdminDashboardView, 
     AdminDashboardView,
@@ -36,6 +40,10 @@ from apps.base.views import (
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
     path('about/', AboutView.as_view(), name='about'),
+    path('services/', ServicesView.as_view(), name='services'),
+    path('contact/', ContactView.as_view(), name='contact'),
+    path('terms/', TermsView.as_view(), name='terms'),
+    path('privacy-policy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('administer/', AdministrView.as_view(), name='administer'),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls')),

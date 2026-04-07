@@ -34,85 +34,79 @@
         
 
         <!-- Doctor Profile Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-8">
+        <div class=" mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 p-4 lg:p-6">
                 <!-- Doctor Image -->
-                <div class="md:col-span-1">
-                    <div class="bg-gradient-to-br from-[#245258] to-[#1a3d42] rounded-2xl overflow-hidden h-96 flex items-center justify-center">
-                        {% if doctor.profile_picture %}
-                            <img src="{{ doctor.profile_picture.url }}" class="w-full h-full object-cover" alt="Dr. {{ doctor.user.get_full_name }}">
-                        {% else %}
-                            <span class="material-symbols-outlined text-9xl text-gray-300">person</span>
-                        {% endif %}
-                    </div>
+                <div class="rounded-xl overflow-hidden bg-primary min-h-[260px] lg:min-h-[300px] flex items-center justify-center">
+                    {% if doctor.profile_picture %}
+                        <img src="{{ doctor.profile_picture.url }}" class="w-full h-full object-cover" alt="Dr. {{ doctor.user.get_full_name }}">
+                    {% else %}
+                        <span class="material-symbols-outlined text-8xl text-white">person</span>
+                    {% endif %}
                 </div>
 
                 <!-- Doctor Info -->
-                <div class="md:col-span-2">
-                    <div class="flex items-start justify-between mb-6">
-                        <div class="flex-1">
-                            <h2 class="text-3xl font-bold text-gray-900 mb-3"> {{ doctor_full_name }} 
-                                <span class="material-symbols-outlined text-xl text-primary  align-middle ml-2" style="display: inline;">verified</span>
-                            </h2>
-                            <div class="flex flex-wrap gap-3 items-center mb-4">
-                                <span class="inline-block px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
-                                    {{ doctor.specialization }}
-                                </span>
-                                <span class="text-xs text-gray-500">2 years exp.</span>
-                            </div>
-                        </div>
-                        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-bold whitespace-nowrap">
-                            <span class="w-2.5 h-2.5 bg-green-600 rounded-full"></span>
-                            Available
-                        </span>
+                <div class="rounded-xl border border-gray-300 p-4 lg:p-5 flex flex-col">
+                    <div class="mb-3">
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{{ doctor_full_name }}
+                            <span class="material-symbols-outlined text-lg text-primary align-middle ml-1" style="display: inline;">verified</span>
+                        </h2>
                     </div>
 
-                    <!-- About Section -->
-                    {% if doctor.bio %}
-                        <div class="mb-6">
-                            <h3 class="font-bold text-gray-900 mb-3 text-sm lg:text-base">About</h3>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-4">{{ doctor.bio }}</p>
-                        </div>
-                    {% endif %}
+                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[11px] text-gray-500">
+                        {% if doctor.qualification %}
+                            <span>{{ doctor.qualification }}</span>
+                            <span>-</span>
+                        {% endif %}
+                        <span>{{ doctor.specialization }}</span>
+                        {% if doctor.experience_years %}
+                            <span class="px-2 py-0.5 rounded-full border border-gray-300 text-sm text-gray-500">{{ doctor.experience_years }} years</span>
+                        {% endif %}
+                    </div>
+                  
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-1">
+                            About
+                            <span class="material-symbols-outlined text-sm text-gray-400">info</span>
+                        </h3>
+                        <p class="text-sm text-justify text-gray-600 leading-relaxed">
+                            {% if doctor.bio %}
+                                {{ doctor.bio }}
+                            {% else %}
+                                Dr. {{ doctor.user.get_full_name }} is available for consultation.
+                            {% endif %}
+                        </p>
+                    </div>
 
-                    <!-- Details Grid -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Experience</p>
-                            <p class="text-lg font-bold text-gray-900">{{ doctor.experience_years }} years</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Consultation Fee</p>
-                            <p class="text-lg font-bold text-accent">NRs {{ doctor.consultation_fee }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Qualification</p>
-                            <p class="text-sm font-bold text-gray-900">{{ doctor.qualification }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Hospital</p>
-                            <p class="text-sm font-bold text-gray-900">{{ doctor.hospital.name }}</p>
-                        </div>
+                    <div class="mb-4  text-sm text-gray-600">
+                        <span class="font-semibold text-gray-900">Appointment fee: </span>
+                        Nrs {{ doctor.consultation_fee }}
+                    </div>
+                    <div class="flex items-center  pt-3 border-t border-gray-200 gap-3 mb-4">
+                        <span class="material-symbols-outlined text-sm text-gray-400">location_on</span>
+                        <p class="text-sm text-gray-600">{{ doctor.hospital.name }}</p>
+                        <p class="text-sm text-gray-400">|</p> 
+                        <p class ="text-sm text-gray-600">{{ doctor.hospital.city }}, {{ doctor.hospital.address }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Booking Slots Section -->
-        <div id="booking-slots-section" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Booking slots</h3>
+        <div id="booking-slots-section" class="p-4">
+            <h3 class="text-m font-semibold text-gray-900 mb-5">Booking slots</h3>
             
             {% if available_slots %}
                 <!-- Store the first day for default selection -->
                 {% with first_day=available_slots|first %}
                 <div id="booking-container" class="space-y-6">
                     <!-- Day Selector -->
-                    <div class="flex flex-wrap gap-3 md:gap-4">
+                    <div class="flex flex-wrap gap-2 md:gap-4">
                         {% for day_slots in available_slots %}
                             <button 
                                 type="button"
                                 onclick="showTimeSlots('day-{{ forloop.counter0 }}')"
-                                class="day-btn {% if forloop.first %}active-day{% endif %} px-3 py-6 rounded-full border-2 text-xs md:text-sm font-semibold transition-all duration-300"
+                                class="day-btn {% if forloop.first %}active-day{% endif %} min-w-[30px] px-3 py-5 rounded-full border text-xs md:text-sm font-medium transition-all duration-300"
                                 data-day="day-{{ forloop.counter0 }}"
                                 style="border-color: #245258; color: #245258; {% if forloop.first %}background-color: #245258; color: white;{% endif %}">
                                 <span class="block">{{ day_slots.weekday|slice:":3"|upper }}</span>
@@ -122,13 +116,13 @@
                     </div>
 
                     <!-- Time Slots Container -->
-                    <div class="pt-4 border-t border-gray-200">
+                    <div class="gap-4"> 
                         {% for day_slots in available_slots %}
                             <div id="day-{{ forloop.counter0 }}" class="time-slots-container {% if not forloop.first %}hidden{% endif %}">
                                 <div class="flex flex-wrap gap-3">
                                     {% for slot in day_slots.slots %}
                                         <a href="{% url 'appointments:book_appointment' doctor.pk %}?date={{ day_slots.date|date:'Y-m-d' }}&time={{ slot.time|date:'H:i' }}" 
-                                           class="px-4 py-2 border-2 border-primary text-primary rounded-lg text-sm font-semibold hover:bg-primary hover:text-white transition-all duration-300">
+                                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-full text-sm font-medium hover:border-primary hover:text-primary transition-all duration-300">
                                             {{ slot.time|date:"g:i A" }}
                                         </a>
                                     {% endfor %}
@@ -138,23 +132,62 @@
                     </div>
 
                     <!-- Book Button -->
-                    <div class="mt-8 pt-6 border-t border-gray-200">
-                        <p class="text-sm text-gray-600 mb-4">Select a time slot above to proceed with booking</p>
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-600">Select a time slot above to proceed with booking</p>
                     </div>
                 </div>
 
                 {% endwith %}
             {% else %}
-                <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-4 rounded-lg text-sm flex items-center gap-3">
+                <div class="bg-accent/30 border border-accent/200 text-primary px-6 py-4 rounded-2xl text-sm flex items-center gap-3">
                     <span class="material-symbols-outlined text-base">warning</span>
                     <p>No available time slots in the next 7 days. Please check back later.</p>
                 </div>
             {% endif %}
         </div>
+
+        {% if same_specialization_doctors %}
+            <div class="mt-8 p-4">
+                <h3 class="text-m font-semibold text-center text-gray-900 mb-2">Related doctors</h3>
+                <p class="text-gray-600 text-sm text-center mb-3">
+                    Simply browse through our extensive lot of trusted doctors
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    {% for doctor in same_specialization_doctors %}
+                        <a href="{% url 'appointments:doctor_detail' doctor.pk %}" class="group">
+                            <div class="bg-white shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                                <div class="h-72 bg-primary overflow-hidden relative">
+                                    {% if doctor.profile_picture %}
+                                        <img src="{{ doctor.profile_picture.url }}"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            alt="Dr. {{ doctor.user.get_full_name }}">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center bg-primary">
+                                            <span class="material-symbols-outlined text-5xl text-white">person</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="p-6">
+                                    <p class="text-emerald-600 text-sm">+ Available</p>
+                                    <h3 class="font-semibold text-sm text-gray-800">
+                                        Dr. {{ doctor.user.get_full_name }}
+                                    </h3>
+                                    <p class="text-gray-400 text-sm">
+                                        {{ doctor.specialization }}
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 </div>
-</div>
+
+
 
 <script>
     function showTimeSlots(dayId) {
@@ -241,4 +274,6 @@
         };
     })();
 </script>
+
+{% include "partials/patient_footer.html" %}
 {% endblock %}

@@ -1,9 +1,11 @@
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from .forms import ContactMessageForm
 from .mixin import RoleRequiredMixin
 
 # Create your views here.
@@ -33,6 +35,33 @@ class AdministrView(TemplateView):
 class AboutView(TemplateView):
     """Render the public About page"""
     template_name = 'base/about.html'
+
+
+class TermsView(TemplateView):
+    """Render the public Terms page"""
+    template_name = 'base/terms.html'
+
+
+class PrivacyPolicyView(TemplateView):
+    """Render the public Privacy Policy page"""
+    template_name = 'base/privacy_policy.html'
+
+
+class ServicesView(TemplateView):
+    """Render the public Services page"""
+    template_name = 'base/services.html'
+
+
+class ContactView(FormView):
+    """Render and handle the public Contact page form"""
+    template_name = 'base/contact.html'
+    form_class = ContactMessageForm
+    success_url = reverse_lazy('contact')
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, "Your message has been sent successfully.")
+        return super().form_valid(form)
 
 
 class SuperAdminDashboardView(LoginRequiredMixin, TemplateView):

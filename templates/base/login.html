@@ -71,6 +71,13 @@
                     class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition duration-300 shadow-lg">
                     Login
                 </button>
+
+                <p class="text-xs text-gray-500 leading-relaxed text-center">
+                    By tapping login, you agree to create an account and to Healthcare's
+                        <a target="_blank" href="{% url 'terms' %}" class="text-primary underline hover:text-green-800">Terms</a>
+                    and
+                        <a target="_blank"href="{% url 'privacy_policy' %}" class="text-primary underline hover:text-green-800">Privacy Policy</a>.
+                </p>
             </form>
 
             <div class="flex items-center my-8">

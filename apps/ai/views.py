@@ -82,6 +82,11 @@ class DoctorListView( ListView):
         selected_specialization = self.request.GET.get('specialization', '').strip()
         if selected_specialization:
             queryset = queryset.filter(specialization=selected_specialization)
+
+        # Filter by hospital name if provided
+        selected_hospital = self.request.GET.get('hospital', '').strip()
+        if selected_hospital:
+            queryset = queryset.filter(hospital__name=selected_hospital)
         
         ai_query = self.request.GET.get('ai_query', '').strip()
         search_query = self.request.GET.get('q', '').strip()
@@ -129,7 +134,14 @@ class DoctorListView( ListView):
             specialization=''
         ).values_list('specialization', flat=True).distinct().order_by('specialization')
         context['specializations'] = specs
+        hospitals = Doctor.objects.filter(
+            hospital__isnull=False
+        ).exclude(
+            hospital__name=''
+        ).values_list('hospital__name', flat=True).distinct().order_by('hospital__name')
+        context['hospitals'] = hospitals
         context['selected_specialization'] = self.request.GET.get('specialization', '').strip()
+        context['selected_hospital'] = self.request.GET.get('hospital', '').strip()
         context['search_query'] = self.request.GET.get('q', '').strip()
         context['ai_query'] = self.request.GET.get('ai_query', '').strip()
         context['ai_detected_specialization'] = self.ai_detected_specialization

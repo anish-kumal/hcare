@@ -116,6 +116,17 @@ class DoctorDetailView( DetailView):
             active_statuses=BOOKING_STATUSES,
         )
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
+        if doctor.specialization:
+            context['same_specialization_doctors'] = Doctor.objects.filter(
+                specialization=doctor.specialization,
+                is_available=True,
+                is_active=True,
+            ).exclude(pk=doctor.pk).select_related('user', 'hospital').order_by(
+                'user__first_name',
+                'user__last_name',
+            )[:4]
+        else:
+            context['same_specialization_doctors'] = Doctor.objects.none()
         return context
 
 

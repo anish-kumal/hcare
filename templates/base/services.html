@@ -1,7 +1,7 @@
-{% extends "base/base.html" %}
+{% extends 'base/base.html' %}
 {% load static %}
 
-{% block title %}About - Health Care{% endblock title %}
+{% block title %}Services - Health Care{% endblock title %}
 
 {% block content %}
 <section
@@ -10,18 +10,19 @@
         background-image: linear-gradient(
             rgba(36, 82, 88, 0.72),
             rgba(36, 82, 88, 0.72)
-        ), url('{% static "images/background.png" %}');">
+        ), url('{% static 'images/background.png' %}');">
     <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
         {% include "partials/navbar.html" %}
 
         <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
             <div class="w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
                 <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">
-                    <span class="block">About Health Care</span>
+                    <span class="block">Patient Services</span>
                 </h1>
                 <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-2xl mx-auto">
-                    Learn who we are, what we believe, and how we are making healthcare access simpler for every patient.
+                    Everything patients need to find doctors, manage appointments, and keep health records in one place.
                 </p>
+             
             </div>
         </div>
     </div>
@@ -31,79 +32,80 @@
     <div class="max-w-[1300px] mx-auto px-4 md:px-8">
         <div class="text-center max-w-3xl mx-auto mb-12 md:mb-16">
             <span class="inline-block bg-primary text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-full mb-5 tracking-wide">
-                Who we are
+                Built for patients
             </span>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                A patient-first healthcare platform
+                Care tools designed around your journey
             </h2>
             <p class="text-gray-600 text-base md:text-lg leading-relaxed">
-                We connect patients, doctors, and hospitals through one streamlined digital experience focused on trust, speed, and care quality.
+                Use the same clean, simple experience across every step of your care, from choosing a doctor to following up on treatment.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">flag</span>
+                    <span class="material-symbols-outlined text-[28px]">search</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Our Mission</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Doctor Search</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Make healthcare access simple, fast, and reliable through a digital platform patients can trust every day.
+                    Browse doctors by name, specialization, or location and find the right specialist faster.
                 </p>
             </div>
 
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">visibility</span>
+                    <span class="material-symbols-outlined text-[28px]">calendar_month</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Our Vision</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Appointment Booking</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Build a connected care ecosystem where patients and providers collaborate without delays or confusion.
+                    Book a visit in a few clicks, choose an available time slot, and manage follow-ups in one place.
                 </p>
             </div>
 
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">verified_user</span>
+                    <span class="material-symbols-outlined text-[28px]">auto_awesome</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Our Promise</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">AI Symptom Search</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Deliver secure, user-friendly tools that improve care quality while reducing waiting time.
+                    Describe your symptoms in plain language to quickly discover doctors who match your needs.
                 </p>
             </div>
 
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">groups</span>
+                    <span class="material-symbols-outlined text-[28px]">description</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Community Focus</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Medical Reports</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Support healthier communities by helping more people reach trusted doctors when they need care.
+                    Keep lab results and medical documents organized so important records are easy to access when needed.
                 </p>
             </div>
 
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">bolt</span>
+                    <span class="material-symbols-outlined text-[28px]">payments</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Fast Experience</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Secure Payments</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Reduce friction in the healthcare journey with quicker search, booking, and follow-up actions.
+                    Complete consultation payments securely and see the status of your booking without confusion.
                 </p>
             </div>
 
             <div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 group text-center flex flex-col items-center">
                 <div class="w-14 h-14 rounded-full bg-primary text-accent flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300 mx-auto">
-                    <span class="material-symbols-outlined text-[28px]">handshake</span>
+                    <span class="material-symbols-outlined text-[28px]">person</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-3">Trusted Care</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Patient Profile</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Build long-term confidence through transparent services and dependable support for every patient.
+                    Update your personal details, keep your profile complete, and make future visits smoother.
                 </p>
             </div>
         </div>
     </div>
 </section>
+
 
 {% include "partials/patient_footer.html" %}
 {% endblock content %}
