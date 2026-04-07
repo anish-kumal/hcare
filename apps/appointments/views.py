@@ -13,7 +13,7 @@ from apps.payments.models import AppointmentPayment
 from .forms import AppointmentBookingForm, AppointmentEditForm, AdminAppointmentBookingForm
 
 
-ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP']
+ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED']
 
 
 
@@ -717,3 +717,140 @@ class AdminAppointmentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
         messages.success(self.request, 'Appointment updated successfully.')
         return super().form_valid(form)
 
+
+class AdminAppointmentRescheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
+    """Allow admin/super-admin to reschedule appointments from manage panel."""
+    model = PatientAppointment
+    template_name = 'appointments/appointment_manage_reschedule.html'
+    context_object_name = 'appointment'
+    slot_window_days = 14
+
+    def get_queryset(self):
+        return PatientAppointment.objects.select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+            'payment',
+        )
+
+    def _is_slot_available(self, doctor, appointment_date, appointment_time, now):
+        weekday = appointment_date.weekday()
+        schedules = doctor.schedules.filter(
+            weekday=weekday,
+            is_available=True,
+        ).order_by('start_time')
+
+        if not schedules:
+            return False
+
+        for schedule in schedules:
+            available_slot_times = {
+                slot['time']
+                for slot in schedule.get_available_slots(
+                    appointment_date=appointment_date,
+                    now=now,
+                    active_statuses=ACTIVE_BOOKING_STATUSES,
+                )
+            }
+            if appointment_time in available_slot_times:
+                return True
+
+        return False
+
+    def _get_reschedule_window(self, appointment, now):
+        start_date = max(appointment.appointment_date, now.date())
+        end_date = start_date + timedelta(days=self.slot_window_days - 1)
+        return start_date, end_date
+
+    def _get_slots_window_now(self, appointment, now):
+        start_date, _ = self._get_reschedule_window(appointment=appointment, now=now)
+        if start_date == now.date():
+            return now
+        current_tz = timezone.get_current_timezone()
+        return timezone.make_aware(datetime.combine(start_date, datetime.min.time()), current_tz)
+
+    def post(self, request, *args, **kwargs):
+        appointment = self.get_object()
+
+        if appointment.status in ['COMPLETED', 'CANCELLED']:
+            messages.error(request, 'Completed or cancelled appointments cannot be rescheduled.')
+            return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
+
+        if not appointment.doctor:
+            messages.error(request, 'This appointment has no assigned doctor and cannot be rescheduled.')
+            return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
+
+        appointment_date_str = request.POST.get('appointment_date', '').strip()
+        appointment_time_str = request.POST.get('appointment_time', '').strip()
+
+        try:
+            appointment_date = datetime.strptime(appointment_date_str, '%Y-%m-%d').date()
+            appointment_time = datetime.strptime(appointment_time_str, '%H:%M').time()
+        except (ValueError, TypeError):
+            messages.error(request, 'Invalid date/time selected. Please choose an available slot.')
+            return redirect('appointments:appointment_manage_reschedule', pk=appointment.pk)
+
+        now = timezone.now()
+        selected_dt = timezone.make_aware(datetime.combine(appointment_date, appointment_time))
+        if selected_dt <= now:
+            messages.error(request, 'Please choose a future time slot.')
+            return redirect('appointments:appointment_manage_reschedule', pk=appointment.pk)
+
+        window_start_date, window_end_date = self._get_reschedule_window(appointment=appointment, now=now)
+        if appointment_date < window_start_date or appointment_date > window_end_date:
+            messages.error(
+                request,
+                f'Please choose a date between {window_start_date:%Y-%m-%d} and {window_end_date:%Y-%m-%d}.',
+            )
+            return redirect('appointments:appointment_manage_reschedule', pk=appointment.pk)
+
+        slot_is_available = self._is_slot_available(
+            doctor=appointment.doctor,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time,
+            now=now,
+        )
+
+        if not slot_is_available:
+            messages.error(request, 'Selected slot is no longer available. Please select another slot.')
+            return redirect('appointments:appointment_manage_reschedule', pk=appointment.pk)
+
+        appointment.appointment_date = appointment_date
+        appointment.appointment_time = appointment_time
+        appointment.status = 'RESCHEDULED'
+        appointment.save(update_fields=['appointment_date', 'appointment_time', 'status', 'modified'])
+
+        messages.success(request, 'Appointment rescheduled successfully.')
+        return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        appointment = self.object
+
+        if appointment.status in ['COMPLETED', 'CANCELLED']:
+            context['available_slots'] = []
+            context['can_reschedule'] = False
+            context['doctor_full_name'] = (
+                f"Dr. {appointment.doctor.user.get_full_name()}"
+                if appointment.doctor and appointment.doctor.user
+                else 'Doctor'
+            )
+            return context
+
+        doctor = appointment.doctor
+        if not doctor:
+            context['available_slots'] = []
+            context['can_reschedule'] = False
+            context['doctor_full_name'] = 'Doctor'
+            return context
+
+        context['available_slots'] = doctor.get_available_slots_by_date(
+            days=self.slot_window_days,
+            now=self._get_slots_window_now(appointment=appointment, now=timezone.now()),
+            active_statuses=ACTIVE_BOOKING_STATUSES,
+        )
+        context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
+        context['can_reschedule'] = True
+        context['selected_date'] = self.request.GET.get('date', '').strip()
+        context['selected_time'] = self.request.GET.get('time', '').strip()
+        return context

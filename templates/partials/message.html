@@ -1,10 +1,10 @@
 {% if messages %}
         <div id="message-container"
-            class="mt-4 space-y-3 flex flex-col items-end absolute top-5 right-6 md:right-5 z-50">
+            class="fixed bottom-6 right-6 z-[9999] flex max-w-sm flex-col items-end space-y-3 px-4 md:right-5 md:px-0 pointer-events-none">
 
             {% for message in messages %}
             <div
-                class="message-item relative p-4 pr-10 rounded-md shadow transition-opacity duration-500
+                class="message-item relative pointer-events-auto w-full p-4 pr-10 rounded-md shadow-lg transition-opacity duration-500
                 {% if message.tags == 'error' %}
                     bg-red-100 border border-red-400 text-red-700
                 {% elif message.tags == 'success' %}

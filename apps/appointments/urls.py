@@ -11,6 +11,7 @@ from .views import (
     AdminAppointmentListView,
     AdminAppointmentDetailView,
     AdminAppointmentUpdateView,
+    AdminAppointmentRescheduleView,
 )
 
 from apps.ai.views import  DoctorListView
@@ -29,4 +30,5 @@ urlpatterns = [
     path('manage/', AdminAppointmentListView.as_view(), name='appointment_list'),
     path('manage/<int:pk>/', AdminAppointmentDetailView.as_view(), name='appointment_manage_detail'),
     path('manage/<int:pk>/edit/', AdminAppointmentUpdateView.as_view(), name='appointment_manage_edit'),
+    path('manage/<int:pk>/reschedule/', AdminAppointmentRescheduleView.as_view(), name='appointment_manage_reschedule'),
 ]

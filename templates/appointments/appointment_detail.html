@@ -206,6 +206,12 @@
                             <span class="material-symbols-outlined text-base">edit</span> Edit Appointment
                         </span>
                     </button>
+
+                    <a href="{% url 'appointments:appointment_reschedule' appointment.pk %}" class="flex-1 px-4 py-2.5 bg-accent text-primary rounded-lg font-semibold hover:bg-[#f3c86f] transition-colors text-center">
+                        <span class="inline-flex items-center justify-center gap-2">
+                            Reschedule
+                        </span>
+                    </a>
                     {% endif %}
 
                     {% if show_khalti_pay_button %}

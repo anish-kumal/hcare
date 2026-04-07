@@ -19,6 +19,10 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Appointment Detail</h1>
                     <div class="flex items-center gap-2">
+                        <a href="{% url 'appointments:appointment_manage_reschedule' appointment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-primary text-sm font-semibold hover:bg-[#f3c86f] transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">event_repeat</span>
+                            Reschedule
+                        </a>
                         <a href="{% url 'appointments:appointment_manage_edit' appointment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
                             <span class="material-symbols-outlined text-[18px]">edit</span>
                             Edit Appointment

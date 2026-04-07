@@ -1,0 +1,150 @@
+{% extends "base/base_dashboard.html" %}
+{% block title %}Reschedule Appointment - Health Care{% endblock title %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Reschedule Appointment</h1>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'appointments:appointment_manage_detail' appointment.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back to Detail
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Patient</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
+                            <p class="text-sm text-gray-600">UUID: {{ appointment.patient.booking_uuid }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Doctor</p>
+                            {% if appointment.doctor %}
+                                <p class="text-lg font-semibold text-gray-900">{{ doctor_full_name }}</p>
+                                <p class="text-sm text-gray-600">{{ appointment.doctor.hospital.name }}</p>
+                            {% else %}
+                                <p class="text-lg font-semibold text-gray-900 text-gray-500">Not Assigned</p>
+                            {% endif %}
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Current Date</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.appointment_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                            <p class="text-xs text-gray-500 mb-1">Current Time</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                        </div>
+                    </div>
+
+                    {% if can_reschedule and available_slots %}
+                    <div class="border-t border-gray-100 pt-6 space-y-6">
+                        <h2 class="text-lg font-semibold text-gray-900">Select New Slot (Next 14 Days)</h2>
+
+                        <div class="flex flex-wrap gap-3 md:gap-4">
+                            {% for day_slots in available_slots %}
+                            <button
+                                type="button"
+                                onclick="showTimeSlots('day-{{ forloop.counter0 }}')"
+                                class="day-btn px-3 py-5 rounded-full border-2 text-xs md:text-sm font-semibold transition-all duration-300 {% if forloop.first %}bg-primary text-white{% else %}text-primary{% endif %}"
+                                data-day="day-{{ forloop.counter0 }}"
+                                style="border-color: #245258; {% if not forloop.first %}color: #245258;{% endif %}">
+                                <span class="block">{{ day_slots.weekday|slice:":3"|upper }}</span>
+                                <span class="block text-xs">{{ day_slots.date|date:"d" }}</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-200">
+                            {% for day_slots in available_slots %}
+                            <div id="day-{{ forloop.counter0 }}" class="time-slots-container {% if not forloop.first %}hidden{% endif %}">
+                                <div class="flex flex-wrap gap-3">
+                                    {% for slot in day_slots.slots %}
+                                    <a href="{% url 'appointments:appointment_manage_reschedule' appointment.pk %}?date={{ day_slots.date|date:'Y-m-d' }}&time={{ slot.time|time:'H:i' }}"
+                                        class="px-4 py-2 border-2 border-primary text-primary rounded-lg text-sm font-semibold hover:bg-primary hover:text-white transition-all duration-300 {% if selected_date == day_slots.date|date:'Y-m-d' and selected_time == slot.time|time:'H:i' %}bg-primary text-white{% endif %}">
+                                        {{ slot.time|time:"g:i A" }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if selected_date and selected_time %}
+                        <form method="post" class="pt-4 border-t border-gray-200">
+                            {% csrf_token %}
+                            <input type="hidden" name="appointment_date" value="{{ selected_date }}">
+                            <input type="hidden" name="appointment_time" value="{{ selected_time }}">
+
+                            <div class="bg-accent/20 rounded-lg p-4 mb-4">
+                                <p class="text-sm text-gray-800">
+                                    Selected slot:
+                                    <span class="font-bold">{{ selected_date }}</span>
+                                    at
+                                    <span class="font-bold">{{ selected_time }}</span>
+                                </p>
+                            </div>
+
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-[#1a3d42] transition-colors">
+                                Confirm Reschedule
+                            </button>
+                        </form>
+                        {% else %}
+                        <p class="text-sm text-gray-600">Choose a slot above, then click confirm.</p>
+                        {% endif %}
+                    </div>
+                    {% elif not can_reschedule %}
+                    <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+                        This appointment cannot be rescheduled.
+                    </div>
+                    {% else %}
+                    <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-700 text-sm">
+                        No available slots in the next 14 days.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    function showTimeSlots(dayId) {
+        document.querySelectorAll('.time-slots-container').forEach((el) => {
+            el.classList.add('hidden');
+        });
+
+        const selected = document.getElementById(dayId);
+        if (selected) {
+            selected.classList.remove('hidden');
+        }
+
+        document.querySelectorAll('.day-btn').forEach((btn) => {
+            if (btn.getAttribute('data-day') === dayId) {
+                btn.classList.add('bg-primary', 'text-white');
+                btn.style.color = 'white';
+                btn.style.backgroundColor = '#245258';
+            } else {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = '#245258';
+            }
+        });
+    }
+</script>
+{% endblock content %}
