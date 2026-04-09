@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from apps import hospitals
 from apps.base.models import BaseModel
-from cloudinary.models import CloudinaryField
 
 # Create your models here.
 class MedicalReport(BaseModel):
@@ -28,9 +27,9 @@ class MedicalReport(BaseModel):
         help_text="Name/title of the medical report"
     )
 
-    report_file = CloudinaryField(
-        resource_type='raw',
-        folder='health_care/patients/reports/'
+    report_file = models.FileField(
+        upload_to='medical_reports/',
+        help_text='Uploaded medical report file'
     )
 
     description = models.TextField(
@@ -66,6 +65,18 @@ class MedicalReport(BaseModel):
 
     def __str__(self):
         return f"Medical Report for {self.patient} at {self.primary_hospital}"
+
+    def get_report_file_url(self):
+        """Return a direct URL for opening the report file."""
+        if not self.report_file:
+            return ''
+        return getattr(self.report_file, 'url', '')
+
+    def get_report_download_url(self):
+        """Return a URL used by app-level download endpoints."""
+        if not self.report_file:
+            return ''
+        return self.get_report_file_url()
     
 
 

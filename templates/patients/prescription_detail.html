@@ -1,0 +1,107 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Prescription Detail - Patient Dashboard{% endblock %}
+
+{% block content %}
+<section class="relative min-h-[36vh] rounded-bl-[50px] md:rounded-bl-[120px] overflow-hidden flex flex-col pt-6 pb-14 md:pb-0">
+    <div class="absolute inset-0">
+        <img src="{% static 'images/background.png' %}" alt="" class="h-full w-full object-cover">
+        <div class="absolute inset-0 bg-[#245258]/70"></div>
+    </div>
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1 relative">
+        {% include "partials/navbar.html" %}
+        <div class="flex-1 flex items-center justify-center pt-8 pb-10">
+            <div class="text-center text-white">
+                <h1 class="text-2xl md:text-5xl font-bold mb-3">Prescription Details</h1>
+                <p class="text-gray-100 text-sm md:text-base">Consultation summary and medicines prescribed for your appointment.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="bg-gray-50 min-h-screen py-10">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-gray-900">Prescription #{{ prescription.pk }}</h2>
+            <a href="{% url 'patients:patient_profile' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Profile
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">Doctor</p>
+                    {% if prescription.appointment.doctor %}
+                    <p class="font-semibold text-gray-900">Dr. {{ prescription.appointment.doctor.user.get_full_name|default:prescription.appointment.doctor.user.username }}</p>
+                    {% else %}
+                    <p class="font-semibold text-gray-500">Not assigned</p>
+                    {% endif %}
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">Hospital</p>
+                    {% if prescription.appointment.doctor and prescription.appointment.doctor.hospital %}
+                    <p class="font-semibold text-gray-900">{{ prescription.appointment.doctor.hospital.name }}</p>
+                    {% else %}
+                    <p class="font-semibold text-gray-500">Not specified</p>
+                    {% endif %}
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">Appointment Date</p>
+                    <p class="font-semibold text-gray-900">{{ prescription.appointment.appointment_date|date:"M d, Y" }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">Appointment Time</p>
+                    <p class="font-semibold text-gray-900">{{ prescription.appointment.appointment_time|time:"h:i A" }}</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Diagnosis</p>
+                <p class="text-gray-900 whitespace-pre-line">{{ prescription.diagnosis|default:"Not provided" }}</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Notes</p>
+                <p class="text-gray-900 whitespace-pre-line">{{ prescription.notes|default:"-" }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Medicines</h3>
+            {% if prescription.medicines.all %}
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full min-w-[700px]">
+                        <thead class="bg-gray-100 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Dosage</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Frequency</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Duration</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for medicine in prescription.medicines.all %}
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-800">{{ medicine.name }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ medicine.dosage }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ medicine.frequency }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ medicine.duration }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ medicine.notes|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    No medicines were added to this prescription.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

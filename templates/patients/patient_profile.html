@@ -5,13 +5,11 @@
 
 {% block content %}
 <!-- Hero Banner Section -->
-<section
-    class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
-    style="
-        background-image: linear-gradient(
-            rgba(36, 82, 88, 0.7),
-            rgba(36, 82, 88, 0.7)
-        ), url('{% static 'images/background.png' %}');">
+<section class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] overflow-hidden flex flex-col pt-6 pb-20 md:pb-0">
+    <div class="absolute inset-0">
+        <img src="{% static 'images/background.png' %}" alt="" class="h-full w-full object-cover">
+        <div class="absolute inset-0 bg-[#245258]/70"></div>
+    </div>
     <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
         {% include "partials/navbar.html" %}
         <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
@@ -39,15 +37,18 @@
                     <h2 class="text-3xl font-bold text-gray-900">
                         {{ patient.user.get_full_name }}
                     </h2>
-                    <button type="button" onclick="toggleEditForm()" class="px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors flex items-center gap-2">
+                    <a href="{% url 'patients:patient_profile_edit' %}" class="px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors flex items-center gap-2">
                         <span class="material-symbols-outlined text-base">edit</span>
                         Edit Profile
-                    </button>
+                    </a>
                 </div>
 
-                <!-- View Mode -->
-                <div id="view-mode">
+                <div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-8 border-b border-gray-200">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-xs text-gray-600 font-semibold mb-2">Username</p>
+                                <p class="text-gray-900">{{ patient.user.username }}</p>
+                            </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <p class="text-xs text-gray-600 font-semibold mb-2">Email</p>
                             <p class="text-gray-900">{{ patient.user.email }}</p>
@@ -90,101 +91,93 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Edit Mode -->
-                <div id="edit-mode" class="hidden">
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label for="{{ form.date_of_birth.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
-                                {{ form.date_of_birth }}
-                                {% if form.date_of_birth.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.date_of_birth.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.gender.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
-                                {{ form.gender }}
-                                {% if form.gender.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.gender.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.blood_group.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Blood Group</label>
-                                {{ form.blood_group }}
-                                {% if form.blood_group.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.blood_group.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.contact_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Contact Number <span class="text-red-500">*</span></label>
-                                {{ form.contact_number }}
-                                {% if form.contact_number.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.contact_number.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.emergency_contact.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Emergency Contact</label>
-                                {{ form.emergency_contact }}
-                                {% if form.emergency_contact.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.emergency_contact.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.emergency_contact_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Emergency Contact Name</label>
-                                {{ form.emergency_contact_name }}
-                                {% if form.emergency_contact_name.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.emergency_contact_name.errors }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="{{ form.address.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Address <span class="text-red-500">*</span></label>
-                            {{ form.address }}
-                            {% if form.address.errors %}
-                                <p class="text-red-600 text-sm mt-1">{{ form.address.errors }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div>
-                                <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">City <span class="text-red-500">*</span></label>
-                                {{ form.city }}
-                                {% if form.city.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.city.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.state.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">State <span class="text-red-500">*</span></label>
-                                {{ form.state }}
-                                {% if form.state.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.state.errors }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="{{ form.country.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Country <span class="text-red-500">*</span></label>
-                                {{ form.country }}
-                                {% if form.country.errors %}
-                                    <p class="text-red-600 text-sm mt-1">{{ form.country.errors }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4">
-                            <button type="button" onclick="toggleEditForm()" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
+
+            <!-- Medical Reports Section -->
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">My Medical Reports</h3>
+
+                {% if medical_reports %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for report in medical_reports %}
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div>
+                                        <h4 class="text-lg font-bold text-gray-900">{{ report.report_name }}</h4>
+                                        <p class="text-sm text-gray-500">{{ report.primary_hospital.name|default:"Hospital" }} · {{ report.created|date:"M d, Y" }}</p>
+                                    </div>
+                                    <span class="inline-flex items-center rounded-full bg-teal-50 text-teal-700 px-3 py-1 text-xs font-semibold">Report</span>
+                                </div>
+
+                                {% if report.description %}
+                                    <p class="text-sm text-gray-600 mb-4 line-clamp-3">{{ report.description }}</p>
+                                {% endif %}
+
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">
+                                        {% if report.uploaded_by %}
+                                            Uploaded by {{ report.uploaded_by.get_full_name|default:report.uploaded_by.username }}
+                                        {% endif %}
+                                    </span>
+                                    <a href="{% url 'medical_report:patient_medical_report_detail' report.pk %}" class="text-primary font-semibold hover:text-[#1a3d42] transition-colors">View Details</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                        <p class="flex items-center gap-2">
+                            <span class="material-symbols-outlined">info</span>
+                            No medical reports have been shared with your account yet.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Prescriptions Section -->
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">My Prescriptions</h3>
+
+                {% if prescriptions %}
+                    <div class="space-y-4">
+                        {% for prescription in prescriptions %}
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                                    <div>
+                                        <h4 class="text-lg font-bold text-gray-900">Prescription #{{ prescription.pk }}</h4>
+                                        <p class="text-sm text-gray-500">
+                                            {% if prescription.appointment.doctor %}
+                                                Dr. {{ prescription.appointment.doctor.user.get_full_name|default:prescription.appointment.doctor.user.username }}
+                                            {% endif %}
+                                            · {{ prescription.appointment.appointment_date|date:"M d, Y" }}
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'appointments:patient_prescription_detail' prescription.pk %}" class="text-primary font-semibold hover:text-[#1a3d42] transition-colors">View Details</a>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-xs text-gray-600 font-semibold mb-2">Diagnosis</p>
+                                        <p class="text-gray-900 whitespace-pre-line">{{ prescription.diagnosis|default:"Not specified" }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-xs text-gray-600 font-semibold mb-2">Medicines</p>
+                                        <p class="text-gray-900">{{ prescription.medicines.count }} medicine{{ prescription.medicines.count|pluralize }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                        <p class="flex items-center gap-2">
+                            <span class="material-symbols-outlined">info</span>
+                            No prescriptions are available for your account yet.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
 
         <!-- Upcoming Appointments Section -->
         <div class="mb-8">
@@ -299,14 +292,4 @@
     </div>
 </div>
 </div>
-
-<script>
-    function toggleEditForm() {
-        const viewMode = document.getElementById('view-mode');
-        const editMode = document.getElementById('edit-mode');
-        
-        viewMode.classList.toggle('hidden');
-        editMode.classList.toggle('hidden');
-    }
-</script>
 {% endblock %}

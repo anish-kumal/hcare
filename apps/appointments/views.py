@@ -320,7 +320,7 @@ class BookingConfirmationView(PatientAccessMixin, ListView):
 
 
 class AppointmentDetailView(PatientAccessMixin, DetailView):
-    """View appointment details and edit appointment"""
+    """View appointment details."""
     model = PatientAppointment
     template_name = 'appointments/appointment_detail.html'
     context_object_name = 'appointment'
@@ -333,25 +333,6 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
         return PatientAppointment.objects.filter(
             patient=patient
         ).select_related('doctor', 'doctor__user', 'doctor__hospital', 'payment')
-    
-    def post(self, request, *args, **kwargs):
-        """Handle appointment update"""
-        appointment = self.get_object()
-        
-        # Check if patient can still edit (only if not completed or cancelled)
-        if appointment.status in ['COMPLETED', 'CANCELLED']:
-            messages.error(request, 'Cannot edit completed or cancelled appointments.')
-            return redirect('appointments:appointment_detail', pk=appointment.pk)
-        
-        form = AppointmentEditForm(request.POST, instance=appointment)
-        
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Appointment updated successfully!')
-            return redirect('appointments:appointment_detail', pk=appointment.pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-            return self.get(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -368,7 +349,58 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
         context['show_khalti_pay_button'] = bool(
             payment and payment.status != AppointmentPayment.PaymentStatus.PAID
         )
+        context['can_edit_appointment'] = appointment.status not in ['COMPLETED', 'CANCELLED']
         return context
+
+
+class AppointmentEditView(PatientAccessMixin, UpdateView):
+    """Edit appointment details for the current patient."""
+    model = PatientAppointment
+    form_class = AppointmentEditForm
+    template_name = 'appointments/appointment_edit.html'
+    context_object_name = 'appointment'
+
+    def get_queryset(self):
+        patient = Patient.objects.filter(user=self.request.user).first()
+        if not patient:
+            return PatientAppointment.objects.none()
+        return PatientAppointment.objects.filter(
+            patient=patient
+        ).select_related('doctor', 'doctor__user', 'doctor__hospital')
+
+    def dispatch(self, request, *args, **kwargs):
+        appointment = self.get_object()
+        if appointment.status in ['COMPLETED', 'CANCELLED']:
+            messages.error(request, 'Cannot edit completed or cancelled appointments.')
+            return redirect('appointments:appointment_detail', pk=appointment.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('appointments:appointment_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Appointment updated successfully!')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+
+class PatientPrescriptionDetailView(PatientAccessMixin, DetailView):
+    """Show prescription detail for the logged-in patient only."""
+    model = Prescription
+    template_name = 'patients/prescription_detail.html'
+    context_object_name = 'prescription'
+
+    def get_queryset(self):
+        return Prescription.objects.filter(
+            appointment__patient__user=self.request.user,
+        ).select_related(
+            'appointment__patient__user',
+            'appointment__doctor__user',
+            'appointment__doctor__hospital',
+        ).prefetch_related('medicines')
 
 
 class AppointmentDoctorListView(SuperAdminAndAdminOnlyMixin, ListView):

@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
@@ -14,8 +14,10 @@ from django.conf import settings
 from django.urls import reverse_lazy
 
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.appointments.models import Prescription
 from apps.patients.models import Patient, PatientAppointment
-from .forms import PatientCreateProfileForm, PatientProfileForm, PatientUserForm
+from apps.users.forms import PasswordChangeForm
+from .forms import PatientAccountForm, PatientCreateProfileForm, PatientProfileForm, PatientUserForm
 
 User = get_user_model()
 
@@ -81,7 +83,7 @@ class PatientHospitalScopedMixin(LoginRequiredMixin):
 
 
 class PatientProfileView(PatientOnlyMixin, DetailView):
-    """View patient profile and manage appointments"""
+    """View patient profile and appointments."""
     model = Patient
     template_name = 'patients/patient_profile.html'
     context_object_name = 'patient'
@@ -100,22 +102,21 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
         """Get the patient profile for the current user"""
         return get_object_or_404(Patient, user=self.request.user)
     
-    def post(self, request, *args, **kwargs):
-        """Handle profile update"""
-        patient = self.get_object()
-        form = PatientProfileForm(request.POST, instance=patient)
-        
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('patients:patient_profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-            return self.get(request, *args, **kwargs)
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         patient = self.object
+
+        context['medical_reports'] = patient.medical_reports.select_related(
+            'primary_hospital',
+            'uploaded_by',
+        ).order_by('-created')
+
+        context['prescriptions'] = Prescription.objects.filter(
+            appointment__patient=patient,
+        ).select_related(
+            'appointment',
+            'appointment__doctor__user',
+        ).prefetch_related('medicines').order_by('-created')
         
         # Get upcoming appointments
         context['upcoming_appointments'] = PatientAppointment.objects.filter(
@@ -129,11 +130,81 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
             patient=patient,
             appointment_date__lt=timezone.now().date()
         ).select_related('doctor', 'doctor__user').order_by('-appointment_date', '-appointment_time')
-        
-        # Get form
-        context['form'] = PatientProfileForm(instance=patient)
-        
+
         return context
+
+
+class PatientProfileEditView(PatientOnlyMixin, UpdateView):
+    """Allow patients to edit their own profile."""
+    model = Patient
+    form_class = PatientProfileForm
+    template_name = 'patients/patient_profile_edit.html'
+    context_object_name = 'patient'
+    success_url = reverse_lazy('patients:patient_profile')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Patient, user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['patient_form'] = kwargs.get('patient_form') or PatientProfileForm(instance=self.object)
+        context['account_form'] = kwargs.get('account_form') or PatientAccountForm(instance=self.request.user)
+        context['password_form'] = kwargs.get('password_form') or PasswordChangeForm(self.request.user)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        action = request.POST.get('action', 'profile')
+
+        if action == 'account':
+            account_form = PatientAccountForm(request.POST, instance=request.user)
+            if account_form.is_valid():
+                account_form.save()
+                messages.success(request, 'Account details updated successfully!')
+                return redirect('patients:patient_profile')
+
+            messages.error(request, 'Please correct the account details below.')
+            return self.render_to_response(self.get_context_data(account_form=account_form))
+
+        if action == 'password':
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                new_password = password_form.cleaned_data.get('new_password')
+                request.user.set_password(new_password)
+                request.user.is_default_password = False
+                request.user.save(update_fields=['password', 'is_default_password'])
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password changed successfully!')
+                return redirect('patients:patient_profile')
+
+            messages.error(request, 'Please correct the password errors below.')
+            return self.render_to_response(self.get_context_data(password_form=password_form))
+
+        patient_form = PatientProfileForm(request.POST, request.FILES, instance=self.object)
+        if patient_form.is_valid():
+            patient_form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('patients:patient_profile')
+
+        messages.error(request, 'Please correct the profile errors below.')
+        return self.render_to_response(self.get_context_data(patient_form=patient_form))
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Profile updated successfully!')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
 class PatientSelfProfileCreateView(PatientOnlyMixin, CreateView):

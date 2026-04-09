@@ -34,68 +34,69 @@
         
         {% if appointment.doctor %}
         <!-- Doctor Profile Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-8">
+        <div class="mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 p-4 lg:p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <!-- Doctor Image -->
-                <div class="md:col-span-1">
-                    <div class="bg-gradient-to-br from-[#245258] to-[#1a3d42] rounded-2xl overflow-hidden h-96 flex items-center justify-center">
-                        {% if appointment.doctor.profile_picture %}
-                            {% if appointment.doctor.user %}
-                                <img src="{{ appointment.doctor.profile_picture.url }}" class="w-full h-full object-cover" alt="Dr. {{ appointment.doctor.user.get_full_name }}">
-                            {% else %}
-                                <img src="{{ appointment.doctor.profile_picture.url }}" class="w-full h-full object-cover" alt="Doctor">
-                            {% endif %}
-                        {% else %}
-                            <span class="material-symbols-outlined text-9xl text-gray-300">person</span>
-                        {% endif %}
-                    </div>
+                <div class="rounded-xl overflow-hidden bg-primary min-h-[260px] lg:min-h-[300px] flex items-center justify-center">
+                    {% if appointment.doctor.profile_picture %}
+                        <img src="{{ appointment.doctor.profile_picture.url }}" class="w-full h-full object-cover" alt="{% if appointment.doctor.user %}Dr. {{ appointment.doctor.user.get_full_name }}{% else %}Doctor{% endif %}">
+                    {% else %}
+                        <span class="material-symbols-outlined text-8xl text-white">person</span>
+                    {% endif %}
                 </div>
 
                 <!-- Doctor Info -->
-                <div class="md:col-span-2">
-                    <div class="flex items-start justify-between mb-6">
-                        <div class="flex-1">
-                            <h2 class="text-4xl font-bold text-gray-900 mb-3">{% if appointment.doctor.user %}Dr. {{ appointment.doctor.user.get_full_name }}{% else %}Doctor{% endif %}
-                                <span class="material-symbols-outlined text-3xl text-accent align-middle ml-2" style="display: inline;">verified</span>
-                            </h2>
-                            <div class="flex flex-wrap gap-3 items-center mb-4">
-                                <span class="inline-block px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
-                                    {{ appointment.doctor.qualification }}{% if appointment.doctor.specialization %} - {{ appointment.doctor.specialization.name }}{% endif %}
-                                </span>
-                                <span class="inline-block px-3 py-1.5 {% if appointment.status == 'COMPLETED' %}bg-green-100 text-green-700{% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-700{% elif appointment.status == 'SCHEDULED' or appointment.status == 'CONFIRMED' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %} rounded-full text-xs font-bold">
-                                    {{ appointment.get_status_display }}
-                                </span>
-                            </div>
-                        </div>
+                <div class="rounded-xl border border-gray-300 p-4 lg:p-5 flex flex-col">
+                    <div class="mb-3">
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+                            {% if appointment.doctor.user %}Dr. {{ appointment.doctor.user.get_full_name }}{% else %}Doctor{% endif %}
+                            <span class="material-symbols-outlined text-lg text-primary align-middle ml-1" style="display: inline;">verified</span>
+                        </h2>
                     </div>
 
-                    <!-- About Section -->
-                    {% if appointment.doctor.bio %}
-                        <div class="mb-6">
-                            <h3 class="font-bold text-gray-900 mb-3 text-sm lg:text-base">About</h3>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-4">{{ appointment.doctor.bio }}</p>
-                        </div>
-                    {% endif %}
-
-                    <!-- Details Grid -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Experience</p>
-                            <p class="text-lg font-bold text-gray-900">{{ appointment.doctor.experience_years }} years</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Consultation Fee</p>
-                            <p class="text-lg font-bold text-accent">Ns {{ appointment.doctor.consultation_fee }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Qualification</p>
-                            <p class="text-sm font-bold text-gray-900">{{ appointment.doctor.qualification }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Hospital</p>
-                            <p class="text-sm font-bold text-gray-900">{% if appointment.doctor.hospital %}{{ appointment.doctor.hospital.name }}{% else %}-{% endif %}</p>
-                        </div>
+                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[11px] text-gray-500">
+                        {% if appointment.doctor.qualification %}
+                            <span>{{ appointment.doctor.qualification }}</span>
+                            {% if appointment.doctor.specialization %}
+                                <span>-</span>
+                            {% endif %}
+                        {% endif %}
+                        {% if appointment.doctor.specialization %}
+                            <span>{{ appointment.doctor.specialization.name }}</span>
+                        {% endif %}
+                        {% if appointment.doctor.experience_years %}
+                            <span class="px-2 py-0.5 rounded-full border border-gray-300 text-sm text-gray-500">{{ appointment.doctor.experience_years }} years</span>
+                        {% endif %}
                     </div>
+
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-1">
+                            About
+                            <span class="material-symbols-outlined text-sm text-gray-400">info</span>
+                        </h3>
+                        <p class="text-sm text-justify text-gray-600 leading-relaxed">
+                            {% if appointment.doctor.bio %}
+                                {{ appointment.doctor.bio }}
+                            {% else %}
+                                {% if appointment.doctor.user %}Dr. {{ appointment.doctor.user.get_full_name }}{% else %}This doctor{% endif %} is available for consultation.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="mb-4 text-sm text-gray-600">
+                        <span class="font-semibold text-gray-900">Appointment fee: </span>
+                        Nrs {{ appointment.doctor.consultation_fee }}
+                    </div>
+
+                    <div class="flex items-center pt-3 border-t border-gray-200 gap-3 mb-4">
+                        <span class="material-symbols-outlined text-sm text-gray-400">location_on</span>
+                        <p class="text-sm text-gray-600">{% if appointment.doctor.hospital %}{{ appointment.doctor.hospital.name }}{% else %}-{% endif %}</p>
+                        {% if appointment.doctor.hospital %}
+                            <p class="text-sm text-gray-400">|</p>
+                            <p class="text-sm text-gray-600">{{ appointment.doctor.hospital.city }}, {{ appointment.doctor.hospital.address }}</p>
+                        {% endif %}
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -107,6 +108,12 @@
                 <h3 class="text-2xl font-bold text-gray-900 mb-6">Appointment Details</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-8 border-b border-gray-200">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-xs text-gray-600 font-semibold mb-2">Appointment Status</p>
+                        <span class="inline-block px-3 py-1.5 {% if appointment.status == 'COMPLETED' %}bg-green-100 text-green-700{% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-700{% elif appointment.status == 'SCHEDULED' or appointment.status == 'CONFIRMED' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %} rounded-full text-xs font-bold">
+                            {{ appointment.get_status_display }}
+                        </span>
+                    </div>
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <p class="text-xs text-gray-600 font-semibold mb-2">Appointment Date</p>
                         <p class="text-xl font-bold text-gray-900">{{ appointment.appointment_date|date:"M d, Y" }}</p>
@@ -165,60 +172,22 @@
                     {% endif %}
                 </div>
 
-                <!-- Edit Form (Initially Hidden) -->
-                <div id="edit-form" class="hidden">
-                    <h4 class="text-xl font-bold text-gray-900 mb-6">Edit Appointment</h4>
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="id_reason" class="block text-sm font-semibold text-gray-700 mb-2">Reason for Visit <span class="text-red-500">*</span></label>
-                            <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
-                                      name="reason" 
-                                      id="id_reason"
-                                      rows="3"
-                                      required>{{ appointment.reason }}</textarea>
-                        </div>
-
-                        <div class="mb-6">
-                            <label for="id_notes" class="block text-sm font-semibold text-gray-700 mb-2">Additional Notes (Optional)</label>
-                            <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
-                                      name="notes" 
-                                      id="id_notes"
-                                      rows="3">{{ appointment.notes }}</textarea>
-                        </div>
-
-                        <div class="flex gap-4">
-                            <button type="button" onclick="toggleEditForm()" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
                 <!-- Action Buttons -->
-                <div id="action-buttons" class="flex flex-col md:flex-row gap-4">
-                    {% if appointment.status != 'COMPLETED' and appointment.status != 'CANCELLED' %}
-                    <button type="button" onclick="toggleEditForm()" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                <div class="flex flex-col md:flex-row gap-4">
+                    {% if can_edit_appointment %}
+                    <a href="{% url 'appointments:appointment_edit' appointment.pk %}" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors text-center">
                         <span class="inline-flex items-center gap-2">
                             <span class="material-symbols-outlined text-base">edit</span> Edit Appointment
                         </span>
-                    </button>
-
-                    <a href="{% url 'appointments:appointment_reschedule' appointment.pk %}" class="flex-1 px-4 py-2.5 bg-accent text-primary rounded-lg font-semibold hover:bg-[#f3c86f] transition-colors text-center">
-                        <span class="inline-flex items-center justify-center gap-2">
-                            Reschedule
-                        </span>
                     </a>
+
                     {% endif %}
 
                     {% if show_khalti_pay_button %}
                     <form method="post" action="{% url 'payments:patient_payment_process' %}" class="flex-1">
                         {% csrf_token %}
                         <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                        <button type="submit" name="payment_method" value="KHALTI" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
+                        <button type="submit" name="payment_method" value="KHALTI" class="w-full px-4 py-2.5 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-800 transition-colors">
                             <span class="inline-flex items-center justify-center gap-2">
                                 Pay with Khalti
                             </span>
@@ -226,9 +195,9 @@
                     </form>
                     {% endif %}
 
-                    <a href="{% url 'appointments:doctor_list' %}" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors text-center">
+                    <a href="{% url 'patients:patient_profile' %}" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors text-center">
                         <span class="inline-flex items-center justify-center gap-2">
-                            Back to Doctors
+                            Back to Profile
                         </span>
                     </a>
                 </div>
@@ -237,14 +206,4 @@
     </div>
 </div>
 </div>
-
-<script>
-    function toggleEditForm() {
-        const editForm = document.getElementById('edit-form');
-        const actionButtons = document.getElementById('action-buttons');
-        
-        editForm.classList.toggle('hidden');
-        actionButtons.classList.toggle('hidden');
-    }
-</script>
 {% endblock %}

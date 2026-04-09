@@ -300,3 +300,48 @@ class PatientProfileForm(forms.ModelForm):
 
     def clean_emergency_contact(self):
         return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
+    
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > date.today():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return date_of_birth
+
+
+class PatientAccountForm(forms.ModelForm):
+    """Form for patients to update username and email."""
+
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'placeholder': 'Enter username',
+                'autocomplete': 'username',
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+                'placeholder': 'Enter email address',
+                'autocomplete': 'email',
+            }),
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if '@' in username:
+            raise forms.ValidationError('Username cannot contain @.')
+
+        user_id = self.instance.id if self.instance and self.instance.id else None
+        if User.objects.filter(username=username).exclude(id=user_id).exists():
+            raise forms.ValidationError('This username is already taken.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        user_id = self.instance.id if self.instance and self.instance.id else None
+        if User.objects.filter(email=email).exclude(id=user_id).exists():
+            raise forms.ValidationError('This email is already registered.')
+        return email
+
+

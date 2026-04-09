@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Medical Report Detail - Patient Dashboard{% endblock %}
+
+{% block content %}
+<section class="relative min-h-[36vh] rounded-bl-[50px] md:rounded-bl-[120px] overflow-hidden flex flex-col pt-6 pb-14 md:pb-0">
+    <div class="absolute inset-0">
+        <img src="{% static 'images/background.png' %}" alt="" class="h-full w-full object-cover">
+        <div class="absolute inset-0 bg-[#245258]/70"></div>
+    </div>
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1 relative">
+        {% include "partials/navbar.html" %}
+        <div class="flex-1 flex items-center justify-center pt-8 pb-10">
+            <div class="text-center text-white">
+                <h1 class="text-2xl md:text-5xl font-bold mb-3">Medical Report</h1>
+                <p class="text-gray-100 text-sm md:text-base">Details of your report and hospital sharing information.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="bg-gray-50 min-h-screen py-10">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-gray-900">{{ medical_report.report_name }}</h2>
+            <a href="{% url 'patients:patient_profile' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Profile
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Report Information</h3>
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-gray-500">Hospital</dt>
+                    <dd class="text-gray-900 font-semibold">{{ medical_report.primary_hospital.name }}</dd>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-gray-500">Uploaded By</dt>
+                    <dd class="text-gray-900 font-semibold">{{ medical_report.uploaded_by.get_full_name|default:medical_report.uploaded_by.username|default:"System" }}</dd>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-gray-500">Created</dt>
+                    <dd class="text-gray-900">{{ medical_report.created|date:"M d, Y h:i A" }}</dd>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-gray-500">Last Updated</dt>
+                    <dd class="text-gray-900">{{ medical_report.modified|date:"M d, Y h:i A" }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        {% if medical_report.description %}
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Description</h3>
+            <p class="text-gray-800 whitespace-pre-line">{{ medical_report.description }}</p>
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Report File</h3>
+            {% if medical_report.get_report_file_url %}
+                <a href="{% url 'medical_report:patient_medical_report_download' medical_report.pk %}" class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">download</span>
+                    Download Report
+                </a>
+                    <a href="{% url 'medical_report:patient_medical_report_view' medical_report.pk %}" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 ml-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+                    Open File
+                </a>
+            {% else %}
+                <p class="text-sm text-gray-500">No file attached for this report.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Shared With Hospitals</h3>
+            {% if medical_report.shared_with.all %}
+                <div class="space-y-2">
+                    {% for hospital in medical_report.shared_with.all %}
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <p class="font-semibold text-gray-900">{{ hospital.name }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                    This report is currently not shared with any other hospital.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
