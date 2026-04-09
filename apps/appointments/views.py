@@ -94,7 +94,7 @@ def has_existing_active_booking(patient, doctor):
 
 
 
-class DoctorDetailView( DetailView):
+class DoctorDetailView(DetailView):
     """Show doctor details and available appointment slots"""
     model = Doctor
     template_name = 'appointments/doctor_detail.html'
@@ -517,6 +517,7 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
                 'all_bookings': day_bookings,
             })
         
+        print(weekly_schedule)
 
         context['weekly_schedule'] = weekly_schedule
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
@@ -883,6 +884,7 @@ class AdminAppointmentRescheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
             now=self._get_slots_window_now(appointment=appointment, now=timezone.now()),
             active_statuses=BOOKING_STATUSES,
         )
+        print('[AdminAppointmentRescheduleView] available_slots:', context['available_slots'])
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         context['can_reschedule'] = True
         context['selected_date'] = self.request.GET.get('date', '').strip()

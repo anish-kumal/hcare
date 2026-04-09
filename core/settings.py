@@ -52,6 +52,8 @@ ALLOWED_HOSTS = config(
     cast=lambda value: [host.strip() for host in value.split(",") if host.strip()],
 )
 
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
+
 # Site ID for django.contrib.sites
 SITE_ID = 1
 
@@ -70,6 +72,7 @@ PRELOAD_APPS = [
 
 
 THIRD_PARTY_APPS = [
+    'debug_toolbar',
     'cloudinary',
     'cloudinary_storage',
     'channels',
@@ -96,6 +99,7 @@ INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
