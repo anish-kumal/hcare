@@ -45,7 +45,7 @@
                                             Dr. {{ appointment.doctor.user.get_full_name }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
-                                            {{ appointment.doctor.specialization.name }}
+                                            {{ appointment.doctor.specialization }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
                                             {{ appointment.appointment_date|date:"M d, Y" }}
@@ -123,7 +123,7 @@
                                             Dr. {{ appointment.doctor.user.get_full_name }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
-                                            {{ appointment.doctor.specialization.name }}
+                                            {{ appointment.doctor.specialization }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
                                             {{ appointment.appointment_date|date:"M d, Y" }}

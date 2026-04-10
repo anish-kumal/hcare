@@ -5,6 +5,7 @@ app_name = 'medical_report'
 
 urlpatterns = [
     path('patient/<int:pk>/', views.PatientMedicalReportDetailView.as_view(), name='patient_medical_report_detail'),
+    path('patient/<int:pk>/edit/', views.PatientMedicalReportUpdateView.as_view(), name='patient_medical_report_edit'),
     path('patient/<int:pk>/download/', views.PatientMedicalReportDownloadView.as_view(), name='patient_medical_report_download'),
     path('patient/<int:pk>/view/', views.PatientMedicalReportViewFileView.as_view(), name='patient_medical_report_view'),
     

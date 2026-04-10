@@ -1,5 +1,6 @@
 from django import forms
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from apps.patients.models import Patient
 from apps.hospitals.models import Hospital
 from .models import MedicalReport
@@ -25,13 +26,11 @@ class AdminMedicalReportForm(forms.ModelForm):
             }),
             'report_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
-                'placeholder': 'Enter Report Name',
-                'required': True
+                'placeholder': 'Enter Report Name'
             }),
             'report_file': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
-                'accept': '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-                'required': True
+                'accept': '.pdf,.jpg,.jpeg,.png,.doc,.docx'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
@@ -76,6 +75,33 @@ class AdminMedicalReportForm(forms.ModelForm):
             # Super admin fallback - all patients and hospitals available
             self.fields['patient'].queryset = Patient.objects.all()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        report_file = cleaned_data.get('report_file')
+        
+        # Validate file is provided on create
+        if not self.instance.pk and not report_file:
+            raise ValidationError({'report_file': 'Report file is required.'})
+        
+        # Validate file size (max 10MB)
+        if report_file and hasattr(report_file, 'size'):
+            max_size = 10 * 1024 * 1024  # 10MB
+            if report_file.size > max_size:
+                raise ValidationError({
+                    'report_file': f'File size must not exceed 10MB. Current size: {report_file.size / (1024*1024):.2f}MB'
+                })
+        
+        # Validate file extension
+        if report_file:
+            allowed_extensions = ('pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx')
+            file_ext = report_file.name.split('.')[-1].lower()
+            if file_ext not in allowed_extensions:
+                raise ValidationError({
+                    'report_file': f'Invalid file format. Allowed: {", ".join(allowed_extensions)}'
+                })
+        
+        return cleaned_data
+
     def save(self, commit=True):
         instance = super().save(commit=False)
 
@@ -95,3 +121,23 @@ class AdminMedicalReportForm(forms.ModelForm):
             instance.save()
             self.save_m2m()
         return instance
+
+
+class PatientMedicalReportShareForm(forms.ModelForm):
+    """Patient form that only allows editing hospital sharing."""
+
+    class Meta:
+        model = MedicalReport
+        fields = ['shared_with']
+        widgets = {
+            'shared_with': forms.CheckboxSelectMultiple(attrs={
+                'class': 'w-full rounded-lg border border-gray-300 p-3 text-gray-900'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.primary_hospital_id:
+            self.fields['shared_with'].queryset = Hospital.objects.exclude(
+                pk=self.instance.primary_hospital_id
+            )

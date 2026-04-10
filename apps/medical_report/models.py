@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from apps import hospitals
 from apps.base.models import BaseModel
+from auditlog.registry import auditlog
 
 # Create your models here.
 class MedicalReport(BaseModel):
@@ -15,10 +16,10 @@ class MedicalReport(BaseModel):
         help_text="Patient associated with this medical report"
     )
 
-    primary_hospital = models.OneToOneField(
+    primary_hospital = models.ForeignKey(
         hospitals.models.Hospital,
         on_delete=models.PROTECT,
-        related_name='medical_report',
+        related_name='medical_reports',
         help_text="Hospital associated with this medical report"
     )
 
@@ -77,6 +78,11 @@ class MedicalReport(BaseModel):
         if not self.report_file:
             return ''
         return self.get_report_file_url()
+    
+
+
+# Register model for audit logging
+auditlog.register(MedicalReport)
     
 
 

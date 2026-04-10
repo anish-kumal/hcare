@@ -1,0 +1,260 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Audit Log Details - Healthcare System{% endblock %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+    title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    {% include "partials/side_bar.html" %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        <!-- Top Header -->
+        {% include "partials/header.html" %}
+
+        <!-- Scrollable Main Content -->
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1000px] mx-auto space-y-8">
+                <!-- Headline & Actions -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <h1 class="text-2xl md:text-3xl font-bold text-[#131616] tracking-tight">Audit Log Details</h1>
+                    <a href="{% url 'logs:auditlog_list' %}"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+                        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                        Back to Logs
+                    </a>
+                </div>
+
+                <!-- Main Log Info -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-primary px-6 py-4 md:py-5">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2 leading-tight">
+                            <span class="material-symbols-outlined text-[20px]">event_note</span>
+                            Audit Event Information
+                        </h2>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-200">
+                            <!-- Timestamp -->
+                            <div>
+                                <h3 class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Timestamp
+                                </h3>
+                                <p class="text-lg font-semibold text-gray-900">{{ log.timestamp|date:"F d, Y - H:i:s" }}
+                                </p>
+                            </div>
+
+                            <!-- Action -->
+                            <div>
+                                <h3 class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Action</h3>
+                                <p>
+                                    {% if log.action == 0 %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                        <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                                        CREATE
+                                    </span>
+                                    {% elif log.action == 1 %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                        <span class="material-symbols-outlined text-[14px]">edit</span>
+                                        UPDATE
+                                    </span>
+                                    {% elif log.action == 2 %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                        <span class="material-symbols-outlined text-[14px]">delete</span>
+                                        DELETE
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                        <span class="material-symbols-outlined text-[14px]">help</span>
+                                        UNKNOWN
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Performed By & Remote Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Performed By -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined">account_circle</span>
+                                    Performed By
+                                </h3>
+                                {% if log.actor %}
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <p class="font-semibold text-gray-900 mb-3">
+                                        {{ log.actor.get_full_name|default:log.actor.username }}</p>
+                                    <div class="space-y-2 text-sm">
+                                        <div>
+                                            <span class="text-gray-600">Username:</span>
+                                            <code
+                                                class="bg-white px-2 py-1 rounded text-xs ml-2">{{ log.actor.username }}</code>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">Email:</span>
+                                            <p class="text-primary font-medium mt-1">{{ log.actor.email }}</p>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">Type:</span>
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-primary/20 text-primary mt-1">
+                                                {{ log.actor.get_user_type_display }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                                        <span class="material-symbols-outlined text-[14px]">help</span>
+                                        Anonymous
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Remote Information -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined">public</span>
+                                    Remote Information
+                                </h3>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
+                                    <div>
+                                        <span class="text-gray-600 text-sm">IP Address:</span>
+                                        <code
+                                            class="block bg-white px-3 py-2 rounded text-xs mt-1 font-mono">{{ log.remote_addr|default:"N/A" }}</code>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-sm">Remote Port:</span>
+                                        <code
+                                            class="block bg-white px-3 py-2 rounded text-xs mt-1 font-mono">{{ log.remote_port|default:"N/A" }}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Object Information -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-gray-700 px-6 py-4 md:py-5">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2 leading-tight">
+                            <span class="material-symbols-outlined text-[20px]">storage</span>
+                            Modified Object
+                        </h2>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Model -->
+                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <h3 class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">Model</h3>
+                                <code
+                                    class="block text-sm font-mono bg-white px-3 py-2 rounded mt-2">{{ log.content_type.app_label }}.{{ log.content_type.model }}</code>
+                            </div>
+
+                            <!-- Object ID -->
+                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <h3 class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">Object ID
+                                </h3>
+                                <code
+                                    class="block text-sm font-mono bg-white px-3 py-2 rounded mt-2">{{ log.object_pk }}</code>
+                            </div>
+
+                            <!-- Object Representation -->
+                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <h3 class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">Object
+                                    Representation</h3>
+                                <p class="text-sm text-gray-900 mt-2"><em>{{ log.object_repr|truncatewords:20 }}</em>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Field Changes -->
+                {% if log.changes %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-accent  px-6 py-4 md:py-5">
+                        <h2 class="text-lg font-semibold text-primary flex items-center gap-2 leading-tight">
+                            <span class="material-symbols-outlined text-[20px]">difference</span>
+                            Field Changes
+                        </h2>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Field</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Previous
+                                            Value</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">New Value
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    {% for field, values in log.changes.items %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ field }}</code>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <small>
+                                                {% if values|length > 0 %}
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                                                    <span class="material-symbols-outlined text-[12px]">delete</span>
+                                                    {{ values.0|truncatewords:15 }}
+                                                </span>
+                                                {% else %}
+                                                <span class="text-gray-500">N/A</span>
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <small>
+                                                {% if values|length > 1 %}
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                                    <span class="material-symbols-outlined text-[12px]">add</span>
+                                                    {{ values.1|truncatewords:15 }}
+                                                </span>
+                                                {% else %}
+                                                <span class="text-gray-500">N/A</span>
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </main>
+    </div>
+
+</div>
+
+{% endblock %}

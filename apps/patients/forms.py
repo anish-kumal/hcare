@@ -1,38 +1,18 @@
-from datetime import date
-import re
-
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
+from apps.base.validation import (
+    validate_date_not_in_future,
+    validate_email_format,
+    validate_image_max_size,
+    validate_nepal_phone_number,
+    validate_strong_password,
+    validate_unique_email,
+    validate_unique_username,
+    validate_username_format,
+)
 from apps.patients.models import Patient
 
 User = get_user_model()
-
-
-def validate_nepal_phone_number(phone_number):
-    phone_number = (phone_number or '').strip()
-
-    if not phone_number:
-        return phone_number
-
-    phone_number_digits = re.sub(r'[\s\-]', '', phone_number)
-
-    if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
-        return phone_number
-
-    if re.match(r'^\+977\d{9}$', phone_number_digits):
-        return phone_number
-
-    if re.match(r'^\+977\d{6,7}$', phone_number_digits):
-        return phone_number
-
-    if re.match(r'^0\d{1,2}-\d{5,7}$', phone_number):
-        return phone_number
-
-    raise forms.ValidationError(
-        'Please enter a valid Nepal phone number. '
-        'Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456'
-    )
 
 
 class PatientUserForm(forms.ModelForm):
@@ -86,36 +66,15 @@ class PatientUserForm(forms.ModelForm):
         }
 
     def clean_username(self):
-        username = self.cleaned_data.get('username', '')
-        if '@' in username:
-            raise forms.ValidationError('Username cannot contain @.')
-        if User.objects.filter(username=username).exists():
-            raise forms.ValidationError('This username is already taken.')
-        return username
+        username = validate_username_format(self.cleaned_data.get('username'))
+        return validate_unique_username(username, model=User)
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('This email is already registered.')
-        return email
+        email = validate_email_format(self.cleaned_data.get('email'))
+        return validate_unique_email(email, model=User)
 
     def clean_password(self):
         password = self.cleaned_data.get('password', '')
-        if len(password) < 8:
-            raise forms.ValidationError('Password must be at least 8 characters long.')
-
-        if not re.search(r'[A-Z]', password):
-            raise forms.ValidationError('Password must contain at least one uppercase letter.')
-
-        if not re.search(r'[a-z]', password):
-            raise forms.ValidationError('Password must contain at least one lowercase letter.')
-
-        if not re.search(r'\d', password):
-            raise forms.ValidationError('Password must contain at least one number.')
-
-        if not re.search(r'[^A-Za-z0-9]', password):
-            raise forms.ValidationError('Password must contain at least one special character.')
-
         user = User(
             username=self.cleaned_data.get('username', ''),
             email=self.cleaned_data.get('email', ''),
@@ -123,19 +82,14 @@ class PatientUserForm(forms.ModelForm):
             last_name=self.cleaned_data.get('last_name', ''),
         )
 
-        try:
-            validate_password(password, user=user)
-        except forms.ValidationError as error:
-            raise forms.ValidationError(error.messages)
-
-        return password
+        return validate_strong_password(password, user=user)
 
 
     def clean_date_of_birth(self):
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        if date_of_birth and date_of_birth > date.today():
-            raise forms.ValidationError("Date of birth cannot be in the future.")
-        return date_of_birth
+        return validate_date_not_in_future(
+            self.cleaned_data.get('date_of_birth'),
+            field_label='Date of birth'
+        )
 
     def clean_phone_number(self):
         return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
@@ -234,10 +188,10 @@ class PatientCreateProfileForm(forms.ModelForm):
         }
 
     def clean_date_of_birth(self):
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        if date_of_birth and date_of_birth > date.today():
-            raise forms.ValidationError("Date of birth cannot be in the future.")
-        return date_of_birth
+        return validate_date_not_in_future(
+            self.cleaned_data.get('date_of_birth'),
+            field_label='Date of birth'
+        )
 
     def clean_contact_number(self):
         return validate_nepal_phone_number(self.cleaned_data.get('contact_number'))
@@ -245,14 +199,17 @@ class PatientCreateProfileForm(forms.ModelForm):
     def clean_emergency_contact(self):
         return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
 
+    def clean_profile_picture(self):
+        return validate_image_max_size(self.cleaned_data.get('profile_picture'))
+
 
 class PatientProfileForm(forms.ModelForm):
     """Form for patients to edit their profile"""
     
     class Meta:
         model = Patient
-        fields = ['date_of_birth', 'gender', 'blood_group', 'contact_number', 
-                  'emergency_contact', 'emergency_contact_name', 'address', 'city', 'state', 'country']
+        fields = ['date_of_birth', 'gender', 'blood_group', 'contact_number',
+              'emergency_contact', 'emergency_contact_name', 'address', 'city', 'state', 'country', 'profile_picture']
         widgets = {
             'date_of_birth': forms.DateInput(attrs={
                 'type': 'date',
@@ -293,6 +250,10 @@ class PatientProfileForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
                 'placeholder': 'Country',
             }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                'accept': 'image/*',
+            }),
         }
 
     def clean_contact_number(self):
@@ -302,11 +263,13 @@ class PatientProfileForm(forms.ModelForm):
         return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
     
     def clean_date_of_birth(self):
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        if date_of_birth and date_of_birth > date.today():
-            raise forms.ValidationError("Date of birth cannot be in the future.")
-        return date_of_birth
+        return validate_date_not_in_future(
+            self.cleaned_data.get('date_of_birth'),
+            field_label='Date of birth'
+        )
 
+    def clean_profile_picture(self):
+        return validate_image_max_size(self.cleaned_data.get('profile_picture'))
 
 class PatientAccountForm(forms.ModelForm):
     """Form for patients to update username and email."""
@@ -328,20 +291,13 @@ class PatientAccountForm(forms.ModelForm):
         }
 
     def clean_username(self):
-        username = self.cleaned_data.get('username', '').strip()
-        if '@' in username:
-            raise forms.ValidationError('Username cannot contain @.')
-
+        username = validate_username_format(self.cleaned_data.get('username'))
         user_id = self.instance.id if self.instance and self.instance.id else None
-        if User.objects.filter(username=username).exclude(id=user_id).exists():
-            raise forms.ValidationError('This username is already taken.')
-        return username
+        return validate_unique_username(username, model=User, exclude_pk=user_id)
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
+        email = validate_email_format(self.cleaned_data.get('email'))
         user_id = self.instance.id if self.instance and self.instance.id else None
-        if User.objects.filter(email=email).exclude(id=user_id).exists():
-            raise forms.ValidationError('This email is already registered.')
-        return email
+        return validate_unique_email(email, model=User, exclude_pk=user_id)
 
 

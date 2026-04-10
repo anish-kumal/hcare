@@ -1,4 +1,4 @@
-{% extends "base/base_dashboard.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 {% block title %}Manage Doctor Appointments - Health Care{% endblock title %}
 
@@ -24,6 +24,8 @@
                         <p class="text-sm text-gray-500 mt-1">View and manage appointment schedules for all doctors</p>
                     </div>
                 </div>
+
+                {% include "partials/list_analytics_cards.html" %}
 
                 <!-- Search and Filter -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">

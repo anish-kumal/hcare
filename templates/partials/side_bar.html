@@ -45,6 +45,12 @@
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">people</span>
         <span class="font-medium text-sm">Users</span>
       </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'logs:auditlog_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'logs:auditlog_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">history</span>
+        <span class="font-medium text-sm">Audit Logs</span>
+      </a>
     {% elif request.user.is_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'admin_dashboard' %}">
@@ -129,6 +135,12 @@
         href="{% url 'medical_report:admin_medical_report_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">description</span>
         <span class="font-medium text-sm">Medical Reports</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'logs:auditlog_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'logs:auditlog_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">history</span>
+        <span class="font-medium text-sm">Audit Logs</span>
       </a>
 
     {% endif %}

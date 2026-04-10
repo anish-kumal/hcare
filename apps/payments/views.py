@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.generic import UpdateView, ListView, DetailView, View
 
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.hospitals.crypto import decrypt_khalti_key
 from apps.patients.models import PatientAppointment
 
 from .forms import AppointmentPaymentForm
@@ -76,7 +77,7 @@ class PaymentListView(SuperAdminAndAdminOnlyMixin, ListView):
     model = AppointmentPayment
     template_name = 'payments/payment_list.html'
     context_object_name = 'payments'
-    paginate_by = 20
+    paginate_by = 10
 
     def get_queryset(self):
         queryset = AppointmentPayment.objects.select_related(
@@ -104,9 +105,23 @@ class PaymentListView(SuperAdminAndAdminOnlyMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        payments = AppointmentPayment.objects.all()
         context['selected_status'] = self.request.GET.get('status', '').strip()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['status_choices'] = AppointmentPayment.PaymentStatus.choices
+        context['analytics_cards'] = [
+            {'label': 'Total Payments', 'value': payments.count(), 'value_class': 'text-gray-900'},
+            {
+                'label': 'Paid',
+                'value': payments.filter(status=AppointmentPayment.PaymentStatus.PAID).count(),
+                'value_class': 'text-green-700',
+            },
+            {
+                'label': 'Pending',
+                'value': payments.filter(status=AppointmentPayment.PaymentStatus.PENDING).count(),
+                'value_class': 'text-amber-700',
+            },
+        ]
         return context
 
 
@@ -234,6 +249,12 @@ class PatientPaymentStatusView(LoginRequiredMixin, DetailView):
 class PatientPaymentProcessView(LoginRequiredMixin, View):
     """Handle cash or Khalti payment selection for patient appointments."""
 
+    @staticmethod
+    def _get_khalti_secret_key(appointment):
+        """Read and validate hospital Khalti key only at payment initiation time."""
+        hospital = appointment.doctor.hospital
+        return decrypt_khalti_key(hospital.khalti_secret_key)
+
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_patient:
             raise PermissionDenied("Only patients can access this page.")
@@ -277,6 +298,16 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             if payment.status != AppointmentPayment.PaymentStatus.PAID:
                 payment.status = AppointmentPayment.PaymentStatus.PENDING
 
+            try:
+                secret_key = self._get_khalti_secret_key(appointment)
+            except ValueError:
+                messages.error(request, 'Stored Khalti key is invalid. Please contact admin to reconfigure keys.')
+                return redirect(reverse('payments:patient_payment_list'))
+
+            if not secret_key:
+                messages.error(request, 'Khalti secret key is not configured for this hospital.')
+                return redirect(reverse('payments:patient_payment_list'))
+
             # Keep callback URL canonical and explicit to avoid provider slash normalization issues.
             return_url = request.build_absolute_uri('/payments/patient/')
             website_url = request.build_absolute_uri('/')
@@ -300,13 +331,9 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             }
 
             headers = {
-                'Authorization': f'Key {getattr(appointment.doctor.hospital, "khalti_secret_key", None)}',
+                'Authorization': f'Key {secret_key}',
                 'Content-Type': 'application/json',
             }
-
-            if not headers['Authorization'].replace('Key ', '').strip():
-                messages.error(request, 'Khalti secret key is not configured for this hospital.')
-                return redirect(reverse('payments:patient_payment_list'))
 
             try:
                 response = requests.post(

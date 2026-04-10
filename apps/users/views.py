@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth import logout, update_session_auth_hash, login
+from django.contrib.auth import logout, update_session_auth_hash
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -18,7 +18,7 @@ class UserRegisterView(CreateView):
     """
     model = User
     form_class = UserRegistrationForm
-    template_name = 'patient/register.html'
+    template_name = 'patients/register.html'
     success_url = reverse_lazy('users:login')
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -116,16 +116,6 @@ class AdministerLoginView(LoginView):
             )
             return redirect(f"{reverse('otp:request')}?source=administer")
 
-        # Check if admin needs to set up Khalti payment keys
-        if user.is_admin and hasattr(user, 'hospital_admin_profile'):
-            hospital = user.hospital_admin_profile.hospital
-            if not hospital.khalti_secret_key or not hospital.khalti_public_key:
-                # Log in the user first
-                login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-                # Then redirect to Khalti setup
-                success_url = reverse('admin_dashboard')
-                return redirect(f"{reverse('hospitals:khalti_setup')}?next={success_url}")
-
         messages.success(
             self.request,
             f'Welcome back, {user.get_full_name() or user.username}!'
@@ -172,9 +162,9 @@ class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
     model = User
     template_name = 'users/user_list.html'
     context_object_name = 'users'
-    paginate_by = 15
-    
-    def get_queryset(self):
+    paginate_by = 10
+
+    def _base_queryset(self):
         manageable_user_types = [
             User.UserType.STAFF,
             User.UserType.LAB_ASSISTANT,
@@ -188,6 +178,16 @@ class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
             except HospitalAdmin.DoesNotExist:
                 return User.objects.none()
             queryset = queryset.filter(hospital_staff_profile__hospital_id=hospital_id)
+
+        return queryset
+    
+    def get_queryset(self):
+        manageable_user_types = [
+            User.UserType.STAFF,
+            User.UserType.LAB_ASSISTANT,
+            User.UserType.PHARMACIST,
+        ]
+        queryset = self._base_queryset()
 
         search_query = self.request.GET.get('search', '')
         user_type = self.request.GET.get('user_type', '')
@@ -213,11 +213,17 @@ class UserListView(SuperAdminAndAdminOnlyMixin, ListView):
             User.UserType.LAB_ASSISTANT,
             User.UserType.PHARMACIST,
         ]
+        users = self._base_queryset()
         context['search_query'] = self.request.GET.get('search', '')
         context['user_type_filter'] = self.request.GET.get('user_type', '')
         context['user_types'] = [
             choice for choice in User.UserType.choices
             if choice[0] in manageable_user_types
+        ]
+        context['analytics_cards'] = [
+            {'label': 'Total Users', 'value': users.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Active Users', 'value': users.filter(is_active=True).count(), 'value_class': 'text-green-700'},
+            {'label': 'Inactive Users', 'value': users.filter(is_active=False).count(), 'value_class': 'text-red-700'},
         ]
         return context
 

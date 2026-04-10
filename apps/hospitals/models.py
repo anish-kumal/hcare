@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from apps.base.models import BaseModel
 from cloudinary.models import CloudinaryField
-from encrypted_model_fields.fields import EncryptedCharField
+from auditlog.registry import auditlog
 
 class Hospital(BaseModel):
     """
@@ -93,14 +93,14 @@ class Hospital(BaseModel):
         help_text="Emergency contact number"
     )
     
-    khalti_secret_key = EncryptedCharField(
+    khalti_secret_key = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         help_text="Khalti secret key for payment processing"
     )
 
-    khalti_public_key = EncryptedCharField(
+    khalti_public_key = models.CharField(
         max_length=255,
         blank=True,
         null=True,
@@ -233,3 +233,10 @@ class HospitalStaff(BaseModel):
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.hospital.name}"
+
+
+# Register models for audit logging
+auditlog.register(Hospital)
+auditlog.register(HospitalDepartment)
+auditlog.register(HospitalAdmin)
+auditlog.register(HospitalStaff)

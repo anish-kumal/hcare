@@ -5,6 +5,7 @@ from apps.base.models import BaseModel
 from apps.doctors.models import Doctor
 from apps.hospitals.models import Hospital
 from cloudinary.models import CloudinaryField
+from auditlog.registry import auditlog
 
 def generate_booking_code(prefix='BK'):
     return f"{prefix}{get_random_string(10, allowed_chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789')}"
@@ -266,3 +267,8 @@ class PatientAppointment(BaseModel):
     
     def __str__(self):
         return f"{self.patient} - {self.doctor} - {self.appointment_date}"
+
+
+# Register models for audit logging
+auditlog.register(Patient)
+auditlog.register(PatientAppointment)

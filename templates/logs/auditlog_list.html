@@ -1,0 +1,209 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Audit Logs - Healthcare System{% endblock %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+    title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    {% include "partials/side_bar.html" %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        <!-- Top Header -->
+        {% include "partials/header.html" %}
+
+        <!-- Scrollable Main Content -->
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1400px] mx-auto space-y-8">
+                <!-- Headline & Actions -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Audit Logs</h1>
+                    </div>
+                    {% if hospital %}
+                    <div>
+                        <span
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-semibold">
+                            <span class="material-symbols-outlined text-[18px]">domain</span>
+                            {{ hospital.name }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% include "partials/list_analytics_cards.html" %}
+
+                <!-- Filter & Search Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <form method="get" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Search by Username -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Search by Username</label>
+                                <input type="text" name="search" value="{{ search_query|default:'' }}"
+                                    placeholder="Enter username..."
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                            </div>
+
+                            <!-- Action Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
+                                <select name="action"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                    <option value="">All Actions</option>
+                                    <option value="0" {% if request.GET.action == '0' %}selected{% endif %}>Create
+                                    </option>
+                                    <option value="1" {% if request.GET.action == '1' %}selected{% endif %}>Update
+                                    </option>
+                                    <option value="2" {% if request.GET.action == '2' %}selected{% endif %}>Delete
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex items-end gap-2">
+                                <button type="submit"
+                                    class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-[#1a3d42] transition-colors">
+                                    <span class="flex items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined">search</span>
+                                        Filter
+                                    </span>
+                                </button>
+                                <a href="{% url 'logs:auditlog_list' %}"
+                                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-center">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Logs Table -->
+                {% if logs %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Timestamp</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        User</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Action</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Model</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Object ID</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        IP Address</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for log in logs %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        <small>{{ log.timestamp|date:"M d, Y H:i" }}</small>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        {% if log.actor %}
+                                        <div class="font-medium text-gray-900">{{ log.actor.username }}</div>
+                                        <small class="text-gray-600">{{ log.actor.get_user_type_display }}</small>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                                            <span class="material-symbols-outlined text-[14px]">help</span>
+                                            Anonymous
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        {% if log.action == 0 %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                            <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                                            CREATE
+                                        </span>
+                                        {% elif log.action == 1 %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                            <span class="material-symbols-outlined text-[14px]">edit</span>
+                                            UPDATE
+                                        </span>
+                                        {% elif log.action == 2 %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                            <span class="material-symbols-outlined text-[14px]">delete</span>
+                                            DELETE
+                                        </span>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                            <span class="material-symbols-outlined text-[14px]">help</span>
+                                            UNKNOWN
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <code
+                                            class="bg-gray-100 px-2 py-1 rounded text-xs">{{ log.content_type.model }}</code>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ log.object_pk }}</code>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        <small>{{ log.remote_addr|default:"N/A" }}</small>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <a href="{% url 'logs:auditlog_detail' log.pk %}"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                                            <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                {% include "partials/pagination.html" %}
+                {% endif %}
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="bg-accent/30 rounded-xl shadow-sm border p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
+                        <span class="material-symbols-outlined text-primary text-[32px]">event_note</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Audit Logs Found</h3>
+                    <p class="text-gray-600">There are no audit logs matching your criteria.</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </main>
+    </div>
+
+</div>
+
+{% endblock %}

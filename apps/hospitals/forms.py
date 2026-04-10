@@ -1,5 +1,14 @@
 from django import forms
 from .models import Hospital, HospitalAdmin, HospitalDepartment
+from .crypto import encrypt_khalti_key
+from apps.base.validation import (
+    validate_email_format,
+    validate_image_max_size,
+    validate_strong_password,
+    validate_unique_email,
+    validate_unique_username,
+    validate_username_format,
+)
 from apps.users.models import User
 
 
@@ -136,6 +145,19 @@ class HospitalForm(forms.ModelForm):
             return self.instance.khalti_public_key
         return public_key
 
+    def clean_logo(self):
+        return validate_image_max_size(self.cleaned_data.get('logo'))
+
+    def save(self, commit=True):
+        hospital = super().save(commit=False)
+        hospital.khalti_secret_key = encrypt_khalti_key(self.cleaned_data.get('khalti_secret_key'))
+        hospital.khalti_public_key = encrypt_khalti_key(self.cleaned_data.get('khalti_public_key'))
+
+        if commit:
+            hospital.save()
+            self.save_m2m()
+        return hospital
+
 
 class HospitalAdminForm(forms.ModelForm):
     """Form for adding/editing hospital admins"""
@@ -219,24 +241,39 @@ class HospitalAdminForm(forms.ModelForm):
             self.fields['password'].required = True
 
     def clean_username(self):
-        username = self.cleaned_data['username']
-        if '@' in username:
-            raise forms.ValidationError('Username cannot contain @.')
-        qs = User.objects.filter(username__iexact=username)
-        if self._linked_user:
-            qs = qs.exclude(pk=self._linked_user.pk)
-        if qs.exists():
-            raise forms.ValidationError('This username is already taken.')
-        return username
+        username = validate_username_format(self.cleaned_data.get('username'))
+        exclude_pk = self._linked_user.pk if self._linked_user else None
+        return validate_unique_username(
+            username,
+            model=User,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+        )
 
     def clean_email(self):
-        email = self.cleaned_data['email']
-        qs = User.objects.filter(email__iexact=email)
-        if self._linked_user:
-            qs = qs.exclude(pk=self._linked_user.pk)
-        if qs.exists():
-            raise forms.ValidationError('This email is already in use.')
-        return email
+        email = validate_email_format(self.cleaned_data.get('email'))
+        exclude_pk = self._linked_user.pk if self._linked_user else None
+        return validate_unique_email(
+            email,
+            model=User,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+            error_message='This email is already in use.',
+        )
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
+        if not password:
+            return password
+
+        user = self._linked_user or User(
+            username=self.cleaned_data.get('username', ''),
+            email=self.cleaned_data.get('email', ''),
+            first_name=self.cleaned_data.get('first_name', ''),
+            last_name=self.cleaned_data.get('last_name', ''),
+        )
+
+        return validate_strong_password(password, user=user)
 
     def save(self, commit=True):
         hospital_admin = super().save(commit=False)
@@ -388,6 +425,9 @@ class HospitalRegistrationForm(forms.ModelForm):
             }),
         }
 
+    def clean_logo(self):
+        return validate_image_max_size(self.cleaned_data.get('logo'))
+
 
 class KhaltiSetupForm(forms.ModelForm):
     """Form for setting up Khalti payment keys - Only khalti_secret_key and khalti_public_key"""
@@ -427,3 +467,13 @@ class KhaltiSetupForm(forms.ModelForm):
             raise forms.ValidationError('Both Khalti keys are required.')
         
         return cleaned_data
+
+    def save(self, commit=True):
+        hospital = super().save(commit=False)
+        hospital.khalti_secret_key = encrypt_khalti_key(self.cleaned_data['khalti_secret_key'])
+        hospital.khalti_public_key = encrypt_khalti_key(self.cleaned_data['khalti_public_key'])
+
+        if commit:
+            hospital.save()
+            self.save_m2m()
+        return hospital

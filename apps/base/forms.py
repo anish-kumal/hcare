@@ -1,6 +1,6 @@
 from django import forms
 from .models import ContactMessage
-import re
+from apps.base.validation import validate_email_format, validate_nepal_phone_number
 
 
 class ContactMessageForm(forms.ModelForm):
@@ -42,39 +42,9 @@ class ContactMessageForm(forms.ModelForm):
         }
 
     def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number', '').strip()
-        
-        if not phone_number:
-            return phone_number
-        
-        # Remove spaces and hyphens for validation
-        phone_number_digits = re.sub(r'[\s\-]', '', phone_number)
-        
-        # Nepal mobile number: 10 digits starting with 98, 97, 96 (e.g., 9841234567)
-        if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
-            return phone_number
-        
-        # Nepal international format: +977 followed by 9 digits (e.g., +9779841234567)
-        if re.match(r'^\+977\d{9}$', phone_number_digits):
-            return phone_number
-        
-        # Nepal landline: +977 with area code (5-7 digits) (e.g., +97714-1234567)
-        if re.match(r'^\+977\d{6,7}$', phone_number_digits):
-            return phone_number
-        
-        # Local landline format: area code + hyphen + local number (e.g., 061-563200, 01-4123456)
-        if re.match(r'^0\d{1,2}-\d{5,7}$', phone_number):
-            return phone_number
-        
-        raise forms.ValidationError(
-            "Please enter a valid Nepal phone number. "
-            "Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456"
-        )
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
     
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        if email and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
-            raise forms.ValidationError("Please enter a valid email address.")
-        return email
+        return validate_email_format(self.cleaned_data.get('email'))
     
         

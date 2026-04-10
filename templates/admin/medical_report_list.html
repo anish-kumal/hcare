@@ -29,6 +29,8 @@
                     </a>
                 </div>
 
+                {% include "partials/list_analytics_cards.html" %}
+
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[1000px]">
@@ -78,29 +80,7 @@
                     </div>
                 </div>
 
-                {% if is_paginated %}
-                <div class="flex justify-center gap-2 mt-6">
-                    <nav class="flex items-center gap-1">
-                        {% if page_obj.has_previous %}
-                        <a href="?page=1" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">First</a>
-                        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Previous</a>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                            <span class="px-3 py-2 rounded-lg bg-primary text-white font-medium text-sm">{{ num }}</span>
-                            {% else %}
-                            <a href="?page={{ num }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Next</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm">Last</a>
-                        {% endif %}
-                    </nav>
-                </div>
-                {% endif %}
+                {% include "partials/pagination.html" %}
             </div>
         </main>
     </div>

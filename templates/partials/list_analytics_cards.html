@@ -1,0 +1,10 @@
+{% if analytics_cards %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for card in analytics_cards %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs tracking-wide text-gray-600">{{ card.label }}</p>
+        <p class="mt-2 text-3xl font-bold {{ card.value_class|default:'text-gray-900' }}">{{ card.value }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

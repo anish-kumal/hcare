@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager
 from apps.base.models import BaseModel
+from auditlog.registry import auditlog
 
 
 
@@ -100,5 +101,9 @@ class User(AbstractUser, BaseModel):
     @property
     def is_pharmacist(self):
         return self.user_type == self.UserType.PHARMACIST
+
+
+# Register User model for audit logging
+auditlog.register(User)
 
 

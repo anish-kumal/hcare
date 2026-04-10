@@ -3,6 +3,7 @@ from django.conf import settings
 from apps.base.models import BaseModel
 from apps.doctors.models import Doctor, DoctorSchedule
 from apps.patients.models import Patient
+from auditlog.registry import auditlog
 
 
 # Using PatientAppointment from apps.patients.models
@@ -66,4 +67,9 @@ class Medicine(BaseModel):
 
 
 __all__ = ['PatientAppointment', 'Prescription', 'Medicine']
+
+
+# Register models for audit logging
+auditlog.register(Prescription)
+auditlog.register(Medicine)
 

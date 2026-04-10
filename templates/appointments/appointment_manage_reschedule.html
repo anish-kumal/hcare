@@ -1,4 +1,4 @@
-{% extends "base/base_dashboard.html" %}
+{% extends "base/base.html" %}
 {% block title %}Reschedule Appointment - Health Care{% endblock title %}
 
 {% block content %}
@@ -61,7 +61,7 @@
                             <button
                                 type="button"
                                 onclick="showTimeSlots('day-{{ forloop.counter0 }}')"
-                                class="day-btn px-3 py-5 rounded-full border-2 text-xs md:text-sm font-semibold transition-all duration-300 {% if forloop.first %}bg-primary text-white{% else %}text-primary{% endif %}"
+                                class="day-btn px-3 py-5 rounded-full border text-xs md:text-sm font-medium transition-all duration-300 {% if forloop.first %}bg-primary text-white{% else %}text-primary{% endif %}"
                                 data-day="day-{{ forloop.counter0 }}"
                                 style="border-color: #245258; {% if not forloop.first %}color: #245258;{% endif %}">
                                 <span class="block">{{ day_slots.weekday|slice:":3"|upper }}</span>
@@ -76,7 +76,7 @@
                                 <div class="flex flex-wrap gap-3">
                                     {% for slot in day_slots.slots %}
                                     <a href="{% url 'appointments:appointment_manage_reschedule' appointment.pk %}?date={{ day_slots.date|date:'Y-m-d' }}&time={{ slot.time|time:'H:i' }}"
-                                        class="px-4 py-2 border-2 border-primary text-primary rounded-lg text-sm font-semibold hover:bg-primary hover:text-white transition-all duration-300 {% if selected_date == day_slots.date|date:'Y-m-d' and selected_time == slot.time|time:'H:i' %}bg-primary text-white{% endif %}">
+                                        class="px-4 py-2 border border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary hover:text-white transition-all duration-300 {% if selected_date == day_slots.date|date:'Y-m-d' and selected_time == slot.time|time:'H:i' %}bg-primary text-white{% endif %}">
                                         {{ slot.time|time:"g:i A" }}
                                     </a>
                                     {% endfor %}

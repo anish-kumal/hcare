@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.conf import settings
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Hospital, HospitalAdmin, HospitalDepartment
 from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm, KhaltiSetupForm
@@ -48,8 +48,14 @@ class HospitalListView(SuperAdminOnlyMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        hospitals = Hospital.objects.all()
         context['search_query'] = self.request.GET.get('search', '')
         context['is_verified_filter'] = self.request.GET.get('is_verified', '')
+        context['analytics_cards'] = [
+            {'label': 'Total Hospitals', 'value': hospitals.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Verified', 'value': hospitals.filter(is_verified=True).count(), 'value_class': 'text-green-700'},
+            {'label': 'Unverified', 'value': hospitals.filter(is_verified=False).count(), 'value_class': 'text-amber-700'},
+        ]
         return context
 
 
@@ -484,14 +490,6 @@ class KhaltiSetupView(LoginRequiredMixin, FormView):
             return self.request.user.hospital_admin_profile.hospital
         raise PermissionDenied("You are not a hospital admin.")
     
-    def get_initial(self):
-        """Pre-populate form if keys already exist"""
-        initial = super().get_initial()
-        hospital = self.get_object()
-        initial['khalti_secret_key'] = hospital.khalti_secret_key or ''
-        initial['khalti_public_key'] = hospital.khalti_public_key or ''
-        return initial
-    
     def get_context_data(self, **kwargs):
         """Add hospital info to context"""
         context = super().get_context_data(**kwargs)
@@ -499,13 +497,15 @@ class KhaltiSetupView(LoginRequiredMixin, FormView):
         context['hospital'] = hospital
         context['page_title'] = f'Khalti Payment Setup - {hospital.name}'
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.get_object()
+        return kwargs
     
     def form_valid(self, form):
         """Save khalti keys to the hospital"""
-        hospital = self.get_object()
-        hospital.khalti_secret_key = form.cleaned_data['khalti_secret_key']
-        hospital.khalti_public_key = form.cleaned_data['khalti_public_key']
-        hospital.save()
+        form.save()
         
         messages.success(
             self.request,

@@ -1,9 +1,17 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from datetime import date
-import re
 from .models import Doctor, DoctorSchedule
-from django.contrib.auth.password_validation import validate_password
+from apps.base.validation import (
+    validate_date_not_in_future,
+    validate_email_format,
+    validate_image_max_size,
+    validate_nepal_phone_number,
+    validate_strong_password,
+    validate_unique_email,
+    validate_unique_username,
+    validate_username_format,
+)
 
 User = get_user_model()
 
@@ -59,78 +67,26 @@ class DoctorUserForm(forms.ModelForm):
         }
     
     def clean_username(self):
-        username = self.cleaned_data.get('username', '')
-        if '@' in username:
-            raise forms.ValidationError("Username cannot contain @.")
-        queryset = User.objects.filter(username=username)
-        if self.instance and self.instance.pk:
-            queryset = queryset.exclude(pk=self.instance.pk)
-        if queryset.exists():
-            raise forms.ValidationError("This username is already taken.")
-        return username
+        username = validate_username_format(self.cleaned_data.get('username'))
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_username(username, model=User, exclude_pk=exclude_pk)
     
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        queryset = User.objects.filter(email=email)
-        if self.instance and self.instance.pk:
-            queryset = queryset.exclude(pk=self.instance.pk)
-        if queryset.exists():
-            raise forms.ValidationError("This email is already registered.")
-        return email
+        email = validate_email_format(self.cleaned_data.get('email'))
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_email(email, model=User, exclude_pk=exclude_pk)
 
     def clean_date_of_birth(self):
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        if date_of_birth and date_of_birth > date.today():
-            raise forms.ValidationError("Date of birth cannot be in the future.")
-        return date_of_birth
+        return validate_date_not_in_future(
+            self.cleaned_data.get('date_of_birth'),
+            field_label='Date of birth'
+        )
 
     def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number', '').strip()
-        
-        if not phone_number:
-            return phone_number
-        
-        # Remove spaces and hyphens for validation
-        phone_number_digits = re.sub(r'[\s\-]', '', phone_number)
-        
-        # Nepal mobile number: 10 digits starting with 98, 97, 96 (e.g., 9841234567)
-        if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
-            return phone_number
-        
-        # Nepal international format: +977 followed by 9 digits (e.g., +9779841234567)
-        if re.match(r'^\+977\d{9}$', phone_number_digits):
-            return phone_number
-        
-        # Nepal landline: +977 with area code (5-7 digits) (e.g., +97714-1234567)
-        if re.match(r'^\+977\d{6,7}$', phone_number_digits):
-            return phone_number
-        
-        # Local landline format: area code + hyphen + local number (e.g., 061-563200, 01-4123456)
-        if re.match(r'^0\d{1,2}-\d{5,7}$', phone_number):
-            return phone_number
-        
-        raise forms.ValidationError(
-            "Please enter a valid Nepal phone number. "
-            "Formats: 98XXXXXXXX, +9779XXXXXXXX, 061-563200, or +977-1-4123456"
-        )
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
         
     def clean_password(self):
         password = self.cleaned_data.get('password', '')
-        if len(password) < 8:
-            raise forms.ValidationError('Password must be at least 8 characters long.')
-
-        if not re.search(r'[A-Z]', password):
-            raise forms.ValidationError('Password must contain at least one uppercase letter.')
-
-        if not re.search(r'[a-z]', password):
-            raise forms.ValidationError('Password must contain at least one lowercase letter.')
-
-        if not re.search(r'\d', password):
-            raise forms.ValidationError('Password must contain at least one number.')
-
-        if not re.search(r'[^A-Za-z0-9]', password):
-            raise forms.ValidationError('Password must contain at least one special character.')
-
         user = User(
             username=self.cleaned_data.get('username', ''),
             email=self.cleaned_data.get('email', ''),
@@ -138,12 +94,7 @@ class DoctorUserForm(forms.ModelForm):
             last_name=self.cleaned_data.get('last_name', ''),
         )
 
-        try:
-            validate_password(password, user=user)
-        except forms.ValidationError as error:
-            raise forms.ValidationError(error.messages)
-
-        return password
+        return validate_strong_password(password, user=user)
 
 
 
@@ -169,21 +120,6 @@ class DoctorUserUpdateForm(DoctorUserForm):
         if not password:
             return password
 
-        if len(password) < 8:
-            raise forms.ValidationError('Password must be at least 8 characters long.')
-
-        if not re.search(r'[A-Z]', password):
-            raise forms.ValidationError('Password must contain at least one uppercase letter.')
-
-        if not re.search(r'[a-z]', password):
-            raise forms.ValidationError('Password must contain at least one lowercase letter.')
-
-        if not re.search(r'\d', password):
-            raise forms.ValidationError('Password must contain at least one number.')
-
-        if not re.search(r'[^A-Za-z0-9]', password):
-            raise forms.ValidationError('Password must contain at least one special character.')
-
         user = User(
             username=self.cleaned_data.get('username', ''),
             email=self.cleaned_data.get('email', ''),
@@ -191,12 +127,7 @@ class DoctorUserUpdateForm(DoctorUserForm):
             last_name=self.cleaned_data.get('last_name', ''),
         )
 
-        try:
-            validate_password(password, user=user)
-        except forms.ValidationError as error:
-            raise forms.ValidationError(error.messages)
-
-        return password
+        return validate_strong_password(password, user=user)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -307,6 +238,9 @@ class DoctorProfileForm(forms.ModelForm):
         if experience_years is not None and experience_years > 100:
             raise forms.ValidationError("Experience years cannot be more than 100.")
         return experience_years
+
+    def clean_profile_picture(self):
+        return validate_image_max_size(self.cleaned_data.get('profile_picture'))
 
 
 class DoctorScheduleForm(forms.ModelForm):

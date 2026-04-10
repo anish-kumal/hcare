@@ -4,6 +4,7 @@
 
 {% block content %}
 
+
 <!-- Mobile menu button (visible only on small screens) -->
 <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
   title="Toggle menu">
@@ -244,14 +245,52 @@
               </div>
 
               <!-- Payment Configuration -->
+
+            
+
               <div class="mt-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Configuration (Khalti)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                    <label for="{{ form.khalti_secret_key.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                      Khalti Secret Key
+                    </label>
+                    <div class="relative">
+                      {{ form.khalti_secret_key }}
+                      <button
+                        type="button"
+                        class="password-toggle absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700"
+                        data-target="{{ form.khalti_secret_key.id_for_label }}"
+                        aria-label="Show Khalti secret key"
+                        title="Show/Hide key"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                      </button>
+                    </div>
+                    {% if form.khalti_secret_key.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.khalti_secret_key.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.khalti_secret_key.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.khalti_secret_key.help_text }}</p>
+                    {% endif %}
+                </div>
+                
                   <div>
                     <label for="{{ form.khalti_public_key.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                       Khalti Public Key
                     </label>
-                    {{ form.khalti_public_key }}
+                    <div class="relative">
+                      {{ form.khalti_public_key }}
+                      <button
+                        type="button"
+                        class="password-toggle absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700"
+                        data-target="{{ form.khalti_public_key.id_for_label }}"
+                        aria-label="Show Khalti public key"
+                        title="Show/Hide key"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                      </button>
+                    </div>
                     {% if form.khalti_public_key.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.khalti_public_key.errors.0 }}</p>
                     {% endif %}
@@ -260,18 +299,7 @@
                     {% endif %}
                   </div>
 
-                  <div>
-                    <label for="{{ form.khalti_secret_key.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                      Khalti Secret Key
-                    </label>
-                    {{ form.khalti_secret_key }}
-                    {% if form.khalti_secret_key.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.khalti_secret_key.errors.0 }}</p>
-                    {% endif %}
-                    {% if form.khalti_secret_key.help_text %}
-                    <p class="mt-1 text-xs text-gray-500">{{ form.khalti_secret_key.help_text }}</p>
-                    {% endif %}
-                  </div>
+                  
                 </div>
               </div>
             </div>
@@ -344,6 +372,36 @@
   </div>
 
 </div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.password-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const targetId = btn.getAttribute('data-target');
+        let input = targetId ? document.getElementById(targetId) : null;
+
+        if (!input) {
+          input = btn.closest('.relative')?.querySelector('input');
+        }
+
+        if (!input) {
+          return;
+        }
+
+        const icon = btn.querySelector('.material-symbols-outlined');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+
+        if (icon) {
+          icon.textContent = show ? 'visibility_off' : 'visibility';
+        }
+
+        btn.setAttribute('aria-label', show ? 'Hide key' : 'Show key');
+      });
+    });
+  });
+</script>
 
 
 {% endblock content %}

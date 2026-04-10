@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from collections import defaultdict
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
@@ -109,12 +110,45 @@ class DoctorDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         doctor = self.object
+        now = timezone.now()
 
         context['available_slots'] = doctor.get_available_slots_by_date(
             days=7,
-            now=timezone.now(),
+            now=now,
             active_statuses=BOOKING_STATUSES,
         )
+
+        # Send booked slots too, grouped by date, so templates/clients can display unavailable times.
+        start_date = timezone.localtime(now).date()
+        end_date = start_date + timedelta(days=6)
+        booked_by_date = defaultdict(set)
+
+        booked_appointments = PatientAppointment.objects.filter(
+            doctor=doctor,
+            appointment_date__range=(start_date, end_date),
+            status__in=BOOKING_STATUSES,
+        ).order_by('appointment_date', 'appointment_time')
+
+        for appointment in booked_appointments:
+            slot_datetime = timezone.make_aware(
+                datetime.combine(appointment.appointment_date, appointment.appointment_time)
+            )
+            if slot_datetime <= now:
+                continue
+            booked_by_date[appointment.appointment_date].add(appointment.appointment_time)
+
+        context['booked_slots'] = [
+            {
+                'date': slot_date,
+                'weekday': slot_date.strftime('%A'),
+                'slots': [
+                    {'time': slot_time}
+                    for slot_time in sorted(slot_times)
+                ],
+            }
+            for slot_date, slot_times in sorted(booked_by_date.items())
+        ]
+
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         if doctor.specialization:
             context['same_specialization_doctors'] = Doctor.objects.filter(
@@ -441,6 +475,12 @@ class AppointmentDoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
             is_active=True,
             specialization__isnull=False,
         ).exclude(specialization='').values_list('specialization', flat=True).distinct().order_by('specialization')
+        active_doctors = Doctor.objects.filter(is_active=True)
+        context['analytics_cards'] = [
+            {'label': 'Total Doctors', 'value': active_doctors.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Available', 'value': active_doctors.filter(is_available=True).count(), 'value_class': 'text-green-700'},
+            {'label': 'Unavailable', 'value': active_doctors.filter(is_available=False).count(), 'value_class': 'text-red-700'},
+        ]
         return context
     
 class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
@@ -549,7 +589,6 @@ class AppointmentDoctorScheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
                 'all_bookings': day_bookings,
             })
         
-        print(weekly_schedule)
 
         context['weekly_schedule'] = weekly_schedule
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
@@ -701,7 +740,7 @@ class AdminAppointmentListView(SuperAdminAndAdminOnlyMixin, ListView):
     model = PatientAppointment
     template_name = 'appointments/appointment_list.html'
     context_object_name = 'appointments'
-    paginate_by = 20
+    paginate_by = 5
 
     def get_queryset(self):
         queryset = PatientAppointment.objects.select_related(
@@ -733,6 +772,12 @@ class AdminAppointmentListView(SuperAdminAndAdminOnlyMixin, ListView):
         context['selected_status'] = self.request.GET.get('status', '').strip()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['status_choices'] = PatientAppointment.STATUS_CHOICES
+        appointments = PatientAppointment.objects.all()
+        context['analytics_cards'] = [
+            {'label': 'Total Appointments', 'value': appointments.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Completed', 'value': appointments.filter(status='COMPLETED').count(), 'value_class': 'text-green-700'},
+            {'label': 'Cancelled', 'value': appointments.filter(status='CANCELLED').count(), 'value_class': 'text-red-700'},
+        ]
         return context
 
 
@@ -916,7 +961,6 @@ class AdminAppointmentRescheduleView(SuperAdminAndAdminOnlyMixin, DetailView):
             now=self._get_slots_window_now(appointment=appointment, now=timezone.now()),
             active_statuses=BOOKING_STATUSES,
         )
-        print('[AdminAppointmentRescheduleView] available_slots:', context['available_slots'])
         context['doctor_full_name'] = f"Dr. {doctor.user.get_full_name()}"
         context['can_reschedule'] = True
         context['selected_date'] = self.request.GET.get('date', '').strip()
@@ -987,7 +1031,7 @@ class AdminPrescriptionListView(SuperAdminAndAdminOnlyMixin, ListView):
     model = Prescription
     template_name = 'appointments/prescription_list.html'
     context_object_name = 'prescriptions'
-    paginate_by = 20
+    paginate_by = 10
 
     def get_queryset(self):
         queryset = Prescription.objects.select_related(
@@ -1013,6 +1057,19 @@ class AdminPrescriptionListView(SuperAdminAndAdminOnlyMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '').strip()
+        prescriptions = Prescription.objects.all()
+        today = timezone.localdate()
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        context['analytics_cards'] = [
+            {'label': 'Total Prescriptions', 'value': prescriptions.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Created Today', 'value': prescriptions.filter(created__date=today).count(), 'value_class': 'text-blue-700'},
+            {
+                'label': 'Created This Week',
+                'value': prescriptions.filter(created__date__range=(week_start, week_end)).count(),
+                'value_class': 'text-emerald-700',
+            },
+        ]
         return context
 
 

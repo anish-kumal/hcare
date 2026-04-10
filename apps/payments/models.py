@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from apps.base.models import BaseModel
 from apps.patients.models import PatientAppointment
+from auditlog.registry import auditlog
 
 
 class AppointmentPayment(BaseModel):
@@ -60,3 +61,7 @@ class AppointmentPayment(BaseModel):
 
     def __str__(self):
         return f'Payment for Appointment #{self.appointment_id} - {self.status}'
+
+
+# Register model for audit logging
+auditlog.register(AppointmentPayment)

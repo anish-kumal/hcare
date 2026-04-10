@@ -82,11 +82,21 @@
                         <span class="font-semibold text-gray-900">Appointment fee: </span>
                         Nrs {{ doctor.consultation_fee }}
                     </div>
-                    <div class="flex items-center  pt-3 border-t border-gray-200 gap-3 mb-4">
+                    <div class="flex items-center pt-3 border-t border-gray-200 gap-3 mb-4">
                         <span class="material-symbols-outlined text-sm text-gray-400">location_on</span>
-                        <p class="text-sm text-gray-600">{{ doctor.hospital.name }}</p>
-                        <p class="text-sm text-gray-400">|</p> 
-                        <p class ="text-sm text-gray-600">{{ doctor.hospital.city }}, {{ doctor.hospital.address }}</p>
+                        <p class="text-sm text-gray-600">{{ doctor.hospital.name|default:"Hospital" }}</p>
+                        <p class="text-sm text-gray-400">|</p>
+                        <p class="text-sm text-gray-600">{{ doctor.hospital.city|default:"-" }}, {{ doctor.hospital.address|default:"-" }}</p>
+                    </div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-outlined text-sm text-gray-400">contact_phone</span>
+                        <p class="text-sm text-gray-600">{{ doctor.hospital.phone_number|default:"-" }}</p>
+                        <p class="text-sm text-gray-400">|</p>
+                        <p class="text-sm text-gray-600">{{ doctor.hospital.email|default:"-" }}</p>
+                        {% if doctor.hospital.website %}
+                            <p class="text-sm text-gray-400">|</p>
+                            <a href="{{ doctor.hospital.website }}" target="_blank" rel="noopener noreferrer" class="text-sm text-primary hover:underline break-all">{{ doctor.hospital.website }}</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -108,6 +118,7 @@
                                 onclick="showTimeSlots('day-{{ forloop.counter0 }}')"
                                 class="day-btn {% if forloop.first %}active-day{% endif %} min-w-[30px] px-3 py-5 rounded-full border text-xs md:text-sm font-medium transition-all duration-300"
                                 data-day="day-{{ forloop.counter0 }}"
+                                data-date="{{ day_slots.date|date:'Y-m-d' }}"
                                 style="border-color: #245258; color: #245258; {% if forloop.first %}background-color: #245258; color: white;{% endif %}">
                                 <span class="block">{{ day_slots.weekday|slice:":3"|upper }}</span>
                                 <span class="block text-xs">{{ day_slots.date|date:"d" }}</span>
@@ -130,6 +141,27 @@
                             </div>
                         {% endfor %}
                     </div>
+
+                    {% if booked_slots %}
+                        <div class="pt-2">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Booked slots</h4>
+                            <div class="space-y-3" id="booked-slots-days">
+                                {% for day_slots in booked_slots %}
+                                    <div class="booked-slots-day flex flex-wrap items-center gap-2 {% if not forloop.first %}hidden{% endif %}" data-date="{{ day_slots.date|date:'Y-m-d' }}">
+                                        <span class="text-xs font-medium text-gray-500 min-w-[95px]">
+                                            {{ day_slots.weekday|slice:":3" }}, {{ day_slots.date|date:"M d" }}
+                                        </span>
+                                        {% for slot in day_slots.slots %}
+                                            <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
+                                                {{ slot.time|date:"g:i A" }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                                <p id="booked-slots-empty" class="text-xs text-gray-500 hidden">No booked slots for the selected date.</p>
+                            </div>
+                        </div>
+                    {% endif %}
 
                     <!-- Book Button -->
                     <div class="mt-6 pt-4 border-t border-gray-200">
@@ -211,6 +243,29 @@
                 btn.classList.remove('active-day');
             }
         });
+
+        const selectedDayButton = document.querySelector(`.day-btn[data-day="${dayId}"]`);
+        const selectedDate = selectedDayButton ? selectedDayButton.getAttribute('data-date') : null;
+        const bookedRows = document.querySelectorAll('.booked-slots-day');
+        const emptyBookedSlotsLabel = document.getElementById('booked-slots-empty');
+
+        let hasVisibleBookedRows = false;
+        bookedRows.forEach(row => {
+            if (selectedDate && row.getAttribute('data-date') === selectedDate) {
+                row.classList.remove('hidden');
+                hasVisibleBookedRows = true;
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        if (emptyBookedSlotsLabel) {
+            if (selectedDate && !hasVisibleBookedRows) {
+                emptyBookedSlotsLabel.classList.remove('hidden');
+            } else {
+                emptyBookedSlotsLabel.classList.add('hidden');
+            }
+        }
     }
 
     async function refreshBookingSlots() {
@@ -227,6 +282,7 @@
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
+                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -260,18 +316,48 @@
 
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const socketUrl = `${protocol}://${window.location.host}/ws/appointments/doctors/${doctorId}/slots/`;
-        const socket = new WebSocket(socketUrl);
+        let socket = null;
+        let reconnectTimer = null;
 
-        socket.onmessage = function(event) {
-            try {
-                const payload = JSON.parse(event.data);
-                if (payload.type === 'slots.updated') {
-                    refreshBookingSlots();
+        const connect = function () {
+            socket = new WebSocket(socketUrl);
+
+            socket.onmessage = function (event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'slots.updated' && String(payload.doctor_id) === String(doctorId)) {
+                        refreshBookingSlots();
+                    }
+                } catch (error) {
+                    // Ignore malformed payloads and keep the page usable.
                 }
-            } catch (error) {
-                // Ignore malformed payloads and keep the page usable.
-            }
+            };
+
+            socket.onclose = function () {
+                if (reconnectTimer) {
+                    return;
+                }
+                reconnectTimer = window.setTimeout(function () {
+                    reconnectTimer = null;
+                    connect();
+                }, 2000);
+            };
+
+            socket.onerror = function () {
+                socket.close();
+            };
         };
+
+        connect();
+
+        window.addEventListener('beforeunload', function () {
+            if (reconnectTimer) {
+                window.clearTimeout(reconnectTimer);
+            }
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        });
     })();
 </script>
 

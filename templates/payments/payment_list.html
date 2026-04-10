@@ -18,6 +18,8 @@
             <div class="max-w-[1400px] mx-auto space-y-6">
                 <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Payments</h1>
 
+                {% include "partials/list_analytics_cards.html" %}
+
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="md:col-span-2">
@@ -94,19 +96,7 @@
                     {% endif %}
                 </div>
 
-                {% if is_paginated %}
-                <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm text-gray-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
-                    <div class="flex items-center gap-2">
-                        {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ selected_status }}" class="px-3 py-1.5 rounded border border-gray-300 text-sm hover:bg-white">Previous</a>
-                        {% endif %}
-                        {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ selected_status }}" class="px-3 py-1.5 rounded border border-gray-300 text-sm hover:bg-white">Next</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
+                {% include "partials/pagination.html" %}
             </div>
         </main>
     </div>

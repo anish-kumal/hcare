@@ -1,5 +1,6 @@
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
+from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model, update_session_auth_hash
@@ -135,7 +136,7 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
 
 
 class PatientProfileEditView(PatientOnlyMixin, UpdateView):
-    """Allow patients to edit their own profile."""
+    """Allow patients to edit their own personal profile."""
     model = Patient
     form_class = PatientProfileForm
     template_name = 'patients/patient_profile_edit.html'
@@ -156,55 +157,76 @@ class PatientProfileEditView(PatientOnlyMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['patient_form'] = kwargs.get('patient_form') or PatientProfileForm(instance=self.object)
-        context['account_form'] = kwargs.get('account_form') or PatientAccountForm(instance=self.request.user)
-        context['password_form'] = kwargs.get('password_form') or PasswordChangeForm(self.request.user)
+        context['patient_form'] = context.get('form')
         return context
 
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        action = request.POST.get('action', 'profile')
-
-        if action == 'account':
-            account_form = PatientAccountForm(request.POST, instance=request.user)
-            if account_form.is_valid():
-                account_form.save()
-                messages.success(request, 'Account details updated successfully!')
-                return redirect('patients:patient_profile')
-
-            messages.error(request, 'Please correct the account details below.')
-            return self.render_to_response(self.get_context_data(account_form=account_form))
-
-        if action == 'password':
-            password_form = PasswordChangeForm(request.user, request.POST)
-            if password_form.is_valid():
-                new_password = password_form.cleaned_data.get('new_password')
-                request.user.set_password(new_password)
-                request.user.is_default_password = False
-                request.user.save(update_fields=['password', 'is_default_password'])
-                update_session_auth_hash(request, request.user)
-                messages.success(request, 'Password changed successfully!')
-                return redirect('patients:patient_profile')
-
-            messages.error(request, 'Please correct the password errors below.')
-            return self.render_to_response(self.get_context_data(password_form=password_form))
-
-        patient_form = PatientProfileForm(request.POST, request.FILES, instance=self.object)
-        if patient_form.is_valid():
-            patient_form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('patients:patient_profile')
-
-        messages.error(request, 'Please correct the profile errors below.')
-        return self.render_to_response(self.get_context_data(patient_form=patient_form))
-
     def form_valid(self, form):
-        messages.success(self.request, 'Profile updated successfully!')
+        messages.success(self.request, 'Personal profile updated successfully!')
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
+        messages.error(self.request, 'Please correct the personal profile errors below.')
         return super().form_invalid(form)
+
+
+class PatientAccountEditView(PatientOnlyMixin, View):
+    """Edit patient account details (username/email) on a separate page."""
+
+    template_name = 'patients/patient_account_edit.html'
+
+    def get(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(request, 'Please complete your patient profile to continue.')
+            return redirect('patients:patient_profile_create')
+
+        form = PatientAccountForm(instance=request.user)
+        return render(request, self.template_name, {'account_form': form})
+
+    def post(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(request, 'Please complete your patient profile to continue.')
+            return redirect('patients:patient_profile_create')
+
+        form = PatientAccountForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Account details updated successfully!')
+            return redirect('patients:patient_profile')
+
+        messages.error(request, 'Please correct the account details below.')
+        return render(request, self.template_name, {'account_form': form})
+
+
+class PatientPasswordChangeView(PatientOnlyMixin, View):
+    """Change patient password on a separate page."""
+
+    template_name = 'patients/patient_password_change.html'
+
+    def get(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(request, 'Please complete your patient profile to continue.')
+            return redirect('patients:patient_profile_create')
+
+        form = PasswordChangeForm(request.user)
+        return render(request, self.template_name, {'password_form': form})
+
+    def post(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(request, 'Please complete your patient profile to continue.')
+            return redirect('patients:patient_profile_create')
+
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data.get('new_password')
+            request.user.set_password(new_password)
+            request.user.is_default_password = False
+            request.user.save(update_fields=['password', 'is_default_password'])
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('patients:patient_profile')
+
+        messages.error(request, 'Please correct the password errors below.')
+        return render(request, self.template_name, {'password_form': form})
 
 
 class PatientSelfProfileCreateView(PatientOnlyMixin, CreateView):
@@ -408,10 +430,13 @@ class PatientListView(PatientHospitalScopedMixin, ListView):
     template_name = 'patients/patient_list.html'
     context_object_name = 'patients'
     paginate_by = 10
+
+    def _base_queryset(self):
+        return self.get_hospital_scoped_queryset()
     
     def get_queryset(self):
         """Get all patients with optional search"""
-        queryset = self.get_hospital_scoped_queryset()
+        queryset = self._base_queryset()
         search_query = self.request.GET.get('search', '').strip()
         is_active_filter = self.request.GET.get('is_active', '').strip().lower()
 
@@ -434,8 +459,14 @@ class PatientListView(PatientHospitalScopedMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        patients = self._base_queryset()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['is_active_filter'] = self.request.GET.get('is_active', '').strip().lower()
+        context['analytics_cards'] = [
+            {'label': 'Total Patients', 'value': patients.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Active', 'value': patients.filter(is_active=True).count(), 'value_class': 'text-green-700'},
+            {'label': 'Inactive', 'value': patients.filter(is_active=False).count(), 'value_class': 'text-red-700'},
+        ]
         return context
 
 class PatientDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):

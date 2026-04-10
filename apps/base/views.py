@@ -11,7 +11,7 @@ from .mixin import RoleRequiredMixin
 # Create your views here.
 class IndexView(RoleRequiredMixin, TemplateView):
     """Render the home page"""
-    template_name = 'patient/index.html'
+    template_name = 'patients/index.html'
 
 
 class AdministrView(TemplateView):
@@ -99,7 +99,7 @@ class DoctorDashboardView(LoginRequiredMixin, TemplateView):
 
 class PatientDashboardView(LoginRequiredMixin, TemplateView):
     """Patient Dashboard"""
-    template_name = 'patient/index.html'
+    template_name = 'patients/index.html'
     login_url = 'users:login'
     
     def dispatch(self, request, *args, **kwargs):

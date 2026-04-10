@@ -1,13 +1,14 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.views import View
 from django.http import Http404, FileResponse
+from django.contrib import messages
 from pathlib import Path
 from django.utils.text import slugify
 from django.conf import settings
 from django.core.files.base import File
 from django.core.files.storage import default_storage
 from apps.medical_report.models import MedicalReport
-from apps.medical_report.forms import  AdminMedicalReportForm
+from apps.medical_report.forms import AdminMedicalReportForm, PatientMedicalReportShareForm
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin
 from apps.appointments.views import PatientAccessMixin
 from django.urls import reverse_lazy
@@ -26,6 +27,18 @@ class AdminMedicalReportCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def form_valid(self, form):
+        """Show success message when report is created"""
+        messages.success(self.request, 'Medical report created successfully!')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Show error messages when form is invalid"""
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f'{field.upper()}: {error}')
+        return super().form_invalid(form)
+
 # Admin Views
 class AdminMedicalReportListView(SuperAdminAndAdminOnlyMixin, ListView):
     """
@@ -34,10 +47,20 @@ class AdminMedicalReportListView(SuperAdminAndAdminOnlyMixin, ListView):
     model = MedicalReport
     template_name = 'admin/medical_report_list.html'
     context_object_name = 'medical_reports'
-    paginate_by = 20
+    paginate_by = 10
 
     def get_queryset(self):
         return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reports = MedicalReport.objects.all()
+        context['analytics_cards'] = [
+            {'label': 'Total Reports', 'value': reports.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Shared Reports', 'value': reports.filter(shared_with__isnull=False).distinct().count(), 'value_class': 'text-blue-700'},
+            {'label': 'Private Reports', 'value': reports.filter(shared_with__isnull=True).count(), 'value_class': 'text-amber-700'},
+        ]
+        return context
 
 
 class AdminMedicalReportDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
@@ -69,6 +92,18 @@ class AdminMedicalReportUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
     def get_queryset(self):
         return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
 
+    def form_valid(self, form):
+        """Show success message when report is updated"""
+        messages.success(self.request, 'Medical report updated successfully!')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Show error messages when form is invalid"""
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f'{field.upper()}: {error}')
+        return super().form_invalid(form)
+
 
 class AdminMedicalReportDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
     """
@@ -77,6 +112,11 @@ class AdminMedicalReportDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
     model = MedicalReport
     template_name = 'admin/medical_report_confirm_delete.html'
     success_url = reverse_lazy('medical_report:admin_medical_report_list')
+
+    def delete(self, request, *args, **kwargs):
+        """Show success message when report is deleted"""
+        messages.success(request, 'Medical report deleted successfully!')
+        return super().delete(request, *args, **kwargs)
 
 
 class PatientMedicalReportDetailView(PatientAccessMixin, DetailView):
@@ -93,6 +133,35 @@ class PatientMedicalReportDetailView(PatientAccessMixin, DetailView):
             'primary_hospital',
             'uploaded_by',
         ).prefetch_related('shared_with')
+
+
+class PatientMedicalReportUpdateView(PatientAccessMixin, UpdateView):
+    """Patient can update only sharing for their own report."""
+
+    model = MedicalReport
+    form_class = PatientMedicalReportShareForm
+    template_name = 'patients/medical_report_edit.html'
+    context_object_name = 'medical_report'
+
+    def get_queryset(self):
+        return MedicalReport.objects.filter(
+            patient__user=self.request.user,
+        ).select_related(
+            'patient__user',
+            'primary_hospital',
+            'uploaded_by',
+        ).prefetch_related('shared_with')
+
+    def get_success_url(self):
+        return reverse_lazy('medical_report:patient_medical_report_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Report sharing updated successfully.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Could not update sharing. Please check your selection.')
+        return super().form_invalid(form)
 
 
 class MedicalReportDownloadMixin:

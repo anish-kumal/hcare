@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.base.models import BaseModel
 from apps.hospitals.models import Hospital, HospitalDepartment
 from cloudinary.models import CloudinaryField
+from auditlog.registry import auditlog
 
 class Doctor(BaseModel):
     """
@@ -281,3 +282,8 @@ class DoctorSchedule(BaseModel):
     
     def __str__(self):
         return f"{self.doctor} - {self.get_weekday_display()} {self.start_time}-{self.end_time}"
+
+
+# Register models for audit logging
+auditlog.register(Doctor)
+auditlog.register(DoctorSchedule)

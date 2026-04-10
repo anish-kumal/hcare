@@ -68,7 +68,7 @@ class DoctorListView( ListView):
     """List all available doctors for booking"""
     template_name = 'appointments/doctor_list.html'
     context_object_name = 'doctors'
-    paginate_by = 12
+    paginate_by = 10
     
     def get_queryset(self):
         self.ai_detected_specialization = None

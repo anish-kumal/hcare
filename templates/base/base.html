@@ -29,6 +29,13 @@
             },
         };
     </script> 
+    <style>
+        /* Prevent duplicate eye icon from browser-native password reveal UI. */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+    </style>
 
     {% block head_extra %}
     {% endblock head_extra %}
