@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% block title %}Appointments - Health Care{% endblock title %}
+{% block title %}My Appointments - Health Care{% endblock title %}
 
 {% block content %}
 <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
@@ -17,18 +17,11 @@
         <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
             <div class="max-w-[1400px] mx-auto space-y-8">
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
-                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Appointments Management</h1>
-
-                    <div class="flex gap-3 flex-wrap">
-                        <a href="{% url 'appointments:appointment_prescription_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
-                            <span class="material-symbols-outlined text-[20px]">prescriptions</span>
-                            View Prescriptions
-                        </a>
-                        <a href="{% url 'appointments:appointment_doctor_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
-                            <span class="material-symbols-outlined text-[20px]">event_available</span>
-                            Manage Doctor Slots
-                        </a>
-                    </div>
+                    <h1 class="text-3xl font-bold text-[#131616] tracking-tight">My Appointments</h1>
+                    <a href="{% url 'medical_report:doctor_medical_report_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">description</span>
+                        Medical Reports
+                    </a>
                 </div>
 
                 {% include "partials/list_analytics_cards.html" %}
@@ -36,17 +29,15 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <form method="get" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Search -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Search Appointments</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                                 <input type="text" name="search" value="{{ search_query }}"
-                                    placeholder="Search by patient, doctor, or UUID..."
+                                    placeholder="Search by patient name, UUID, reason..."
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
                             </div>
 
-                            <!-- Status Filter -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Status</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                 <select name="status"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                                     <option value="">All statuses</option>
@@ -56,7 +47,6 @@
                                 </select>
                             </div>
 
-                            <!-- Submit Button -->
                             <div class="flex items-end gap-2">
                                 <button type="submit"
                                     class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-[#1a3d42] transition-colors">
@@ -65,7 +55,7 @@
                                         Filter
                                     </span>
                                 </button>
-                                <a href="{% url 'appointments:appointment_list' %}"
+                                <a href="{% url 'appointments:doctor_appointment_list' %}"
                                     class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-center">Reset</a>
                             </div>
                         </div>
@@ -79,7 +69,6 @@
                             <thead class="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Patient</th>
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Doctor</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Date / Time</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Status</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Payment</th>
@@ -92,18 +81,10 @@
                                     <td class="px-6 py-4 text-sm text-gray-800">
                                         {% if appointment.patient and appointment.patient.user %}
                                         <p class="font-semibold">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
-                                        {% else %}
-                                        <p class="font-semibold">-</p>
-                                        {% endif %}
                                         <p class="text-xs text-gray-500">UUID: {{ appointment.patient.booking_uuid }}</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-800">
-                                        {% if appointment.doctor and appointment.doctor.user %}
-                                        <p class="font-semibold">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username|default:"-" }}</p>
                                         {% else %}
                                         <p class="font-semibold">-</p>
                                         {% endif %}
-
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-700">
                                         <p>{{ appointment.appointment_date|date:"M d, Y" }}</p>
@@ -123,12 +104,12 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm">
                                         <div class="flex gap-2">
-                                            <a href="{% url 'appointments:appointment_manage_detail' appointment.pk %}"
+                                            <a href="{% url 'appointments:doctor_appointment_detail' appointment.pk %}"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                                                 title="View">
                                                 <span class="material-symbols-outlined text-[16px]">visibility</span>
                                             </a>
-                                            <a href="{% url 'appointments:appointment_manage_edit' appointment.pk %}"
+                                            <a href="{% url 'appointments:doctor_appointment_edit' appointment.pk %}"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary bg-accent/30 hover:bg-accent/50 transition-colors"
                                                 title="Edit">
                                                 <span class="material-symbols-outlined text-[16px]">edit</span>
@@ -145,13 +126,12 @@
                 {% include "partials/pagination.html" %}
 
                 {% else %}
-                <!-- Empty State -->
                 <div class="bg-accent/30 rounded-xl shadow-sm border p-12 text-center">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
                         <span class="material-symbols-outlined text-primary text-[32px]">event_available</span>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">No Appointments Found</h3>
-                    <p class="text-gray-600 mb-6">There are no appointments matching your search criteria.</p>
+                    <p class="text-gray-600 mb-6">No appointments match your filter.</p>
                 </div>
                 {% endif %}
             </div>

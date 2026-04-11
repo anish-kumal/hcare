@@ -19,7 +19,7 @@
       <div class="max-w-[1000px] mx-auto space-y-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
           <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{% if is_edit %}Edit{% else %}Add{% endif %} Prescription</h1>
-          <a href="{% if is_edit %}{% url 'appointments:appointment_prescription_detail' prescription.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+          <a href="{% if is_edit %}{% if is_doctor_portal %}{% url 'prescription:doctor_prescription_detail' prescription.id %}{% else %}{% url 'prescription:appointment_prescription_detail' prescription.id %}{% endif %}{% else %}{% if is_doctor_portal %}{% url 'appointments:doctor_appointment_detail' appointment.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
             <span class="material-symbols-outlined text-[20px]">arrow_back</span>
             {% if is_edit %}Back to Prescription{% else %}Back to Appointment{% endif %}
           </a>
@@ -157,7 +157,7 @@
                 <span class="material-symbols-outlined text-[18px]">save</span>
                 {% if is_edit %}Update{% else %}Save{% endif %} Prescription
               </button>
-              <a href="{% if is_edit %}{% url 'appointments:appointment_prescription_detail' prescription.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+              <a href="{% if is_edit %}{% if is_doctor_portal %}{% url 'prescription:doctor_prescription_detail' prescription.id %}{% else %}{% url 'prescription:appointment_prescription_detail' prescription.id %}{% endif %}{% else %}{% if is_doctor_portal %}{% url 'appointments:doctor_appointment_detail' appointment.id %}{% else %}{% url 'appointments:appointment_manage_detail' appointment.id %}{% endif %}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
                 <span class="material-symbols-outlined text-[18px]">close</span>
                 Cancel
               </a>

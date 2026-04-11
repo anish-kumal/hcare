@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from apps.appointments.views import AdminPrescriptionListView
 from apps.base.views import (
     IndexView, 
     AboutView,
@@ -32,6 +31,8 @@ from apps.base.views import (
     DoctorDashboardView,
     PatientDashboardView,
     LabAssistantDashboardView,
+    PharmacistDashboardView,
+    StaffDashboardView,
     Custom404View,
     Custom500View,
 )
@@ -53,16 +54,19 @@ urlpatterns = [
     path('doctors/', include('apps.doctors.urls')),
     path('patients/', include('apps.patients.urls')),
     path('appointments/', include('apps.appointments.urls')),
-    path('appointments/manage/prescriptions/', AdminPrescriptionListView.as_view(), name='appointment_prescription_list'),
     path('payments/', include('apps.payments.urls')),
     path('medical-reports/', include('apps.medical_report.urls')),
     path('logs/', include('apps.logs.urls')),
+    path('prescriptions/', include('apps.prescription.urls', 'prescription')),
     # Dashboard routes based on role
     path('dashboard/super-admin/', SuperAdminDashboardView.as_view(), name='super_admin_dashboard'),
     path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),
     path('dashboard/doctor/', DoctorDashboardView.as_view(), name='doctor_dashboard'),
     path('dashboard/patient/', PatientDashboardView.as_view(), name='patient_dashboard'),
     path('dashboard/lab-assistant/', LabAssistantDashboardView.as_view(), name='lab_assistant_dashboard'),
+    path('dashboard/pharmacist/', PharmacistDashboardView.as_view(), name='pharmacist_dashboard'),
+    path('dashboard/staff/', StaffDashboardView.as_view(), name='staff_dashboard'),
+
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:

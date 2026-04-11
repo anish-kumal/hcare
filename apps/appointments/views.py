@@ -1,25 +1,23 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from collections import defaultdict
-from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
+from apps.medical_report.models import MedicalReport
+from .models import Prescription
 from .forms import (
     AppointmentBookingForm,
     AppointmentEditForm,
     AdminAppointmentBookingForm,
-    PrescriptionForm,
-    MedicineFormSet,
 )
-from .models import Prescription
 
 
 ACTIVE_BOOKING_STATUSES = ['SCHEDULED', 'FOLLOW_UP', 'RESCHEDULED']
@@ -43,6 +41,25 @@ class PatientAccessMixin(LoginRequiredMixin):
             return redirect('index')
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class DoctorAccessMixin(LoginRequiredMixin):
+    """Restrict appointment doctor-portal views to doctor users only."""
+    login_url = 'users:login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please log in first to continue.')
+            return self.handle_no_permission()
+
+        if not request.user.is_doctor:
+            messages.error(request, 'Only doctors can access this page.')
+            return redirect('index')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_current_doctor(self):
+        return Doctor.objects.filter(user=self.request.user, is_active=True).select_related('user', 'hospital').first()
 
 
 def get_booking_status(patient, doctor, appointment_date, appointment_time, default_status):
@@ -460,23 +477,143 @@ class AppointmentEditView(PatientAccessMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class PatientPrescriptionDetailView(PatientAccessMixin, DetailView):
-    """Show prescription detail for the logged-in patient only."""
-    model = Prescription
-    template_name = 'patients/prescription_detail.html'
-    context_object_name = 'prescription'
+class DoctorAppointmentListView(DoctorAccessMixin, ListView):
+    """List only current doctor's appointments with search and status filters."""
+    model = PatientAppointment
+    template_name = 'appointments/doctor_appointment_list.html'
+    context_object_name = 'appointments'
+    paginate_by = 10
 
     def get_queryset(self):
-        return Prescription.objects.filter(
-            appointment__patient__user=self.request.user,
+        doctor = self.get_current_doctor()
+        if not doctor:
+            return PatientAppointment.objects.none()
+
+        queryset = PatientAppointment.objects.filter(
+            doctor=doctor,
         ).select_related(
-            'appointment__patient__user',
-            'appointment__doctor__user',
-            'appointment__doctor__hospital',
-        ).prefetch_related('medicines')
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+            'payment',
+        ).order_by('-appointment_date', '-appointment_time')
+
+        status = self.request.GET.get('status', '').strip()
+        if status:
+            queryset = queryset.filter(status=status)
+
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(patient__user__first_name__icontains=search)
+                | Q(patient__user__last_name__icontains=search)
+                | Q(patient__booking_uuid__icontains=search)
+                | Q(reason__icontains=search)
+                | Q(notes__icontains=search)
+            )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        doctor = self.get_current_doctor()
+        context['doctor'] = doctor
+        context['search_query'] = self.request.GET.get('search', '').strip()
+        context['selected_status'] = self.request.GET.get('status', '').strip()
+        context['status_choices'] = PatientAppointment.STATUS_CHOICES
+
+        appointments = PatientAppointment.objects.filter(doctor=doctor) if doctor else PatientAppointment.objects.none()
+        context['analytics_cards'] = [
+            {'label': 'My Appointments', 'value': appointments.count(), 'value_class': 'text-gray-900', 'icon': 'event_note'},
+            {'label': 'Completed', 'value': appointments.filter(status='COMPLETED').count(), 'value_class': 'text-green-700', 'icon': 'task_alt'},
+            {'label': 'Today', 'value': appointments.filter(appointment_date=timezone.localdate()).count(), 'value_class': 'text-blue-700', 'icon': 'today'},
+        ]
+        return context
 
 
-class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
+class DoctorAppointmentDetailView(DoctorAccessMixin, DetailView):
+    """Show appointment detail for current doctor's appointments only."""
+    model = PatientAppointment
+    template_name = 'appointments/doctor_appointment_detail.html'
+    context_object_name = 'appointment'
+
+    def get_queryset(self):
+        return PatientAppointment.objects.filter(
+            doctor__user=self.request.user,
+        ).select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+            'payment',
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        appointment = self.object
+
+        prescription = getattr(appointment, 'prescription_record', None)
+        past_prescriptions = Prescription.objects.filter(
+            appointment__patient=appointment.patient,
+            appointment__doctor=appointment.doctor,
+        ).exclude(
+            appointment_id=appointment.id,
+        ).select_related(
+            'appointment',
+        ).order_by('-appointment__appointment_date', '-appointment__appointment_time', '-created')
+
+        patient_reports = MedicalReport.objects.filter(
+            patient=appointment.patient,
+        ).filter(
+            Q(uploaded_by=self.request.user)
+            | Q(primary_hospital=appointment.doctor.hospital)
+            | Q(shared_with=appointment.doctor.hospital)
+        ).select_related(
+            'uploaded_by',
+            'primary_hospital',
+        ).distinct().order_by('-created')
+
+        context['has_prescription'] = bool(prescription)
+        context['prescription'] = prescription
+        context['can_edit_prescription'] = bool(
+            prescription and prescription.created_by_id == self.request.user.id
+        )
+        context['past_prescriptions'] = past_prescriptions
+        context['patient_reports'] = patient_reports
+        return context
+
+
+class DoctorAppointmentUpdateView(DoctorAccessMixin, UpdateView):
+    """Allow doctors to edit only their own appointments."""
+    model = PatientAppointment
+    form_class = AppointmentEditForm
+    template_name = 'appointments/doctor_appointment_edit.html'
+    context_object_name = 'appointment'
+
+    def get_queryset(self):
+        return PatientAppointment.objects.filter(
+            doctor__user=self.request.user,
+        ).select_related(
+            'patient__user',
+            'doctor__user',
+            'doctor__hospital',
+        )
+
+    def get_success_url(self):
+        return reverse('appointments:doctor_appointment_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        selected_status = form.cleaned_data.get('status')
+        appointment_date = form.cleaned_data.get('appointment_date') or self.object.appointment_date
+
+        if selected_status == 'COMPLETED' and appointment_date != timezone.localdate():
+            form.add_error('status', 'Only today\'s appointments can be marked as completed.')
+            return self.form_invalid(form)
+
+        messages.success(self.request, 'Appointment updated successfully.')
+        return super().form_valid(form)
+
+
+class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, ListView):
     """List all doctors for admin/staff to manage appointments""" 
     model = Doctor
     template_name = 'appointments/appointment_doctor_list.html'
@@ -533,7 +670,7 @@ class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndA
         ]
         return context
     
-class AppointmentDoctorScheduleView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
+class AppointmentDoctorScheduleView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):
     """View doctor schedule and appointments for admin/staff"""
     model = Doctor
     template_name = 'appointments/appointment_doctor_schedule.html'
@@ -648,7 +785,7 @@ class AppointmentDoctorScheduleView(AdminHospitalScopedQuerysetMixin, SuperAdmin
         return context
 
 
-class AdminAppointmentCreateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, CreateView):
+class AdminAppointmentCreateView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, CreateView):
     """Create booking by admin/staff for patients in doctor hospital"""
     model = PatientAppointment
     form_class = AdminAppointmentBookingForm
@@ -788,10 +925,10 @@ class AdminAppointmentCreateView(AdminHospitalScopedQuerysetMixin, SuperAdminAnd
         return redirect('payments:appointment_payment', appointment_id=appointment.id)
 
 
-class AdminAppointmentListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
+class AdminAppointmentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, ListView):
     """List appointments for admin/super-admin with basic filters."""
     model = PatientAppointment
-    template_name = 'appointments/appointment_list.html'
+    template_name = 'appointments/appointment_manage_list.html'
     context_object_name = 'appointments'
     paginate_by = 5
 
@@ -840,7 +977,7 @@ class AdminAppointmentListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAd
         return context
 
 
-class AdminAppointmentDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
+class AdminAppointmentDetailView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):
     """Show appointment detail for admin/super-admin."""
     model = PatientAppointment
     template_name = 'appointments/appointment_manage_detail.html'
@@ -861,7 +998,7 @@ class AdminAppointmentDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAnd
         return context
 
 
-class AdminAppointmentUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
+class AdminAppointmentUpdateView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, UpdateView):
     """Edit appointment for admin/super-admin."""
     model = PatientAppointment
     form_class = AppointmentEditForm
@@ -891,7 +1028,7 @@ class AdminAppointmentUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAnd
         return super().form_valid(form)
 
 
-class AdminAppointmentRescheduleView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
+class AdminAppointmentRescheduleView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):
     """Allow admin/super-admin to reschedule appointments from manage panel."""
     model = PatientAppointment
     template_name = 'appointments/appointment_manage_reschedule.html'
@@ -1028,221 +1165,3 @@ class AdminAppointmentRescheduleView(AdminHospitalScopedQuerysetMixin, SuperAdmi
         context['selected_date'] = self.request.GET.get('date', '').strip()
         context['selected_time'] = self.request.GET.get('time', '').strip()
         return context
-
-
-class AdminPrescriptionCreateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, CreateView):
-    """Create prescription and medicine rows for an appointment."""
-    model = Prescription
-    form_class = PrescriptionForm
-    template_name = 'appointments/prescription_form.html'
-
-    def get_appointment(self):
-        queryset = PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'hospital')
-        queryset = self.scope_queryset_for_admin(queryset, hospital_field='hospital_id')
-        return get_object_or_404(queryset, pk=self.kwargs.get('appointment_id'))
-
-    def dispatch(self, request, *args, **kwargs):
-        appointment = self.get_appointment()
-        if hasattr(appointment, 'prescription_record'):
-            messages.warning(request, 'Prescription already exists for this appointment.')
-            return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['appointment'] = self.get_appointment()
-        if self.request.POST:
-            context['medicine_formset'] = MedicineFormSet(self.request.POST)
-        else:
-            context['medicine_formset'] = MedicineFormSet()
-        return context
-
-    def form_valid(self, form):
-        appointment = self.get_appointment()
-        context = self.get_context_data(form=form)
-        medicine_formset = context['medicine_formset']
-
-        if not medicine_formset.is_valid():
-            messages.error(self.request, 'Please correct medicine form errors below.')
-            return self.render_to_response(context)
-
-        with transaction.atomic():
-            form.instance.appointment = appointment
-            form.instance.created_by = self.request.user
-            self.object = form.save()
-
-            medicine_formset.instance = self.object
-            medicines = medicine_formset.save(commit=False)
-            for medicine in medicines:
-                medicine.created_by = self.request.user
-                medicine.save()
-            for deleted_medicine in medicine_formset.deleted_objects:
-                deleted_medicine.delete()
-
-        messages.success(self.request, 'Prescription saved successfully.')
-        return redirect('appointments:appointment_manage_detail', pk=appointment.pk)
-
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return self.render_to_response(self.get_context_data(form=form))
-
-
-class AdminPrescriptionListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
-    """List prescriptions for admin/super-admin."""
-    model = Prescription
-    template_name = 'appointments/prescription_list.html'
-    context_object_name = 'prescriptions'
-    paginate_by = 10
-
-    def get_queryset(self):
-        queryset = Prescription.objects.filter(
-            appointment__hospital__is_active=True,
-        ).select_related(
-            'appointment__patient__user',
-            'appointment__doctor__user',
-            'appointment__hospital',
-            'created_by',
-        ).prefetch_related('medicines').order_by('-created')
-        queryset = self.scope_queryset_for_admin(queryset, hospital_field='appointment__hospital_id')
-
-        search = self.request.GET.get('search', '').strip()
-        if search:
-            queryset = queryset.filter(
-                Q(appointment__patient__user__first_name__icontains=search)
-                | Q(appointment__patient__user__last_name__icontains=search)
-                | Q(appointment__patient__booking_uuid__icontains=search)
-                | Q(appointment__doctor__user__first_name__icontains=search)
-                | Q(appointment__doctor__user__last_name__icontains=search)
-                | Q(diagnosis__icontains=search)
-            )
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_query'] = self.request.GET.get('search', '').strip()
-        prescriptions = self.scope_queryset_for_admin(
-            Prescription.objects.filter(appointment__hospital__is_active=True),
-            hospital_field='appointment__hospital_id',
-        )
-        today = timezone.localdate()
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        context['analytics_cards'] = [
-            {'label': 'Total Prescriptions', 'value': prescriptions.count(), 'value_class': 'text-gray-900', 'icon': 'prescriptions'},
-            {'label': 'Created Today', 'value': prescriptions.filter(created__date=today).count(), 'value_class': 'text-blue-700', 'icon': 'today'},
-            {
-                'label': 'Created This Week',
-                'value': prescriptions.filter(created__date__range=(week_start, week_end)).count(),
-                'value_class': 'text-emerald-700',
-                'icon': 'date_range',
-            },
-        ]
-        return context
-
-
-class AdminPrescriptionDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
-    """Show prescription detail for admin/super-admin."""
-    model = Prescription
-    template_name = 'appointments/prescription_detail.html'
-    context_object_name = 'prescription'
-
-    def get_queryset(self):
-        queryset = Prescription.objects.select_related(
-            'appointment__patient__user',
-            'appointment__doctor__user',
-            'appointment__hospital',
-            'created_by',
-        ).prefetch_related('medicines')
-        return self.scope_queryset_for_admin(queryset, hospital_field='appointment__hospital_id')
-
-
-class AdminPrescriptionUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
-    """Update prescription and medicine rows for admin/super-admin."""
-    model = Prescription
-    form_class = PrescriptionForm
-    template_name = 'appointments/prescription_form.html'
-    context_object_name = 'prescription'
-
-    def get_queryset(self):
-        queryset = Prescription.objects.select_related(
-            'appointment__patient__user',
-            'appointment__doctor__user',
-            'appointment__hospital',
-            'created_by',
-        ).prefetch_related('medicines')
-        return self.scope_queryset_for_admin(queryset, hospital_field='appointment__hospital_id')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['appointment'] = self.object.appointment
-        context['is_edit'] = True
-        if self.request.POST:
-            context['medicine_formset'] = MedicineFormSet(self.request.POST, instance=self.object)
-        else:
-            context['medicine_formset'] = MedicineFormSet(instance=self.object)
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data(form=form)
-        medicine_formset = context['medicine_formset']
-
-        if not medicine_formset.is_valid():
-            messages.error(self.request, 'Please correct medicine form errors below.')
-            return self.render_to_response(context)
-
-        with transaction.atomic():
-            self.object = form.save()
-
-            medicine_formset.instance = self.object
-            medicines = medicine_formset.save(commit=False)
-            for medicine in medicines:
-                if not medicine.created_by:
-                    medicine.created_by = self.request.user
-                medicine.save()
-            for deleted_medicine in medicine_formset.deleted_objects:
-                deleted_medicine.delete()
-
-        messages.success(self.request, 'Prescription updated successfully.')
-        return redirect('appointments:appointment_prescription_detail', pk=self.object.pk)
-
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return self.render_to_response(self.get_context_data(form=form))
-
-
-class AdminPrescriptionDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DeleteView):
-    """Delete prescription for admin/super-admin."""
-    model = Prescription
-    template_name = 'partials/delete.html'
-
-    def get_queryset(self):
-        queryset = Prescription.objects.select_related('appointment__patient__user', 'appointment__doctor__user')
-        return self.scope_queryset_for_admin(queryset, hospital_field='appointment__hospital_id')
-
-    def get_success_url(self):
-        return reverse_lazy('appointments:appointment_prescription_list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        patient_name = '-'
-        if self.object.appointment and self.object.appointment.patient and self.object.appointment.patient.user:
-            patient_name = self.object.appointment.patient.user.get_full_name() or self.object.appointment.patient.user.username
-
-        context.update({
-            'delete_page_title': 'Delete Prescription - Health Care',
-            'delete_confirm_title': f'Delete Prescription #{self.object.pk}?',
-            'delete_confirm_message': (
-                f'Are you sure you want to delete this prescription for {patient_name}?'
-            ),
-            'delete_warning_text': (
-                'Deleting this prescription will permanently remove all related medicine rows.'
-            ),
-            'delete_button_label': 'Delete Prescription',
-            'cancel_url': reverse_lazy('appointments:appointment_prescription_detail', kwargs={'pk': self.object.pk}),
-        })
-        return context
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Prescription deleted successfully.')
-        return super().delete(request, *args, **kwargs)

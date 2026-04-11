@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db.models.deletion import ProtectedError
 from .models import Hospital, HospitalAdmin, HospitalDepartment
 from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm, KhaltiSetupForm
 from apps.base.mixin import SuperAdminOnlyMixin
@@ -138,9 +139,17 @@ class HospitalDeleteView(SuperAdminOnlyMixin, DeleteView):
         })
         return context
     
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, 'Hospital deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, 'Hospital deleted successfully!')
+            return response
+        except ProtectedError:
+            messages.error(
+                self.request,
+                'Hospital cannot be deleted because it has related doctors, staff, patients, appointments, or medical reports.'
+            )
+            return redirect(self.success_url)
 
 
 class HospitalAdminListView(SuperAdminOnlyMixin, ListView):
@@ -291,9 +300,10 @@ class HospitalAdminDeleteView(SuperAdminOnlyMixin, DeleteView):
         })
         return context
     
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, 'Admin removed from hospital successfully!')
-        return super().delete(request, *args, **kwargs)
+        return response
     
     def get_success_url(self):
         return reverse_lazy('hospitals:hospital_admin_list', kwargs={'hospital_id': self.object.hospital.id})
@@ -446,9 +456,10 @@ class HospitalDepartmentDeleteView(HospitalAdminOnlyMixin, DeleteView):
         })
         return context
     
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, 'Department deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        return response
 
 
 class HospitalRegistartionView(CreateView):
@@ -474,7 +485,7 @@ class HospitalRegistartionView(CreateView):
         return super().form_invalid(form)
 
 
-class KhaltiSetupView(LoginRequiredMixin, FormView):
+class KhaltiSetupView(HospitalAdminOnlyMixin, FormView):
     """
     View for hospital admins to set up Khalti payment keys.
     Only shows khalti_secret_key and khalti_public_key fields.

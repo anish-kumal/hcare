@@ -36,7 +36,7 @@ class DoctorOnlyMixin(LoginRequiredMixin):
 
 class DoctorScheduleListView(DoctorOnlyMixin, ListView):
 	"""List doctor schedules"""
-	template_name = 'doctor/schedule_list.html'
+	template_name = 'doctors/schedule_list.html'
 	context_object_name = 'schedules'
 
 	def get_queryset(self):
@@ -55,7 +55,7 @@ class DoctorScheduleCreateView(DoctorOnlyMixin, CreateView):
 	"""Create doctor schedule"""
 	model = DoctorSchedule
 	form_class = DoctorScheduleForm
-	template_name = 'doctor/schedule_form.html'
+	template_name = 'doctors/schedule_form.html'
 	success_url = reverse_lazy('doctors:doctor_schedule_list')
 
 	def get_form_kwargs(self):
@@ -90,7 +90,7 @@ class DoctorScheduleCreateView(DoctorOnlyMixin, CreateView):
 class DoctorScheduleDetailView(DoctorOnlyMixin, DetailView):
 	"""Schedule detail view"""
 	model = DoctorSchedule
-	template_name = 'doctor/schedule_detail.html'
+	template_name = 'doctors/schedule_detail.html'
 	context_object_name = 'schedule'
 
 	def get_queryset(self):
@@ -109,7 +109,7 @@ class DoctorScheduleUpdateView(DoctorOnlyMixin, UpdateView):
 	"""Edit doctor schedule"""
 	model = DoctorSchedule
 	form_class = DoctorScheduleForm
-	template_name = 'doctor/schedule_edit.html'
+	template_name = 'doctors/schedule_edit.html'
 	context_object_name = 'schedule'
 
 	def get_form_kwargs(self):
@@ -182,7 +182,7 @@ class DoctorScheduleDeleteView(DoctorOnlyMixin, DeleteView):
 class DoctorProfileUpdateView(DoctorOnlyMixin, DetailView):
 	"""Display doctor's current profile"""
 	model = Doctor
-	template_name = 'doctor/profile_detail.html'
+	template_name = 'doctors/profile_detail.html'
 	context_object_name = 'doctor'
 
 	def get_object(self, queryset=None):
@@ -196,7 +196,7 @@ class DoctorProfileUpdateView(DoctorOnlyMixin, DetailView):
 
 class DoctorProfileEditView(DoctorOnlyMixin, UpdateView):
 	"""Doctor profile edit - Display and update user and doctor info"""
-	template_name = 'doctor/profile_form.html'
+	template_name = 'doctors/profile_form.html'
 	model = Doctor
 	form_class = DoctorSelfProfileForm
 	success_url = reverse_lazy('doctors:doctor_profile')
@@ -513,7 +513,7 @@ class DoctorDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyM
 		})
 		return context
 
-	def delete(self, request, *args, **kwargs):
+	def form_valid(self, form):
 		doctor = self.get_object()
 		doctor_name = doctor.user.get_full_name() or doctor.user.username
 		
@@ -526,7 +526,7 @@ class DoctorDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyM
 		
 		if incomplete_appointments:
 			messages.error(
-				request, 
+				self.request,
 				f'Cannot delete Dr. {doctor_name} because they have incomplete appointments. '
 				'Please complete or cancel all appointments first.'
 			)
@@ -538,9 +538,9 @@ class DoctorDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyM
 			with transaction.atomic():
 				doctor.delete()  # Delete doctor profile first
 				user.delete()    # Then delete the user
-			messages.success(request, f'Doctor {doctor_name} deleted successfully.')
+			messages.success(self.request, f'Doctor {doctor_name} deleted successfully.')
 		except IntegrityError as exc:
-			messages.error(request, f'Could not delete doctor: {exc}')
+			messages.error(self.request, f'Could not delete doctor: {exc}')
 			return redirect('doctors:doctor_detail', pk=doctor.pk)
 
 		return redirect(self.success_url)

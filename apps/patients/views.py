@@ -8,13 +8,14 @@ from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.db.models.deletion import ProtectedError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.urls import reverse_lazy
 
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, SuperAdminAdminStaffOnlyMixin,  AdminStaffOnlyMixin
 from apps.appointments.models import Prescription
 from apps.patients.models import Patient, PatientAppointment
 from apps.users.forms import PasswordChangeForm
@@ -52,7 +53,7 @@ class PatientHospitalScopedMixin(LoginRequiredMixin):
         if user.is_doctor and hasattr(user, 'doctor_profile'):
             return user.doctor_profile.hospital
 
-        if user.is_staff and hasattr(user, 'hospital_staff_profile'):
+        if user.is_staff_member and hasattr(user, 'hospital_staff_profile'):
             return user.hospital_staff_profile.hospital
 
         return -1
@@ -265,7 +266,7 @@ class PatientSelfProfileCreateView(PatientOnlyMixin, CreateView):
         return super().form_invalid(form)
 
 
-class PatientCreateView(LoginRequiredMixin, CreateView):
+class PatientCreateView(AdminStaffOnlyMixin, CreateView):
     """
     Create Patient - Both User and Patient Profile in one page
     Hospital Admin and Staff can create patients
@@ -380,7 +381,7 @@ class PatientCreateView(LoginRequiredMixin, CreateView):
             )
         )
 
-class PatientDetailView(PatientHospitalScopedMixin, DetailView):
+class PatientDetailView(PatientHospitalScopedMixin, SuperAdminAdminStaffOnlyMixin, DetailView):
     """View patient details - For Admin and Super Admin"""
     model = Patient
     template_name = 'patients/patient_detail.html'
@@ -437,7 +438,7 @@ class PatientUpdateView(PatientHospitalScopedMixin, UpdateView):
 
 
     
-class PatientListView(PatientHospitalScopedMixin, ListView):
+class PatientListView(PatientHospitalScopedMixin, SuperAdminAdminStaffOnlyMixin, ListView):
     """List all patients - For Admin and Super Admin"""
     model = Patient
     template_name = 'patients/patient_list.html'
@@ -482,7 +483,7 @@ class PatientListView(PatientHospitalScopedMixin, ListView):
         ]
         return context
 
-class PatientDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+class PatientDeleteView(SuperAdminAndAdminOnlyMixin, SuperAdminAdminStaffOnlyMixin, DeleteView):
     """Delete patient - For Admin and Super Admin"""
     model = Patient
     template_name = 'partials/delete.html'
@@ -516,6 +517,14 @@ class PatientDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
         context['cancel_url'] = reverse_lazy('patients:patient_list')
         return context
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Patient deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, 'Patient deleted successfully!')
+            return response
+        except ProtectedError:
+            messages.error(
+                self.request,
+                'Patient cannot be deleted because it has related appointments or records.'
+            )
+            return redirect(self.success_url)

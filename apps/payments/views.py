@@ -9,7 +9,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views.generic import UpdateView, ListView, DetailView, View
 
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
 from apps.hospitals.crypto import decrypt_khalti_key
 from apps.patients.models import PatientAppointment
 
@@ -77,7 +77,7 @@ class AppointmentPaymentView(LoginRequiredMixin, UpdateView):
         return redirect(reverse_lazy('appointments:booking_confirmation'))
 
 
-class PaymentListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
+class PaymentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, ListView):
     """List payments for admin/super-admin."""
     model = AppointmentPayment
     template_name = 'payments/payment_list.html'
@@ -137,7 +137,7 @@ class PaymentListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMi
         return context
 
 
-class PaymentDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
+class PaymentDetailView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):
     """Show payment detail for admin/super-admin."""
     model = AppointmentPayment
     template_name = 'payments/payment_detail.html'
@@ -153,7 +153,7 @@ class PaymentDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnly
         return self.scope_queryset_for_admin(queryset, hospital_field=self.admin_hospital_field)
 
 
-class PaymentUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
+class PaymentUpdateView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, UpdateView):
     """Edit payment for admin/super-admin."""
     model = AppointmentPayment
     form_class = AppointmentPaymentForm

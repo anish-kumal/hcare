@@ -26,7 +26,9 @@
     </div>
   </div>
 
+
   <nav class="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
+
     {% if request.user.is_super_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'super_admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'super_admin_dashboard' %}">
@@ -46,6 +48,12 @@
         <span class="font-medium text-sm">Users</span>
       </a>
 
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'patient_list patient_create patient_detail patient_update patient_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'patients:patient_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
+        <span class="font-medium text-sm">Patient</span>
+      </a>
+
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'axes_lock_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'users:axes_lock_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">lock_open</span>
@@ -57,6 +65,8 @@
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">history</span>
         <span class="font-medium text-sm">Audit Logs</span>
       </a>
+
+
     {% elif request.user.is_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'admin_dashboard' %}">
@@ -69,6 +79,7 @@
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">domain</span>
         <span class="font-medium text-sm">Hospital</span>
       </a>
+
     {% elif request.user.is_doctor %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'doctor_dashboard' %}">
@@ -80,6 +91,18 @@
         href="{% url 'doctors:doctor_schedule_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">event_available</span>
         <span class="font-medium text-sm">Manage Schedule</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'doctor_appointment_list doctor_appointment_detail doctor_appointment_edit doctor_prescription_create doctor_prescription_detail doctor_prescription_edit' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'appointments:doctor_appointment_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">event_note</span>
+        <span class="font-medium text-sm">My Appointments</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'doctor_medical_report_list doctor_medical_report_detail doctor_medical_report_create doctor_medical_report_update doctor_medical_report_download doctor_medical_report_view' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'medical_report:doctor_medical_report_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">description</span>
+        <span class="font-medium text-sm">Medical Reports</span>
       </a>
 
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'doctor_profile' or request.resolver_match.url_name == 'doctor_profile_edit' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
@@ -137,24 +160,81 @@
         <span class="font-medium text-sm">Department</span>
       </a>
 
-      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'admin_medical_report_list admin_medical_report_detail admin_medical_report_update admin_medical_report_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
-        href="{% url 'medical_report:admin_medical_report_list' %}">
-        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">description</span>
-        <span class="font-medium text-sm">Medical Reports</span>
-      </a>
+    
 
-      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'logs:auditlog_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+    <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'logs:auditlog_list' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'logs:auditlog_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">history</span>
         <span class="font-medium text-sm">Audit Logs</span>
       </a>
 
+      {% endif %}
+
+      {% if request.user.is_staff_member %}
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'patient_list patient_create patient_detail patient_update patient_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'patients:patient_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
+        <span class="font-medium text-sm">Patient</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'appointment_doctor_list appointment_doctor_schedule appointment_admin_book' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'appointments:appointment_doctor_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">schedule</span>
+        <span class="font-medium text-sm">Manage Appointments</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'appointment_list appointment_manage_detail appointment_manage_edit appointment_manage_reschedule' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'appointments:appointment_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">event_note</span>
+        <span class="font-medium text-sm">Appointments</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'payment_list payment_detail payment_edit' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'payments:payment_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">payments</span>
+        <span class="font-medium text-sm">Payments</span>
+      </a>
+
+    
+      {% endif %}
+
+      {% if request.user.is_admin or request.user.is_lab_assistant  %}
+
+        <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'admin_medical_report_list admin_medical_report_detail admin_medical_report_update admin_medical_report_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'medical_report:admin_medical_report_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">description</span>
+        <span class="font-medium text-sm">Medical Reports</span>
+      </a>
+
+      {% endif %}
+
+      {% if request.user.is_admin or request.user.is_pharmacist  %}
+
+        <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'appointment_prescription_list appointment_prescription_detail appointment_prescription_update appointment_prescription_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'prescription:appointment_prescription_list' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">local_pharmacy</span>
+        <span class="font-medium text-sm">Prescriptions</span>
+      </a>
+      
+      {% endif %}
+
+        
+
+    {% if   request.user.is_super_admin or request.user.is_admin or request.user.is_staff_member or request.user.is_lab_assistant or request.user.is_pharmacist %}
+        <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'user_profile' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'users:user_profile' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
+        <span class="font-medium text-sm">My Profile</span>
+      </a>
+
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'password_change' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'users:password_change' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">lock</span>
+        <span class="font-medium text-sm">Change Password</span>
+      </a>
+
     {% endif %}
-    <a class="group flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all duration-200"
-      href="#">
-      <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
-      <span class="font-medium text-sm">Settings</span>
-    </a>
+
 
   </nav>
 

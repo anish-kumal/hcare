@@ -66,6 +66,9 @@ class AdminMedicalReportForm(forms.ModelForm):
                 Q(hospital=user_hospital) | Q(appointments__hospital=user_hospital)
             ).distinct()
 
+            # Do not allow sharing back to the requester's own hospital.
+            self.fields['shared_with'].queryset = Hospital.objects.exclude(pk=user_hospital.pk)
+
             # Set and lock primary_hospital to user's hospital
             self.fields['primary_hospital'].queryset = Hospital.objects.filter(pk=user_hospital.pk)
             self.fields['primary_hospital'].initial = user_hospital
@@ -74,6 +77,10 @@ class AdminMedicalReportForm(forms.ModelForm):
         else:
             # Super admin fallback - all patients and hospitals available
             self.fields['patient'].queryset = Patient.objects.all()
+            if self.instance and self.instance.primary_hospital_id:
+                self.fields['shared_with'].queryset = Hospital.objects.exclude(
+                    pk=self.instance.primary_hospital_id
+                )
 
     def clean(self):
         cleaned_data = super().clean()

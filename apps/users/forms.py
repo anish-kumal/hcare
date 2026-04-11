@@ -235,6 +235,12 @@ class UserManagementForm(forms.ModelForm):
 
     def clean_password(self):
         password = self.cleaned_data.get('password', '')
+        if not password:
+            # On update, blank means keep the existing password unchanged.
+            if self.instance and self.instance.pk:
+                return password
+            raise forms.ValidationError('Password is required when creating a user.')
+
         user = User(
             username=self.cleaned_data.get('username', ''),
             email=self.cleaned_data.get('email', ''),
@@ -318,3 +324,86 @@ class PasswordChangeForm(forms.Form):
                     self.add_error('new_password', message)
 
         return cleaned_data
+
+
+class UserSelfProfileForm(forms.ModelForm):
+    """Allow logged-in staff users to edit their own basic profile fields."""
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'user@example.com'
+        })
+    )
+
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'username'
+        })
+    )
+
+    first_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'First Name'
+        })
+    )
+
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': 'Last Name'
+        })
+    )
+
+    phone_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'placeholder': '+977-98XXXXXXXX'
+        })
+    )
+
+    date_of_birth = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition'
+        })
+    )
+
+    address = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
+            'rows': 3,
+            'placeholder': 'Address'
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'first_name', 'last_name',
+            'phone_number', 'date_of_birth', 'address'
+        ]
+
+    def clean_email(self):
+        email = validate_email_format(self.cleaned_data.get('email'))
+        return validate_unique_email(email, model=User, exclude_pk=self.instance.pk)
+
+    def clean_username(self):
+        username = validate_username_format(self.cleaned_data.get('username'))
+        return validate_unique_username(username, model=User, exclude_pk=self.instance.pk)
+
+    def clean_date_of_birth(self):
+        return validate_date_not_in_future(
+            self.cleaned_data.get('date_of_birth'),
+            field_label='Date of birth'
+        )
+
+    def clean_phone_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))

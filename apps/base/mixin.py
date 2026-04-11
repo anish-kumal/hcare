@@ -19,6 +19,8 @@ class RoleRequiredMixin:
             return redirect(reverse_lazy('doctor_dashboard'))
         elif user.is_lab_assistant:
             return redirect(reverse_lazy('lab_assistant_dashboard'))
+        elif user.is_pharmacist:
+            return redirect(reverse_lazy('pharmacist_dashboard'))
         elif user.is_patient:
             return redirect(reverse_lazy('patient_dashboard'))
 
@@ -58,6 +60,51 @@ class AdminOnlyMixin(LoginRequiredMixin):
             raise PermissionDenied("You don't have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
 
+class SuperAdminAdminStaffOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to super admin, admin, and staff users only"""
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_super_admin or request.user.is_admin or request.user.is_staff_member):
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+    
+
+class AdminStaffOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to admin and staff users only"""
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_admin or request.user.is_staff_member):
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+    
+
+class AdminLabAssistantOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to admin and lab assistant users only"""
+    login_url = 'users:login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_admin or request.user.is_lab_assistant):
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+class AdminPharmacistOnlyMixin(LoginRequiredMixin):
+    """Mixin to restrict access to admin and pharmacist users only"""
+    login_url = 'users:login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_admin or request.user.is_pharmacist):
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
 
 class AdminHospitalScopedQuerysetMixin:
     """Scope querysets by hospital for hospital-bound users.

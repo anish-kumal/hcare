@@ -1,0 +1,83 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}My Profile - Health Care{% endblock title %}
+
+{% block content %}
+  <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+  </button>
+
+  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+  <div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+      {% include "partials/header.html" %}
+
+      <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div class="max-w-[900px] mx-auto space-y-6">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h1 class="text-3xl font-bold text-[#131616] tracking-tight">My Profile</h1>
+              <p class="text-sm text-gray-500 mt-1">View your account information.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="{% url 'users:user_profile_edit' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                <span class="material-symbols-outlined text-[18px]">edit</span>
+                Edit Profile
+              </a>
+              <a href="{% url 'users:password_change' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white border border-amber-500 rounded-lg text-sm font-semibold hover:bg-amber-600 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">lock</span>
+                Change Password
+              </a>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Full Name</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.get_full_name|default:user_obj.username }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Username</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.username }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Email</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.email|default:"-" }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Phone Number</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.phone_number|default:"-" }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Role</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.get_user_type_display }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Status</p>
+                <p class="text-base font-semibold {% if user_obj.is_active %}text-green-700{% else %}text-red-700{% endif %}">
+                  {% if user_obj.is_active %}Active{% else %}Inactive{% endif %}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Date of Birth</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.date_of_birth|date:"M d, Y"|default:"-" }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Joined</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.created|date:"M d, Y" }}</p>
+              </div>
+              <div class="md:col-span-2">
+                <p class="text-xs text-gray-500 mb-1">Address</p>
+                <p class="text-base font-semibold text-gray-900">{{ user_obj.address|default:"-" }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+{% endblock content %}

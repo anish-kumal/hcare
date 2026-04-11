@@ -3,7 +3,7 @@ from .views import (
     UserRegisterView, UserLoginView, UserLogoutView, 
     AdministerLoginView, AdministerLogoutView,
     UserListView, UserDetailView, 
-    UserUpdateView, UserDeleteView,UserCreateView,PasswordChangeView
+    UserUpdateView, UserDeleteView,UserCreateView,PasswordChangeView, UserProfileView, UserProfileUpdateView
     ,AxesLockListView, AxesUnlockUserView
 
 )
@@ -26,6 +26,8 @@ urlpatterns = [
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
 
     path('password_change/', PasswordChangeView.as_view(), name='password_change'),
+    path('profile/', UserProfileView.as_view(), name='user_profile'),
+    path('profile/edit/', UserProfileUpdateView.as_view(), name='user_profile_edit'),
 
     path('axes/locks/', AxesLockListView.as_view(), name='axes_lock_list'),
     path('axes/locks/<str:username>/unlock/', AxesUnlockUserView.as_view(), name='axes_unlock_user'),

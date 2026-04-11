@@ -6,12 +6,31 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from .forms import ContactMessageForm
-from .mixin import RoleRequiredMixin
+
 
 # Create your views here.
-class IndexView(RoleRequiredMixin, TemplateView):
+class IndexView( TemplateView):
     """Render the home page"""
     template_name = 'patients/index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+        if user.is_authenticated:
+            if user.is_super_admin:
+                return redirect(reverse_lazy('super_admin_dashboard'))
+            elif user.is_admin:
+                return redirect(reverse_lazy('admin_dashboard'))
+            elif user.is_doctor:
+                return redirect(reverse_lazy('doctor_dashboard'))
+            elif user.is_lab_assistant:
+                return redirect(reverse_lazy('lab_assistant_dashboard'))
+            elif user.is_pharmacist:
+                return redirect(reverse_lazy('pharmacist_dashboard'))
+            elif user.is_staff_member:
+                return redirect(reverse_lazy('staff_dashboard'))
+
+        return super().dispatch(request, *args, **kwargs)
+
 
 
 class AdministrView(TemplateView):
@@ -29,6 +48,12 @@ class AdministrView(TemplateView):
                 return redirect(reverse_lazy('doctor_dashboard'))
             elif user.is_lab_assistant:
                 return redirect(reverse_lazy('lab_assistant_dashboard'))
+            elif user.is_pharmacist:
+                return redirect(reverse_lazy('pharmacist_dashboard'))
+            elif user.is_staff_member:
+                return redirect(reverse_lazy('staff_dashboard'))
+            elif user.is_patient:
+                return redirect(reverse_lazy('patient_dashboard'))
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -88,7 +113,7 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
 
 class DoctorDashboardView(LoginRequiredMixin, TemplateView):
     """Doctor Dashboard"""
-    template_name = 'doctor/dashboard.html'
+    template_name = 'doctors/dashboard.html'
     login_url = 'users:login'
     
     def dispatch(self, request, *args, **kwargs):
@@ -115,6 +140,27 @@ class LabAssistantDashboardView(LoginRequiredMixin, TemplateView):
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_lab_assistant:
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+class StaffDashboardView(LoginRequiredMixin, TemplateView):
+    """Staff Dashboard"""
+    template_name = 'staff/dashboard.html'
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_staff_member:
+            raise PermissionDenied("You don't have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class PharmacistDashboardView(LoginRequiredMixin, TemplateView):
+    """Pharmacist Dashboard"""
+    template_name = 'pharmacist/dashboard.html'
+    login_url = 'users:login'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_pharmacist:
             raise PermissionDenied("You don't have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
 

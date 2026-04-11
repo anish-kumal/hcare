@@ -99,6 +99,7 @@ LOCAL_APPS = [
     'apps.payments',
     'apps.medical_report',
     'apps.logs',
+    'apps.prescription',
 ]
 
 INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS

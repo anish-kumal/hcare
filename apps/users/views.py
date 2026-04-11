@@ -6,11 +6,21 @@ from django.contrib.auth import logout, update_session_auth_hash
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Count, Max
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from axes.models import AccessAttempt
 from axes.utils import reset as axes_reset
-from .forms import PasswordChangeForm, UserRegistrationForm, UserLoginForm, UserManagementForm
+from .forms import (
+    PasswordChangeForm,
+    UserRegistrationForm,
+    UserLoginForm,
+    UserManagementForm,
+    UserSelfProfileForm,
+)
 from .models import User
 from apps.hospitals.models import HospitalAdmin, HospitalStaff
 
@@ -22,6 +32,31 @@ MANAGEABLE_USER_TYPES = [
     User.UserType.LAB_ASSISTANT,
     User.UserType.PHARMACIST,
 ]
+
+
+class StaffPortalAccessMixin(LoginRequiredMixin):
+    """Allow only non-patient staff portal roles used in administer login."""
+
+    login_url = 'users:administer_login'
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+        if not user.is_authenticated:
+            return self.handle_no_permission()
+
+        allowed = (
+            user.is_super_admin
+            or user.is_admin
+            or user.is_staff_member
+            or user.is_lab_assistant
+            or user.is_pharmacist
+            or user.is_doctor
+        )
+        if not allowed:
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect('index')
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ManageableUserScopeMixin:
@@ -156,8 +191,12 @@ class AdministerLoginView(LoginView):
             return reverse_lazy('admin_dashboard')
         elif user.is_doctor:
             return reverse_lazy('doctor_dashboard')
-        elif user.is_lab_assistant or user.is_pharmacist:
+        elif user.is_lab_assistant:
             return reverse_lazy('lab_assistant_dashboard')
+        elif user.is_pharmacist:
+            return reverse_lazy('pharmacist_dashboard')
+        elif user.is_staff_member:
+            return reverse_lazy('staff_dashboard')
         else:
             return reverse_lazy('index')
 
@@ -336,6 +375,11 @@ class UserCreateView(AdminOnlyMixin, CreateView):
 
         with transaction.atomic():
             self.object = form.save()
+            password = form.cleaned_data.get('password')
+
+            if password:
+                self.object.is_default_password = True
+                self.object.save(update_fields=['is_default_password'])
 
             if self.object.user_type in [
                 User.UserType.STAFF,
@@ -347,7 +391,38 @@ class UserCreateView(AdminOnlyMixin, CreateView):
                     defaults={'hospital': hospital_admin.hospital},
                 )
 
-        messages.success(self.request, 'User created successfully!')
+        if password:
+            login_url = self.request.build_absolute_uri(reverse_lazy('users:administer_login'))
+            context = {
+                'title': 'Your account for ',
+                'user_name': self.object.get_full_name() or self.object.username,
+                'hospital_name': hospital_admin.hospital.name,
+                'username': self.object.username,
+                'password': password,
+                'login_url': login_url,
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+
+            try:
+                html_message = render_to_string('email/credentials_email.html', context)
+                plain_message = strip_tags(html_message)
+                send_mail(
+                    subject='Your Staff Login Credentials',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[self.object.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                messages.success(self.request, 'User created successfully! Credentials email sent.')
+            except Exception:
+                messages.warning(
+                    self.request,
+                    'User created successfully, but credential email could not be sent. Please share credentials manually.'
+                )
+        else:
+            messages.success(self.request, 'User created successfully!')
+
         return redirect(self.get_success_url())
     
     def form_invalid(self, form):
@@ -430,27 +505,80 @@ class UserDeleteView(ManageableUserScopeMixin, SuperAdminAndAdminOnlyMixin, Dele
         return response
 
 
-class PasswordChangeView(LoginRequiredMixin, FormView):
-	"""Dedicated doctor password change page."""
-	template_name = 'doctor/password_change.html'
-	form_class = PasswordChangeForm
-	success_url = reverse_lazy('doctors:doctor_profile')
+class PasswordChangeView(StaffPortalAccessMixin, FormView):
+    """Password change page for staff portal users (doctor/admin/staff roles)."""
+    template_name = 'users/password_change.html'
+    form_class = PasswordChangeForm
 
-	def get_form_kwargs(self):
-		kwargs = super().get_form_kwargs()
-		kwargs['user'] = self.request.user
-		return kwargs
-    
-	def form_valid(self, form):
-		new_password = form.cleaned_data.get('new_password')
-		if new_password:
-			self.request.user.set_password(new_password)
-			self.request.user.is_default_password = False
-			self.request.user.save(update_fields=['password', 'is_default_password'])
-			update_session_auth_hash(self.request, self.request.user)
-			messages.success(self.request, 'Password changed successfully.')
-		return super().form_valid(form)
+    def get_template_names(self):
+        if self.request.user.is_doctor:
+            return ['doctors/password_change.html']
+        return [self.template_name]
 
-	def form_invalid(self, form):
-		messages.error(self.request, 'Please correct the password errors below.')
-		return super().form_invalid(form)
+    def get_success_url(self):
+        if self.request.user.is_doctor:
+            return reverse_lazy('doctors:doctor_profile')
+        return reverse_lazy('users:user_profile')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        new_password = form.cleaned_data.get('new_password')
+        if new_password:
+            self.request.user.set_password(new_password)
+            self.request.user.is_default_password = False
+            self.request.user.save(update_fields=['password', 'is_default_password'])
+            update_session_auth_hash(self.request, self.request.user)
+            messages.success(self.request, 'Password changed successfully.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the password errors below.')
+        return super().form_invalid(form)
+
+
+class UserProfileView(StaffPortalAccessMixin, DetailView):
+    """View own profile details for staff portal users."""
+    model = User
+    template_name = 'users/profile.html'
+
+    context_object_name = 'user_obj'
+    slug_field = 'id'
+    slug_url_kwarg = 'pk'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_doctor:
+            return redirect('doctors:doctor_profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+
+class UserProfileUpdateView(StaffPortalAccessMixin, UpdateView):
+    """Edit own profile details for non-doctor staff portal users."""
+
+    model = User
+    form_class = UserSelfProfileForm
+    template_name = 'users/profile_form.html'
+    success_url = reverse_lazy('users:user_profile')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_doctor:
+            return redirect('doctors:doctor_profile_edit')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Profile updated successfully.')
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the profile errors below.')
+        return super().form_invalid(form)

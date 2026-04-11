@@ -1,0 +1,86 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ medical_report.report_name }} - Medical Report{% endblock %}
+
+{% block content %}
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg" title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    {% include "partials/side_bar.html" %}
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        {% include "partials/header.html" %}
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1200px] mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#131616] tracking-tight">{{ medical_report.report_name }}</h1>
+                        <p class="text-sm text-gray-500 mt-1">Medical report details.</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <a href="{% url 'medical_report:doctor_medical_report_list' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back
+                        </a>
+                        {% if can_edit %}
+                        <a href="{% url 'medical_report:doctor_medical_report_update' medical_report.pk %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report Information</h2>
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Patient</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.patient.user.get_full_name|default:medical_report.patient.user.username }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Hospital</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.primary_hospital.name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Uploaded By</dt>
+                            <dd class="text-gray-900 font-semibold">{{ medical_report.uploaded_by.get_full_name|default:medical_report.uploaded_by.username|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Created</dt>
+                            <dd class="text-gray-900">{{ medical_report.created|date:"M d, Y H:i" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                {% if medical_report.description %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Description</h2>
+                    <p class="text-gray-900 whitespace-pre-line">{{ medical_report.description }}</p>
+                </div>
+                {% endif %}
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report File</h2>
+                    {% if medical_report.get_report_file_url %}
+                        <a href="{% url 'medical_report:doctor_medical_report_download' medical_report.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">download</span>
+                            Download Report
+                        </a>
+                        <a href="{% url 'medical_report:doctor_medical_report_view' medical_report.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors ml-2" target="_blank">
+                            <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+                            Open File
+                        </a>
+                    {% else %}
+                        <p class="text-gray-500">No report file attached.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

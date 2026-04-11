@@ -1,0 +1,139 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Hospital Admin - Health Care{% endblock title %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+  <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+    title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+  </button>
+
+  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    {% include "partials/side_bar.html" %}
+    
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+    <!-- Top Header -->
+    <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
+      
+      <div class="w-full flex justify-end items-center gap-6">
+
+        <!-- Icons -->
+        <div class="flex items-center gap-3">
+          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative" title="Notifications">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
+          </button>
+          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Settings">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Help">
+            <span class="material-symbols-outlined">help</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+      <div class="max-w-[1400px] mx-auto space-y-8">
+        <!-- Headline & Actions -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
+
+            <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Hospital Admin Dashboard</h1>
+
+          <div class="flex gap-3 flex-wrap">
+
+            <a href="{% url 'users:user_create' %}" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
+              <span class="material-symbols-outlined text-[20px]">add_circle</span>
+              Add Staff Member
+            </a>
+          </div>
+        </div>
+
+        <!-- Stats Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Staff Members -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Staff Members</p>
+                <h3 class="text-3xl font-bold text-[#131616]">24</h3>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">group</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hospital Info -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Hospital Status</p>
+                <h3 class="text-3xl font-bold text-[#131616]">Active</h3>
+              </div>
+              <div class="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">apartment</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Departments -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Departments</p>
+                <h3 class="text-3xl font-bold text-[#131616]">8</h3>
+              </div>
+              <div class="size-10 rounded-lg bg-accent flex items-center justify-center text-primary group-hover:bg-[#d4e890] transition-colors">
+                <span class="material-symbols-outlined">domain</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          <h2 class="text-lg font-bold text-[#131616] mb-6">Quick Actions</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'hospitals:admin_hospital_detail' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
+              <div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-[24px]">apartment</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Hospital Details</span>
+            </a>
+            <a href="{% url 'hospitals:admin_hospital_update' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
+              <div class="size-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-[24px]">edit</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Edit Hospital</span>
+            </a>
+            <a href="{% url 'users:user_list' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
+              <div class="size-12 rounded-lg bg-accent flex items-center justify-center text-primary group-hover:bg-[#d4e890] transition-colors">
+                <span class="material-symbols-outlined text-[24px]">group</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Staff Members</span>
+            </a>
+            <button class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
+              <div class="size-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-[24px]">help</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Help & Support</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+        {% include "partials/footer.html" %}
+    </main>
+  </div>
+  </div>
+{% endblock content %}

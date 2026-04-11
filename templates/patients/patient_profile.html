@@ -255,7 +255,7 @@
                                             <td class="px-6 py-4 text-sm text-gray-600">{{ prescription.appointment.appointment_date|date:"M d, Y" }}</td>
                                             <td class="px-6 py-4 text-sm text-gray-600">{{ prescription.medicines.count }} medicine{{ prescription.medicines.count|pluralize }}</td>
                                             <td class="px-6 py-4 text-sm">
-                                                <a href="{% url 'appointments:patient_prescription_detail' prescription.pk %}" class="text-primary hover:text-[#1a3d42] font-semibold transition-colors">View Details</a>
+                                                <a href="{% url 'prescription:patient_prescription_detail' prescription.pk %}" class="text-primary hover:text-[#1a3d42] font-semibold transition-colors">View Details</a>
                                             </td>
                                         </tr>
                                     {% endfor %}
