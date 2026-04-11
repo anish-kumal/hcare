@@ -53,9 +53,9 @@ class OTPRequestView(View):
         
         try:
             user = User.objects.get(email=email)
-            otp = OTPService.create_and_send(user)
+            otp, email_sent, error_message = OTPService.create_and_send(user)
             
-            if otp:
+            if email_sent and otp:
                 messages.success(
                     request,
                     f"OTP sent to {email}. Please check your inbox."
@@ -64,7 +64,7 @@ class OTPRequestView(View):
             else:
                 messages.error(
                     request,
-                    "Failed to send OTP. Please try again."
+                    error_message or "Failed to send OTP. Please try again."
                 )
                 
         except User.DoesNotExist:
@@ -155,12 +155,12 @@ class OTPResendView(View):
 
         try:
             user = User.objects.get(id=user_id)
-            otp = OTPService.resend_otp(user)
+            otp, email_sent, error_message = OTPService.resend_otp(user)
 
-            if otp:
+            if email_sent and otp:
                 messages.success(request, "New OTP sent to your email.")
             else:
-                messages.error(request, "Failed to send OTP.")
+                messages.error(request, error_message or "Failed to send OTP.")
 
         except User.DoesNotExist:
             messages.success(request, "New OTP sent to your email.")

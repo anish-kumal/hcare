@@ -33,13 +33,13 @@
                 {% if departments %}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Name</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Code</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Description</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -48,13 +48,17 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ department.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ department.code }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ department.description|default:'-' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <a href="{% url 'hospitals:hospital_department_update' department.id %}" class="text-primary hover:text-[#1a3d42]" title="Edit">
-                                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                                    <td class="px-6 py-4 text-sm">
+                                        <div class="flex gap-2">
+                                            <a href="{% url 'hospitals:hospital_department_update' department.id %}"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary bg-accent/30 hover:bg-accent/50 transition-colors"
+                                                title="Edit">
+                                                <span class="material-symbols-outlined text-[16px]">edit</span>
                                             </a>
-                                            <a href="{% url 'hospitals:hospital_department_delete' department.id %}" class="text-red-600 hover:text-red-900" title="Delete">
-                                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                                            <a href="{% url 'hospitals:hospital_department_delete' department.id %}"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                                                title="Delete">
+                                                <span class="material-symbols-outlined text-[16px]">delete</span>
                                             </a>
                                         </div>
                                     </td>
@@ -65,13 +69,17 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No departments found</h3>
+                <!-- Empty State -->
+                <div class="bg-accent/30 rounded-xl shadow-sm border p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
+                        <span class="material-symbols-outlined text-primary text-[32px]">apartment</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Departments Found</h3>
                     <p class="text-gray-600 mb-6">Create your first department for this hospital.</p>
                     <a href="{% url 'hospitals:hospital_department_create' %}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors">
-                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
-                        Create Department
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Add Department
                     </a>
                 </div>
                 {% endif %}

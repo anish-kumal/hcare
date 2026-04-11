@@ -77,6 +77,7 @@ THIRD_PARTY_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'channels',
+    'axes',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -110,6 +111,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'apps.base.middleware.AdminHospitalContextMiddleware',
     'auditlog.middleware.AuditlogMiddleware',
     'allauth.account.middleware.AccountMiddleware',
@@ -253,6 +255,7 @@ LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'users:login'
 
 AUTHENTICATION_BACKENDS = (
+    'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
     'apps.users.backends.EmailOrUsernameModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -285,7 +288,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email Configuration
 # For development: use console backend
 if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For production: use SMTP
 else:
@@ -302,6 +305,17 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@healthcare.co
 OTP_LENGTH = config('OTP_LENGTH', cast=int)
 OTP_VALIDITY_MINUTES = config('OTP_VALIDITY_MINUTES', cast=int)
 OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', cast=int)
+
+# django-axes lockout settings
+AXES_LOCKOUT_PARAMETERS = ["username"]
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = 'locked.html'
+AXES_USERNAME_CALLABLE = 'apps.users.axes.get_axes_username'
+
+# Username-only lockout is intentional, so suppress Axes warning about ip_address.
+SILENCED_SYSTEM_CHECKS = ['axes.W006']
 
 # Khalti Payment Gateway Configuration
 SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')

@@ -88,7 +88,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <a href="mailto:{{ admin.user.email }}" class="text-primary font-medium hover:underline">{{ admin.user.email }}</a>
-                                    
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <div class="flex gap-2">
                                             <a href="{% url 'hospitals:hospital_admin_detail' admin.id %}"
@@ -117,13 +117,15 @@
                     {% include "partials/pagination.html" %}
                 </div>
                 {% else %}
-                <div class="bg-accent/45 border border-primary-200 rounded-xl p-8 text-center">
-                    <span
-                        class="material-symbols-outlined text-6xl text-primary flex justify-center mb-4">manage_accounts</span>
-                    <h3 class="text-lg font-bold text-primary mb-2">No Admins Yet</h3>
-                    <p class="text-primary mb-6">This hospital doesn't have any administrators assigned yet.</p>
+                <!-- Empty State -->
+                <div class="bg-accent/30 rounded-xl shadow-sm border p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
+                        <span class="material-symbols-outlined text-primary text-[32px]">manage_accounts</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Admins Found</h3>
+                    <p class="text-gray-600 mb-6">This hospital doesn't have any administrators assigned yet.</p>
                     <a href="{% url 'hospitals:hospital_admin_create' hospital.id %}"
-                        class="inline-flex items-center gap-2 bg-primary hover:bg-[#1a3d42] text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
                         <span class="material-symbols-outlined">person_add</span>
                         Add First Admin
                     </a>

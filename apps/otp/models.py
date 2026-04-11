@@ -41,6 +41,17 @@ class OTP(BaseModel):
         default=0,
         help_text="Number of verification attempts"
     )
+
+    send_count = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Number of OTP emails sent in current 24-hour window"
+    )
+
+    send_window_started_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Start time of current 24-hour OTP send window"
+    )
     
     class Meta:
         verbose_name = 'One Time Password'

@@ -1,16 +1,20 @@
 from django.shortcuts import redirect
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView
+from django.views import View
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout, update_session_auth_hash
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Max
+from axes.models import AccessAttempt
+from axes.utils import reset as axes_reset
 from .forms import PasswordChangeForm, UserRegistrationForm, UserLoginForm, UserManagementForm
 from .models import User
 from apps.hospitals.models import HospitalAdmin, HospitalStaff
 
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminOnlyMixin, SuperAdminOnlyMixin
 
 
 MANAGEABLE_USER_TYPES = [
@@ -268,6 +272,51 @@ class UserListView(ManageableUserScopeMixin, SuperAdminAndAdminOnlyMixin, ListVi
             {'label': 'Inactive Users', 'value': users.filter(is_active=False).count(), 'value_class': 'text-red-700', 'icon': 'person_off'},
         ]
         return context
+
+
+class AxesLockListView(SuperAdminOnlyMixin, ListView):
+    """Show grouped Axes lockout rows for super admin and allow unlock actions."""
+    model = AccessAttempt
+    template_name = 'super_admin/axes_lock_list.html'
+    context_object_name = 'locked_users'
+    paginate_by = 15
+
+    def get_queryset(self):
+        queryset = (
+            AccessAttempt.objects.exclude(username__isnull=True)
+            .exclude(username='')
+            .values('username')
+            .annotate(
+                attempts=Count('id'),
+                failures=Max('failures_since_start'),
+                last_attempt=Max('attempt_time'),
+                last_ip=Max('ip_address'),
+            )
+            .order_by('-last_attempt', 'username')
+        )
+
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(username__icontains=search_query)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
+
+
+class AxesUnlockUserView(SuperAdminOnlyMixin, View):
+    """Unlock a user by username using Axes reset helper."""
+
+    def post(self, request, username, *args, **kwargs):
+        removed_count = axes_reset(username=username)
+        if removed_count:
+            messages.success(request, f'Unlocked {username} successfully.')
+        else:
+            messages.info(request, f'No Axes lockout entries found for {username}.')
+        return redirect('users:axes_lock_list')
 
 class UserCreateView(AdminOnlyMixin, CreateView):
     """Create user for Super Admin

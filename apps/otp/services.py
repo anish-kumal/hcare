@@ -17,6 +17,8 @@ class OTPService:
     OTP_LENGTH = 6
     OTP_VALIDITY_MINUTES = 5
     MAX_ATTEMPTS = 5
+    MAX_SENDS_PER_24_HOURS = 5
+    SEND_LIMIT_WINDOW_HOURS = 24
     
     @staticmethod
     def generate_code():
@@ -37,6 +39,49 @@ class OTPService:
             datetime: Expiration datetime (5 minutes from now)
         """
         return timezone.now() + timedelta(minutes=OTPService.OTP_VALIDITY_MINUTES)
+
+    @classmethod
+    def _is_window_expired(cls, window_started_at):
+        if not window_started_at:
+            return True
+        return timezone.now() - window_started_at >= timedelta(hours=cls.SEND_LIMIT_WINDOW_HOURS)
+
+    @classmethod
+    def _get_wait_message(cls):
+        return "You have reached the OTP limit (5 times). Please wait 24 hours before requesting again."
+
+    @classmethod
+    def can_send_otp(cls, user):
+        """
+        Check if a user is allowed to receive a new OTP in the current 24-hour window.
+
+        Returns:
+            tuple: (bool, str | None) - allow flag and message when blocked
+        """
+        otp = OTP.objects.filter(user=user).first()
+        if not otp:
+            return True, None
+
+        if cls._is_window_expired(otp.send_window_started_at):
+            return True, None
+
+        if otp.send_count >= cls.MAX_SENDS_PER_24_HOURS:
+            return False, cls._get_wait_message()
+
+        return True, None
+
+    @classmethod
+    def register_successful_send(cls, otp):
+        """Track a successful OTP send in a rolling 24-hour window."""
+        now = timezone.now()
+
+        if cls._is_window_expired(otp.send_window_started_at):
+            otp.send_window_started_at = now
+            otp.send_count = 1
+        else:
+            otp.send_count += 1
+
+        otp.save(update_fields=['send_window_started_at', 'send_count', 'modified'])
     
     @classmethod
     def create_or_update(cls, user):
@@ -173,11 +218,19 @@ class OTPService:
             user: User instance
             
         Returns:
-            tuple: (OTP instance, bool) - OTP object and email sent status
+            tuple: (OTP | None, bool, str | None) - OTP object, email status, and error/limit message
         """
+        can_send, message = cls.can_send_otp(user)
+        if not can_send:
+            return None, False, message
+
         otp = cls.create_or_update(user)
         email_sent = cls.send_otp_email(user, otp.code)
-        return otp, email_sent
+        if email_sent:
+            cls.register_successful_send(otp)
+            return otp, True, None
+
+        return None, False, "Failed to send OTP. Please try again."
     
     @staticmethod
     def resend_otp(user):
@@ -188,7 +241,7 @@ class OTPService:
             user: User instance
             
         Returns:
-            tuple: (OTP instance, bool) - OTP object and email sent status
+            tuple: (OTP | None, bool, str | None) - OTP object, email status, and error/limit message
         """
         return OTPService.create_and_send(user)
     

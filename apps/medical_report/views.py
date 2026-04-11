@@ -51,11 +51,11 @@ class AdminMedicalReportListView(AdminHospitalScopedQuerysetMixin, SuperAdminAnd
 
     def get_queryset(self):
         queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
-        return self.scope_queryset_for_admin(queryset)
+        return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        reports = self.scope_queryset_for_admin(MedicalReport.objects.all())
+        reports = self.scope_queryset_for_admin(MedicalReport.objects.all(), hospital_field='primary_hospital_id')
         context['analytics_cards'] = [
             {'label': 'Total Reports', 'value': reports.count(), 'value_class': 'text-gray-900', 'icon': 'description'},
             {'label': 'Shared Reports', 'value': reports.filter(shared_with__isnull=False).distinct().count(), 'value_class': 'text-blue-700', 'icon': 'share'},
@@ -74,7 +74,7 @@ class AdminMedicalReportDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminA
 
     def get_queryset(self):
         queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
-        return self.scope_queryset_for_admin(queryset)
+        return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
 
 
 class AdminMedicalReportUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
@@ -93,7 +93,7 @@ class AdminMedicalReportUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminA
 
     def get_queryset(self):
         queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
-        return self.scope_queryset_for_admin(queryset)
+        return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
 
     def form_valid(self, form):
         """Show success message when report is updated"""
@@ -118,7 +118,7 @@ class AdminMedicalReportDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminA
 
     def get_queryset(self):
         queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
-        return self.scope_queryset_for_admin(queryset)
+        return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
 
     def delete(self, request, *args, **kwargs):
         """Show success message when report is deleted"""
@@ -267,7 +267,7 @@ class AdminMedicalReportDownloadView(AdminHospitalScopedQuerysetMixin, SuperAdmi
     """Allow admin/super-admin to download medical reports from detail pages."""
 
     def get(self, request, pk, *args, **kwargs):
-        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk)).first()
+        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk), hospital_field='primary_hospital_id').first()
         if not report:
             raise Http404('Medical report not found.')
         return self._download_response(report)
@@ -277,7 +277,7 @@ class AdminMedicalReportViewFileView(AdminHospitalScopedQuerysetMixin, SuperAdmi
     """Allow admin/super-admin to open report files inline from detail pages."""
 
     def get(self, request, pk, *args, **kwargs):
-        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk)).first()
+        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk), hospital_field='primary_hospital_id').first()
         if not report:
             raise Http404('Medical report not found.')
         return self._view_response(report)

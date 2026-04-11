@@ -23,6 +23,7 @@ dependencies = [
     "requests>=2.32.5",
     "daphne>=4.2.1",
     "django-debug-toolbar>=6.3.0",
+    "django-axes>=7.0.2",
     "whitenoise>=6.8.2",
     "django-auditlog>=3.4.1",
 ]
