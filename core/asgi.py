@@ -11,13 +11,21 @@ import os
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
+from django.conf import settings
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
 from django.core.asgi import get_asgi_application
+from apps.appointments.routing import websocket_urlpatterns
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 django_asgi_app = get_asgi_application()
 
-from apps.appointments.routing import websocket_urlpatterns
+# Daphne/ASGI deployments can miss WhiteNoise static handling in some setups.
+# This wraps only HTTP requests and serves collected static assets reliably.
+if not settings.DEBUG:
+	django_asgi_app = ASGIStaticFilesHandler(django_asgi_app)
+
+
 
 application = ProtocolTypeRouter({
 	'http': django_asgi_app,

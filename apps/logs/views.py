@@ -132,9 +132,9 @@ class AuditLogListView(AuditLogBaseView, ListView):
         context['search_query'] = (self.request.GET.get('search') or '').strip()
         context['action_filter'] = (self.request.GET.get('action') or '').strip()
         context['analytics_cards'] = [
-            {'label': 'Total Logs', 'value': logs.count(), 'value_class': 'text-gray-900'},
-            {'label': 'Create Actions', 'value': logs.filter(action=0).count(), 'value_class': 'text-green-700'},
-            {'label': 'Delete Actions', 'value': logs.filter(action=2).count(), 'value_class': 'text-red-700'},
+            {'label': 'Total Logs', 'value': logs.count(), 'value_class': 'text-gray-900', 'icon': 'history'},
+            {'label': 'Create Actions', 'value': logs.filter(action=0).count(), 'value_class': 'text-green-700', 'icon': 'add_circle'},
+            {'label': 'Delete Actions', 'value': logs.filter(action=2).count(), 'value_class': 'text-red-700', 'icon': 'delete'},
         ]
         
         # Add info about whose logs are being viewed

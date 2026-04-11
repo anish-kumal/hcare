@@ -57,3 +57,56 @@ class AdminOnlyMixin(LoginRequiredMixin):
         if not request.user.is_admin:
             raise PermissionDenied("You don't have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
+
+
+class AdminHospitalScopedQuerysetMixin:
+    """Scope querysets by hospital for hospital-bound users.
+
+    Super admin keeps full access.
+    Admin, staff, lab assistant, and pharmacist are scoped to one hospital.
+    """
+
+    def _is_hospital_scoped_user(self):
+        user = self.request.user
+        return (
+            user.is_admin
+            or user.is_staff_member
+            or user.is_lab_assistant
+            or user.is_pharmacist
+        )
+
+    def get_admin_hospital_id(self):
+        if self.request.user.is_super_admin:
+            return None
+
+        if not self._is_hospital_scoped_user():
+            return None
+
+        hospital_id = getattr(self.request, 'hospital_scope_id', None) or getattr(
+            self.request, 'admin_hospital_id', None
+        )
+        if hospital_id:
+            return hospital_id
+
+        try:
+            from apps.hospitals.models import HospitalAdmin, HospitalStaff
+
+            if self.request.user.is_admin:
+                return self.request.user.hospital_admin_profile.hospital_id
+
+            return self.request.user.hospital_staff_profile.hospital_id
+        except (HospitalAdmin.DoesNotExist, HospitalStaff.DoesNotExist):
+            return None
+
+    def scope_queryset_for_admin(self, queryset, hospital_field='hospital_id'):
+        if self.request.user.is_super_admin:
+            return queryset
+
+        if not self._is_hospital_scoped_user():
+            return queryset
+
+        hospital_id = self.get_admin_hospital_id()
+        if not hospital_id:
+            return queryset.none()
+
+        return queryset.filter(**{hospital_field: hospital_id})

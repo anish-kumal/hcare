@@ -16,7 +16,7 @@ from .models import Doctor, DoctorSchedule
 from .forms import DoctorUserForm, DoctorProfileForm, DoctorUserUpdateForm, DoctorSelfProfileForm, DoctorScheduleForm
 from apps.hospitals.models import Hospital, HospitalAdmin
 from apps.patients.models import PatientAppointment
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin
 
 User = get_user_model()
 
@@ -429,7 +429,7 @@ class DoctorCreateView(LoginRequiredMixin, CreateView):
 			)
 
 
-class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
+class DoctorListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
 	"""List doctors for admins"""
 	model = Doctor
 	template_name = 'doctors/doctor_list.html'
@@ -437,14 +437,7 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 
 	def get_base_queryset(self):
 		queryset = super().get_queryset().select_related('user', 'hospital', 'department').order_by('-created')
-
-		if self.request.user.is_admin:
-			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin:
-				return Doctor.objects.none()
-			queryset = queryset.filter(hospital=hospital_admin.hospital)
-
-		return queryset
+		return self.scope_queryset_for_admin(queryset, hospital_field='hospital_id')
 
 	def get_queryset(self):
 		queryset = self.get_base_queryset()
@@ -480,25 +473,18 @@ class DoctorListView(SuperAdminAndAdminOnlyMixin, ListView):
 		return context
 
 
-class DoctorDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+class DoctorDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
 	"""Doctor detail view for admins"""
 	model = Doctor
 	template_name = 'doctors/doctor_detail.html'
 	context_object_name = 'doctor'
 
 	def get_queryset(self):
-		return Doctor.objects.select_related('user', 'hospital', 'department')
-
-	def get_object(self, queryset=None):
-		obj = super().get_object(queryset)
-		if self.request.user.is_admin:
-			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
-				raise PermissionDenied
-		return obj
+		queryset = Doctor.objects.select_related('user', 'hospital', 'department')
+		return self.scope_queryset_for_admin(queryset, hospital_field='hospital_id')
 
 
-class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+class DoctorDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DeleteView):
 	"""Delete doctor user and profile"""
 	model = Doctor
 	template_name = 'partials/delete.html'
@@ -506,15 +492,8 @@ class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
 	context_object_name = 'doctor'
 
 	def get_queryset(self):
-		return Doctor.objects.select_related('user', 'hospital')
-
-	def get_object(self, queryset=None):
-		obj = super().get_object(queryset)
-		if self.request.user.is_admin:
-			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
-				raise PermissionDenied
-		return obj
+		queryset = Doctor.objects.select_related('user', 'hospital')
+		return self.scope_queryset_for_admin(queryset, hospital_field='hospital_id')
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
@@ -566,7 +545,7 @@ class DoctorDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
 
 		return redirect(self.success_url)
 
-class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+class DoctorUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
 	"""Update doctor user and profile details"""
 	model = Doctor
 	template_name = 'doctors/doctor_edit.html'
@@ -574,15 +553,8 @@ class DoctorUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
 	success_url = reverse_lazy('doctors:doctor_list')
 
 	def get_queryset(self):
-		return Doctor.objects.select_related('user', 'hospital', 'department')
-
-	def get_object(self, queryset=None):
-		obj = super().get_object(queryset)
-		if self.request.user.is_admin:
-			hospital_admin = HospitalAdmin.objects.filter(user=self.request.user).select_related('hospital').first()
-			if not hospital_admin or obj.hospital_id != hospital_admin.hospital_id:
-				raise PermissionDenied
-		return obj
+		queryset = Doctor.objects.select_related('user', 'hospital', 'department')
+		return self.scope_queryset_for_admin(queryset, hospital_field='hospital_id')
 
 	def get_hospitals(self):
 		if self.request.user.is_super_admin:

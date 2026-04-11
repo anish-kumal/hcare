@@ -9,11 +9,11 @@ from django.core.files.base import File
 from django.core.files.storage import default_storage
 from apps.medical_report.models import MedicalReport
 from apps.medical_report.forms import AdminMedicalReportForm, PatientMedicalReportShareForm
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin
 from apps.appointments.views import PatientAccessMixin
 from django.urls import reverse_lazy
 
-class AdminMedicalReportCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
+class AdminMedicalReportCreateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, CreateView):
     """
     Admin view to create a new medical report
     """
@@ -40,7 +40,7 @@ class AdminMedicalReportCreateView(SuperAdminAndAdminOnlyMixin, CreateView):
         return super().form_invalid(form)
 
 # Admin Views
-class AdminMedicalReportListView(SuperAdminAndAdminOnlyMixin, ListView):
+class AdminMedicalReportListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
     """
     Admin view to list all medical reports
     """
@@ -50,20 +50,21 @@ class AdminMedicalReportListView(SuperAdminAndAdminOnlyMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        return self.scope_queryset_for_admin(queryset)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        reports = MedicalReport.objects.all()
+        reports = self.scope_queryset_for_admin(MedicalReport.objects.all())
         context['analytics_cards'] = [
-            {'label': 'Total Reports', 'value': reports.count(), 'value_class': 'text-gray-900'},
-            {'label': 'Shared Reports', 'value': reports.filter(shared_with__isnull=False).distinct().count(), 'value_class': 'text-blue-700'},
-            {'label': 'Private Reports', 'value': reports.filter(shared_with__isnull=True).count(), 'value_class': 'text-amber-700'},
+            {'label': 'Total Reports', 'value': reports.count(), 'value_class': 'text-gray-900', 'icon': 'description'},
+            {'label': 'Shared Reports', 'value': reports.filter(shared_with__isnull=False).distinct().count(), 'value_class': 'text-blue-700', 'icon': 'share'},
+            {'label': 'Private Reports', 'value': reports.filter(shared_with__isnull=True).count(), 'value_class': 'text-amber-700', 'icon': 'lock'},
         ]
         return context
 
 
-class AdminMedicalReportDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+class AdminMedicalReportDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
     """
     Admin view to show medical report details
     """
@@ -72,10 +73,11 @@ class AdminMedicalReportDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
     context_object_name = 'medical_report'
 
     def get_queryset(self):
-        return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        return self.scope_queryset_for_admin(queryset)
 
 
-class AdminMedicalReportUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+class AdminMedicalReportUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
     """
     Admin view to update medical report and manage sharing
     """
@@ -90,7 +92,8 @@ class AdminMedicalReportUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
         return kwargs
 
     def get_queryset(self):
-        return MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        return self.scope_queryset_for_admin(queryset)
 
     def form_valid(self, form):
         """Show success message when report is updated"""
@@ -105,13 +108,17 @@ class AdminMedicalReportUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class AdminMedicalReportDeleteView(SuperAdminAndAdminOnlyMixin, DeleteView):
+class AdminMedicalReportDeleteView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DeleteView):
     """
     Admin view to delete medical report
     """
     model = MedicalReport
     template_name = 'admin/medical_report_confirm_delete.html'
     success_url = reverse_lazy('medical_report:admin_medical_report_list')
+
+    def get_queryset(self):
+        queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
+        return self.scope_queryset_for_admin(queryset)
 
     def delete(self, request, *args, **kwargs):
         """Show success message when report is deleted"""
@@ -256,21 +263,21 @@ class PatientMedicalReportViewFileView(PatientAccessMixin, MedicalReportDownload
         return self._view_response(report)
 
 
-class AdminMedicalReportDownloadView(SuperAdminAndAdminOnlyMixin, MedicalReportDownloadMixin, View):
+class AdminMedicalReportDownloadView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, MedicalReportDownloadMixin, View):
     """Allow admin/super-admin to download medical reports from detail pages."""
 
     def get(self, request, pk, *args, **kwargs):
-        report = MedicalReport.objects.filter(pk=pk).first()
+        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk)).first()
         if not report:
             raise Http404('Medical report not found.')
         return self._download_response(report)
 
 
-class AdminMedicalReportViewFileView(SuperAdminAndAdminOnlyMixin, MedicalReportDownloadMixin, View):
+class AdminMedicalReportViewFileView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, MedicalReportDownloadMixin, View):
     """Allow admin/super-admin to open report files inline from detail pages."""
 
     def get(self, request, pk, *args, **kwargs):
-        report = MedicalReport.objects.filter(pk=pk).first()
+        report = self.scope_queryset_for_admin(MedicalReport.objects.filter(pk=pk)).first()
         if not report:
             raise Http404('Medical report not found.')
         return self._view_response(report)

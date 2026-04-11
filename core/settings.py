@@ -16,6 +16,7 @@ import importlib.util
 import base64
 import hashlib
 import cloudinary
+import os
 from cryptography.fernet import Fernet
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -73,7 +74,6 @@ PRELOAD_APPS = [
 
 
 THIRD_PARTY_APPS = [
-    'debug_toolbar',
     'cloudinary',
     'cloudinary_storage',
     'channels',
@@ -83,6 +83,9 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount.providers.google',
     'auditlog',
 ]
+
+if DEBUG:
+    THIRD_PARTY_APPS.insert(0, 'debug_toolbar')
 
 LOCAL_APPS = [
     'apps.users',
@@ -104,10 +107,10 @@ HAS_WHITENOISE = importlib.util.find_spec('whitenoise') is not None
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.base.middleware.AdminHospitalContextMiddleware',
     'auditlog.middleware.AuditlogMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -116,6 +119,9 @@ MIDDLEWARE = [
 
 if HAS_WHITENOISE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+if DEBUG and 'debug_toolbar' in INSTALLED_APPS:
+    MIDDLEWARE.insert(3 if HAS_WHITENOISE else 2, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'core.urls'
 
@@ -201,9 +207,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 
 STORAGES = {
     'default': {
@@ -279,7 +285,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email Configuration
 # For development: use console backend
 if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # For production: use SMTP
 else:

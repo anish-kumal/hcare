@@ -9,7 +9,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views.generic import UpdateView, ListView, DetailView, View
 
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin
+from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin
 from apps.hospitals.crypto import decrypt_khalti_key
 from apps.patients.models import PatientAppointment
 
@@ -31,8 +31,13 @@ class AppointmentPaymentView(LoginRequiredMixin, UpdateView):
 
     def _has_permission(self, appointment):
         user = self.request.user
-        if user.is_super_admin or user.is_admin:
+        if user.is_super_admin:
             return True
+        if user.is_admin:
+            hospital_id = getattr(self.request, 'admin_hospital_id', None)
+            if not hospital_id:
+                return False
+            return appointment.doctor and appointment.doctor.hospital_id == hospital_id
         if user.is_patient:
             return appointment.patient.user_id == user.id
         return False
@@ -72,12 +77,13 @@ class AppointmentPaymentView(LoginRequiredMixin, UpdateView):
         return redirect(reverse_lazy('appointments:booking_confirmation'))
 
 
-class PaymentListView(SuperAdminAndAdminOnlyMixin, ListView):
+class PaymentListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, ListView):
     """List payments for admin/super-admin."""
     model = AppointmentPayment
     template_name = 'payments/payment_list.html'
     context_object_name = 'payments'
     paginate_by = 10
+    admin_hospital_field = 'appointment__hospital_id'
 
     def get_queryset(self):
         queryset = AppointmentPayment.objects.select_related(
@@ -85,6 +91,7 @@ class PaymentListView(SuperAdminAndAdminOnlyMixin, ListView):
             'appointment__doctor__user',
             'appointment__doctor__hospital',
         ).order_by('-created')
+        queryset = self.scope_queryset_for_admin(queryset, hospital_field=self.admin_hospital_field)
 
         status = self.request.GET.get('status', '').strip()
         if status:
@@ -105,53 +112,62 @@ class PaymentListView(SuperAdminAndAdminOnlyMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payments = AppointmentPayment.objects.all()
+        payments = self.scope_queryset_for_admin(
+            AppointmentPayment.objects.all(),
+            hospital_field=self.admin_hospital_field,
+        )
         context['selected_status'] = self.request.GET.get('status', '').strip()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['status_choices'] = AppointmentPayment.PaymentStatus.choices
         context['analytics_cards'] = [
-            {'label': 'Total Payments', 'value': payments.count(), 'value_class': 'text-gray-900'},
+            {'label': 'Total Payments', 'value': payments.count(), 'value_class': 'text-gray-900', 'icon': 'payments'},
             {
                 'label': 'Paid',
                 'value': payments.filter(status=AppointmentPayment.PaymentStatus.PAID).count(),
                 'value_class': 'text-green-700',
+                'icon': 'check_circle',
             },
             {
                 'label': 'Pending',
                 'value': payments.filter(status=AppointmentPayment.PaymentStatus.PENDING).count(),
                 'value_class': 'text-amber-700',
+                'icon': 'pending_actions',
             },
         ]
         return context
 
 
-class PaymentDetailView(SuperAdminAndAdminOnlyMixin, DetailView):
+class PaymentDetailView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, DetailView):
     """Show payment detail for admin/super-admin."""
     model = AppointmentPayment
     template_name = 'payments/payment_detail.html'
     context_object_name = 'payment'
+    admin_hospital_field = 'appointment__hospital_id'
 
     def get_queryset(self):
-        return AppointmentPayment.objects.select_related(
+        queryset = AppointmentPayment.objects.select_related(
             'appointment__patient__user',
             'appointment__doctor__user',
             'appointment__doctor__hospital',
         )
+        return self.scope_queryset_for_admin(queryset, hospital_field=self.admin_hospital_field)
 
 
-class PaymentUpdateView(SuperAdminAndAdminOnlyMixin, UpdateView):
+class PaymentUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMixin, UpdateView):
     """Edit payment for admin/super-admin."""
     model = AppointmentPayment
     form_class = AppointmentPaymentForm
     template_name = 'payments/payment_form.html'
     context_object_name = 'payment'
+    admin_hospital_field = 'appointment__hospital_id'
 
     def get_queryset(self):
-        return AppointmentPayment.objects.select_related(
+        queryset = AppointmentPayment.objects.select_related(
             'appointment__patient__user',
             'appointment__doctor__user',
             'appointment__doctor__hospital',
         )
+        return self.scope_queryset_for_admin(queryset, hospital_field=self.admin_hospital_field)
 
     def get_success_url(self):
         return reverse('payments:payment_detail', kwargs={'pk': self.object.pk})

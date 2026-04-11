@@ -52,9 +52,9 @@ class HospitalListView(SuperAdminOnlyMixin, ListView):
         context['search_query'] = self.request.GET.get('search', '')
         context['is_verified_filter'] = self.request.GET.get('is_verified', '')
         context['analytics_cards'] = [
-            {'label': 'Total Hospitals', 'value': hospitals.count(), 'value_class': 'text-gray-900'},
-            {'label': 'Verified', 'value': hospitals.filter(is_verified=True).count(), 'value_class': 'text-green-700'},
-            {'label': 'Unverified', 'value': hospitals.filter(is_verified=False).count(), 'value_class': 'text-amber-700'},
+            {'label': 'Total Hospitals', 'value': hospitals.count(), 'value_class': 'text-gray-900', 'icon': 'apartment'},
+            {'label': 'Verified', 'value': hospitals.filter(is_verified=True).count(), 'value_class': 'text-green-700', 'icon': 'verified'},
+            {'label': 'Unverified', 'value': hospitals.filter(is_verified=False).count(), 'value_class': 'text-amber-700', 'icon': 'pending'},
         ]
         return context
 

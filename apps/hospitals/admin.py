@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Hospital, HospitalAdmin, HospitalDepartment
+from .models import Hospital, HospitalAdmin, HospitalDepartment, HospitalStaff
 
 
 @admin.register(Hospital)
@@ -21,4 +21,10 @@ class HospitalDepartmentAdmin(admin.ModelAdmin):
 class HospitalAdminAdmin(admin.ModelAdmin):
 	list_display = ('user', 'hospital', 'created')
 	list_filter = ('hospital', 'created')
+	search_fields = ('user__username', 'user__email', 'hospital__name')
+
+@admin.register(HospitalStaff)
+class HospitalStaffAdmin(admin.ModelAdmin):	
+	list_display = ('user', 'hospital', 'created')
+	list_filter = ('hospital',  'created')
 	search_fields = ('user__username', 'user__email', 'hospital__name')

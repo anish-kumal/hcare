@@ -59,7 +59,7 @@ def validate_unique_username(
     model,
     exclude_pk=None,
     case_insensitive=False,
-    error_message='This username is already taken.',
+    error_message='Invalid username.',
 ):
     return _validate_unique_value(
         username,
@@ -121,15 +121,23 @@ def validate_date_not_in_future(value, field_label='Date'):
     return value
 
 
-def validate_image_max_size(
-    uploaded_file,
-    max_size_mb=DEFAULT_MAX_IMAGE_UPLOAD_SIZE_MB,
-):
+def validate_image_max_size(uploaded_file, max_size_mb=DEFAULT_MAX_IMAGE_UPLOAD_SIZE_MB):
     if not uploaded_file:
         return uploaded_file
 
     max_size_bytes = max_size_mb * 1024 * 1024
-    if uploaded_file.size > max_size_bytes:
+
+    file_size = getattr(uploaded_file, 'size', None)
+    if file_size is None:
+        nested_file = getattr(uploaded_file, 'file', None)
+        file_size = getattr(nested_file, 'size', None)
+
+    # Some storage-backed resources (e.g. existing Cloudinary values on edit)
+    # don't expose a local size attribute. In that case, skip size validation.
+    if file_size is None:
+        return uploaded_file
+
+    if file_size > max_size_bytes:
         raise forms.ValidationError(
             f'Image size must be {max_size_mb}MB or less.'
         )

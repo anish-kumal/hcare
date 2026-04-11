@@ -75,7 +75,8 @@ class DoctorListView( ListView):
 
         queryset = Doctor.objects.filter(
             is_available=True,
-            is_active=True
+            is_active=True,
+            hospital__is_active=True
         ).select_related('user', 'hospital').prefetch_related('schedules')
         
         # Filter by specialization if provided
@@ -135,7 +136,8 @@ class DoctorListView( ListView):
         ).values_list('specialization', flat=True).distinct().order_by('specialization')
         context['specializations'] = specs
         hospitals = Doctor.objects.filter(
-            hospital__isnull=False
+            hospital__isnull=False,
+            hospital__is_active=True
         ).exclude(
             hospital__name=''
         ).values_list('hospital__name', flat=True).distinct().order_by('hospital__name')

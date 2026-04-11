@@ -40,22 +40,28 @@ class PatientHospitalScopedMixin(LoginRequiredMixin):
     """Allow super admin/admin/doctor/staff and scope patient data by hospital."""
     login_url = 'users:login'
 
-    def _get_user_hospital_id(self):
+    def _get_user_hospital(self):
         user = self.request.user
 
         if user.is_super_admin:
             return None
 
         if user.is_admin and hasattr(user, 'hospital_admin_profile'):
-            return user.hospital_admin_profile.hospital_id
+            return user.hospital_admin_profile.hospital
 
         if user.is_doctor and hasattr(user, 'doctor_profile'):
-            return user.doctor_profile.hospital_id
+            return user.doctor_profile.hospital
 
         if user.is_staff and hasattr(user, 'hospital_staff_profile'):
-            return user.hospital_staff_profile.hospital_id
+            return user.hospital_staff_profile.hospital
 
         return -1
+
+    def _get_user_hospital_id(self):
+        hospital = self._get_user_hospital()
+        if hospital in (None, -1):
+            return hospital
+        return hospital.id
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -70,8 +76,12 @@ class PatientHospitalScopedMixin(LoginRequiredMixin):
         if request.user.user_type not in allowed_roles:
             raise PermissionDenied("You don't have permission to access this page.")
 
-        if self._get_user_hospital_id() == -1:
+        hospital = self._get_user_hospital()
+        if hospital == -1:
             raise PermissionDenied("Your account is not linked to a hospital.")
+
+        if hospital and not hospital.is_active:
+            raise PermissionDenied("Your hospital is currently inactive. Please contact the super admin.")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -80,7 +90,10 @@ class PatientHospitalScopedMixin(LoginRequiredMixin):
         hospital_id = self._get_user_hospital_id()
         if hospital_id is None:
             return queryset
-        return queryset.filter(hospital_id=hospital_id)
+        return queryset.filter(
+            Q(hospital_id=hospital_id)
+            | Q(appointments__hospital_id=hospital_id)
+        ).distinct()
 
 
 class PatientProfileView(PatientOnlyMixin, DetailView):
@@ -463,9 +476,9 @@ class PatientListView(PatientHospitalScopedMixin, ListView):
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['is_active_filter'] = self.request.GET.get('is_active', '').strip().lower()
         context['analytics_cards'] = [
-            {'label': 'Total Patients', 'value': patients.count(), 'value_class': 'text-gray-900'},
-            {'label': 'Active', 'value': patients.filter(is_active=True).count(), 'value_class': 'text-green-700'},
-            {'label': 'Inactive', 'value': patients.filter(is_active=False).count(), 'value_class': 'text-red-700'},
+            {'label': 'Total Patients', 'value': patients.count(), 'value_class': 'text-gray-900', 'icon': 'groups'},
+            {'label': 'Active', 'value': patients.filter(is_active=True).count(), 'value_class': 'text-green-700', 'icon': 'check_circle'},
+            {'label': 'Inactive', 'value': patients.filter(is_active=False).count(), 'value_class': 'text-red-700', 'icon': 'cancel'},
         ]
         return context
 

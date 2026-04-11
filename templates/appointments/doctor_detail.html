@@ -105,7 +105,22 @@
         <!-- Booking Slots Section -->
         <div id="booking-slots-section" class="p-4">
             <h3 class="text-m font-semibold text-gray-900 mb-5">Booking slots</h3>
-            
+
+            {% if has_active_booking and booking_detail_url %}
+                <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-800">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <p>
+                            You already have an active booking with this doctor.
+                            View your booking details before making a new appointment.
+                        </p>
+                        <a href="{{ booking_detail_url }}"
+                           class="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-amber-700">
+                            <span class="material-symbols-outlined text-sm">event_note</span>
+                            View Booking
+                        </a>
+                    </div>
+                </div>
+            {% else %}
             {% if available_slots %}
                 <!-- Store the first day for default selection -->
                 {% with first_day=available_slots|first %}
@@ -175,6 +190,7 @@
                     <span class="material-symbols-outlined text-base">warning</span>
                     <p>No available time slots in the next 7 days. Please check back later.</p>
                 </div>
+            {% endif %}
             {% endif %}
         </div>
 
