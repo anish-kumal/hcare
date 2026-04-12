@@ -1290,9 +1290,9 @@ class PharmacistDashboardView(LoginRequiredMixin, TemplateView):
         today = timezone.localdate()
         context['prescriptions_today'] = prescription_qs.filter(created__date=today).count()
         # New: prescriptions created this week (Monday to Sunday)
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        context['prescriptions_this_week'] = prescription_qs.filter(created__date__range=(week_start, week_end)).count()
+        last_7_days_start = today - timedelta(days=6)
+        last_7_days_end = today
+        context['prescriptions_last_7_days'] = prescription_qs.filter(created__date__range=(last_7_days_start, last_7_days_end)).count()
         context['prescriptions_this_month'] = prescription_qs.filter(created__date__month=today.month, created__date__year=today.year).count()
         context['prescriptions_this_year'] = prescription_qs.filter(created__date__year=today.year).count()
 

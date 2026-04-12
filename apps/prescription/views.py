@@ -272,12 +272,12 @@ class AdminPrescriptionListView(AdminHospitalScopedQuerysetMixin, AdminPharmacis
 			hospital_field='appointment__hospital_id',
 		)
 		today = timezone.localdate()
-		week_start = today - timedelta(days=today.weekday())
-		week_end = week_start + timedelta(days=6)
+		last_7_days_start = today - timedelta(days=6)
+		last_7_days_end = today
 		context['analytics_cards'] = [
 			{'label': 'Total Prescriptions', 'value': prescriptions.count(),  'icon': 'prescriptions'},
 			{'label': 'Created Today', 'value': prescriptions.filter(created__date=today).count(), 'icon': 'today'},
-			{'label': 'Created This Week','value': prescriptions.filter(created__date__range=(week_start, week_end)).count(),'icon': 'date_range',},
+			{'label': 'Created Last 7 Days','value': prescriptions.filter(created__date__range=(last_7_days_start, last_7_days_end)).count(),'icon': 'date_range',},
 		]
 		return context
 

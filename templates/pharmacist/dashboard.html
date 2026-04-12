@@ -61,9 +61,9 @@
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Created This Week</p>
-                <h3 class="text-3xl font-bold text-[#131616]">{{ prescriptions_this_week }}</h3>
-                <p class="text-xs text-gray-400 mt-2">Prescriptions created this week</p>
+                <p class="text-gray-500 text-sm font-medium mb-1">Created Last 7 Days</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ prescriptions_last_7_days }}</h3>
+                <p class="text-xs text-gray-400 mt-2">Prescriptions created last 7 days</p>
               </div>
               <div class="size-10 rounded-lg bg-green-100 flex items-center justify-center text-green-700 group-hover:bg-green-600 group-hover:text-white transition-colors">
                 <span class="material-symbols-outlined">date_range</span>
@@ -78,12 +78,12 @@
           <p class="text-sm text-gray-500 mb-5">Counts use each prescription's created date.</p>
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This week</p>
-              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ prescriptions_this_week}}</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last 7 days</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ prescriptions_last_7_days }}</p>
             </div>
             <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This month</p>
-              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ prescriptions_this_week }}</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ prescriptions_this_month }}</p>
             </div>
             <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This year</p>

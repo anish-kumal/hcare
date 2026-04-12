@@ -13,22 +13,7 @@
     {% include "partials/side_bar.html" %}
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
-      <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
-        <div>
-          <h1 class="text-xl font-semibold text-[#131616]">My Profile</h1>
-          <p class="text-sm text-gray-500">View and manage your profile information</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <a href="{% url 'doctors:doctor_profile_edit' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition">
-            <span class="material-symbols-outlined text-[18px]">edit</span>
-            Edit Profile
-          </a>
-          <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back
-          </a>
-        </div>
-      </header>
+      {% include "partials/header.html" %}
 
       <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div class="max-w-[900px] mx-auto space-y-6">
@@ -43,6 +28,16 @@
                 <h2 class="text-lg font-semibold text-[#131616]">Personal Information</h2>
                 <p class="text-sm text-gray-500">Your account details</p>
               </div>
+              <div class="ml-auto">
+                <a href="{% url 'doctors:doctor_profile_edit' %}" class="inline-flex items-center gap-2 px-4 py-2 text-base font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition">
+              <span class="material-symbols-outlined text-[20px]">edit</span>
+              Edit Profile
+            </a>
+            <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 text-base font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
+              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+              Back 
+            </a>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,21 +162,7 @@
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="flex gap-3 justify-center">
-            <a href="{% url 'doctors:doctor_profile_edit' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition">
-              <span class="material-symbols-outlined text-[20px]">edit</span>
-              Edit Profile
-            </a>
-            <a href="{% url 'users:password_change' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition">
-              <span class="material-symbols-outlined text-[20px]">lock</span>
-              Change Password
-            </a>
-            <a href="{% url 'doctor_dashboard' %}" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
-              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
-              Back to Dashboard
-            </a>
-          </div>
+          {% include "partials/footer.html" %}
         </div>
       </main>
     </div>
