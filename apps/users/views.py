@@ -9,8 +9,9 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.template.loader import render_to_string
+from django.utils.dateparse import parse_date
 from django.utils.html import strip_tags
 from axes.models import AccessAttempt
 from axes.utils import reset as axes_reset
@@ -281,9 +282,9 @@ class UserListView(ManageableUserScopeMixin, SuperAdminAndAdminOnlyMixin, ListVi
 
         search_query = self.request.GET.get('search', '')
         user_type = self.request.GET.get('user_type', '')
+        joined_date = self.request.GET.get('joined_date', '')
         
         if search_query:
-            from django.db.models import Q
             queryset = queryset.filter(
                 Q(username__icontains=search_query) |
                 Q(email__icontains=search_query) |
@@ -293,22 +294,35 @@ class UserListView(ManageableUserScopeMixin, SuperAdminAndAdminOnlyMixin, ListVi
         
         if user_type in MANAGEABLE_USER_TYPES:
             queryset = queryset.filter(user_type=user_type)
+
+        if joined_date:
+            parsed_joined_date = parse_date(joined_date)
+            if parsed_joined_date:
+                queryset = queryset.filter(created__date=parsed_joined_date)
         
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         users = self._base_queryset()
+        user_counts = users.aggregate(
+            total=Count('id'),
+            staff=Count('id', filter=Q(user_type=User.UserType.STAFF)),
+            lab_assistant=Count('id', filter=Q(user_type=User.UserType.LAB_ASSISTANT)),
+            pharmacist=Count('id', filter=Q(user_type=User.UserType.PHARMACIST)),
+        )
         context['search_query'] = self.request.GET.get('search', '')
         context['user_type_filter'] = self.request.GET.get('user_type', '')
+        context['joined_date_filter'] = self.request.GET.get('joined_date', '')
         context['user_types'] = [
             choice for choice in User.UserType.choices
             if choice[0] in MANAGEABLE_USER_TYPES
         ]
         context['analytics_cards'] = [
-            {'label': 'Total Users', 'value': users.count(), 'value_class': 'text-gray-900', 'icon': 'group'},
-            {'label': 'Active Users', 'value': users.filter(is_active=True).count(), 'value_class': 'text-green-700', 'icon': 'person_check'},
-            {'label': 'Inactive Users', 'value': users.filter(is_active=False).count(), 'value_class': 'text-red-700', 'icon': 'person_off'},
+            {'label': 'Total Users', 'value': user_counts['total'],  'icon': 'group'},
+            {'label': 'Lab Technicians', 'value': user_counts['lab_assistant'],  'icon': 'science'},
+            {'label': 'Staff', 'value': user_counts['staff'],  'icon': 'badge'},
+            {'label': 'Pharmacists', 'value': user_counts['pharmacist'], 'icon': 'medication'},
         ]
         return context
 

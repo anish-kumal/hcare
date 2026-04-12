@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from .models import Hospital, HospitalAdmin, HospitalDepartment
 from .forms import HospitalForm, HospitalAdminForm, HospitalDepartmentForm, KhaltiSetupForm
@@ -383,11 +384,19 @@ class HospitalDepartmentListView(HospitalAdminOnlyMixin, ListView):
     
     def get_queryset(self):
         hospital = self.get_hospital()
-        return hospital.departments.all().order_by('name')
+        queryset = hospital.departments.all().order_by('name')
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query)
+                | Q(code__icontains=search_query)
+            )
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['hospital'] = self.get_hospital()
+        context['search_query'] = self.request.GET.get('search', '').strip()
         return context
     
 class HospitalDepartmentCreateView(HospitalAdminOnlyMixin, CreateView):

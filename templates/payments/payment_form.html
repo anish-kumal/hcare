@@ -51,6 +51,14 @@
                         </div>
 
                         <div>
+                            <label for="id_status" class="block text-sm font-semibold text-gray-700 mb-2">Payment Status</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
                             <label for="id_transaction_reference" class="block text-sm font-semibold text-gray-700 mb-2">Transaction Reference</label>
                             {{ form.transaction_reference }}
                             {% if form.transaction_reference.errors %}

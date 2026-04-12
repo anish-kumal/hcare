@@ -1,7 +1,9 @@
+import re
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from collections import defaultdict
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
@@ -659,15 +661,6 @@ class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnly
             context['specializations'],
             hospital_field='hospital_id',
         ).exclude(specialization='').values_list('specialization', flat=True).distinct().order_by('specialization')
-        active_doctors = self.scope_queryset_for_admin(
-            Doctor.objects.filter(is_active=True, hospital__is_active=True),
-            hospital_field='hospital_id',
-        )
-        context['analytics_cards'] = [
-            {'label': 'Total Doctors', 'value': active_doctors.count(), 'value_class': 'text-gray-900', 'icon': 'medical_services'},
-            {'label': 'Available', 'value': active_doctors.filter(is_available=True).count(), 'value_class': 'text-green-700', 'icon': 'check_circle'},
-            {'label': 'Unavailable', 'value': active_doctors.filter(is_available=False).count(), 'value_class': 'text-red-700', 'icon': 'cancel'},
-        ]
         return context
     
 class AppointmentDoctorScheduleView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):
@@ -947,6 +940,14 @@ class AdminAppointmentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyM
         if status:
             queryset = queryset.filter(status=status)
 
+        appointment_date_filter = self.request.GET.get('appointment_date', '').strip()
+        if appointment_date_filter:
+            try:
+                appointment_date = datetime.strptime(appointment_date_filter, '%Y-%m-%d').date()
+                queryset = queryset.filter(appointment_date=appointment_date)
+            except ValueError:
+                pass
+
         search = self.request.GET.get('search', '').strip()
         if search:
             queryset = queryset.filter(
@@ -963,17 +964,32 @@ class AdminAppointmentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyM
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['selected_status'] = self.request.GET.get('status', '').strip()
+        context['appointment_date_filter'] = self.request.GET.get('appointment_date', '').strip()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['status_choices'] = PatientAppointment.STATUS_CHOICES
         appointments = self.scope_queryset_for_admin(
             PatientAppointment.objects.filter(hospital__is_active=True),
             hospital_field='hospital_id',
         )
-        context['analytics_cards'] = [
-            {'label': 'Total Appointments', 'value': appointments.count(), 'value_class': 'text-gray-900', 'icon': 'event_note'},
-            {'label': 'Completed', 'value': appointments.filter(status='COMPLETED').count(), 'value_class': 'text-green-700', 'icon': 'task_alt'},
-            {'label': 'Cancelled', 'value': appointments.filter(status='CANCELLED').count(), 'value_class': 'text-red-700', 'icon': 'event_busy'},
+        appointment_counts = appointments.aggregate(
+            total=Count('id'),
+            scheduled=Count('id', filter=Q(status='SCHEDULED')),
+            follow_up=Count('id', filter=Q(status='FOLLOW_UP')),
+            rescheduled=Count('id', filter=Q(status='RESCHEDULED')),
+            completed=Count('id', filter=Q(status='COMPLETED')),
+            cancelled=Count('id', filter=Q(status='CANCELLED')),
+        )
+
+        analytics_cards = [
+            {'label': 'Total Appointments', 'value': appointment_counts['total'], 'icon': 'event_note'},
+            {'label': 'Scheduled', 'value': appointment_counts['scheduled'], 'icon': 'event_upcoming'},
+            {'label': 'Rescheduled', 'value': appointment_counts['rescheduled'], 'icon': 'refresh'},
+            {'label': 'Follow Up', 'value': appointment_counts['follow_up'], 'icon': 'update'},
+            {'label': 'Completed', 'value': appointment_counts['completed'], 'icon': 'task_alt'},
+            {'label': 'Cancelled', 'value': appointment_counts['cancelled'], 'icon': 'event_busy'},
         ]
+
+        context['analytics_cards'] = analytics_cards
         return context
 
 

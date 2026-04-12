@@ -3,8 +3,10 @@ from django.views import View
 from django.http import Http404, FileResponse
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from pathlib import Path
 from django.utils.text import slugify
+from django.utils.dateparse import parse_date
 from django.conf import settings
 from django.core.files.base import File
 from django.core.files.storage import default_storage
@@ -223,12 +225,38 @@ class AdminMedicalReportListView(AdminHospitalScopedQuerysetMixin, AdminLabAssis
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
-        return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
+        queryset = MedicalReport.objects.select_related(
+            'patient__user',
+            'primary_hospital',
+            'uploaded_by',
+        ).all()
+        queryset = self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
+
+        search_query = (self.request.GET.get('search') or '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(patient__user__first_name__icontains=search_query)
+                | Q(patient__user__last_name__icontains=search_query)
+                | Q(primary_hospital__name__icontains=search_query)
+                | Q(report_name__icontains=search_query)
+                | Q(uploaded_by__first_name__icontains=search_query)
+                | Q(uploaded_by__last_name__icontains=search_query)
+                | Q(uploaded_by__username__icontains=search_query)
+            )
+
+        created_date = (self.request.GET.get('created_date') or '').strip()
+        if created_date:
+            parsed_date = parse_date(created_date)
+            if parsed_date:
+                queryset = queryset.filter(created__date=parsed_date)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         reports = self.scope_queryset_for_admin(MedicalReport.objects.all(), hospital_field='primary_hospital_id')
+        context['search_query'] = (self.request.GET.get('search') or '').strip()
+        context['created_date_filter'] = (self.request.GET.get('created_date') or '').strip()
         context['analytics_cards'] = [
             {'label': 'Total Reports', 'value': reports.count(), 'value_class': 'text-gray-900', 'icon': 'description'},
             {'label': 'Shared Reports', 'value': reports.filter(shared_with__isnull=False).distinct().count(), 'value_class': 'text-blue-700', 'icon': 'share'},

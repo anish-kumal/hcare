@@ -46,7 +46,7 @@
                 <!-- Filter & Search Section -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <form method="get" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <!-- Search by Username -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Search by Username</label>
@@ -68,6 +68,12 @@
                                     <option value="2" {% if request.GET.action == '2' %}selected{% endif %}>Delete
                                     </option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Timestamp Date</label>
+                                <input type="date" name="timestamp_date" value="{{ timestamp_date_filter|default:'' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
                             </div>
 
                             <!-- Submit Button -->

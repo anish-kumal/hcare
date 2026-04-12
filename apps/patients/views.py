@@ -452,7 +452,6 @@ class PatientListView(PatientHospitalScopedMixin, SuperAdminAdminStaffOnlyMixin,
         """Get all patients with optional search"""
         queryset = self._base_queryset()
         search_query = self.request.GET.get('search', '').strip()
-        is_active_filter = self.request.GET.get('is_active', '').strip().lower()
 
         if search_query:
             queryset = queryset.filter(
@@ -464,23 +463,11 @@ class PatientListView(PatientHospitalScopedMixin, SuperAdminAdminStaffOnlyMixin,
                 | Q(city__icontains=search_query)
             )
 
-        if is_active_filter == 'true':
-            queryset = queryset.filter(is_active=True)
-        elif is_active_filter == 'false':
-            queryset = queryset.filter(is_active=False)
-
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        patients = self._base_queryset()
         context['search_query'] = self.request.GET.get('search', '').strip()
-        context['is_active_filter'] = self.request.GET.get('is_active', '').strip().lower()
-        context['analytics_cards'] = [
-            {'label': 'Total Patients', 'value': patients.count(), 'value_class': 'text-gray-900', 'icon': 'groups'},
-            {'label': 'Active', 'value': patients.filter(is_active=True).count(), 'value_class': 'text-green-700', 'icon': 'check_circle'},
-            {'label': 'Inactive', 'value': patients.filter(is_active=False).count(), 'value_class': 'text-red-700', 'icon': 'cancel'},
-        ]
         return context
 
 class PatientDeleteView(SuperAdminAndAdminOnlyMixin, SuperAdminAdminStaffOnlyMixin, DeleteView):

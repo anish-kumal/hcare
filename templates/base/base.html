@@ -35,6 +35,22 @@
         input[type="password"]::-ms-clear {
             display: none;
         }
+
+        /* Hide scrollbars for page and designated scroll containers only. */
+        html,
+        body,
+        .custom-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+        }
     </style>
 
     {% block head_extra %}

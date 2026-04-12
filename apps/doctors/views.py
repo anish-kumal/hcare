@@ -467,9 +467,18 @@ class DoctorListView(AdminHospitalScopedQuerysetMixin, SuperAdminAndAdminOnlyMix
 		context['status_query'] = self.request.GET.get('status', '').strip().lower()
 
 		base_queryset = self.get_base_queryset()
-		context['total_doctors_count'] = base_queryset.count()
-		context['available_doctors_count'] = base_queryset.filter(is_available=True).count()
-		context['unavailable_doctors_count'] = base_queryset.filter(is_available=False).count()
+		total_doctors_count = base_queryset.count()
+		available_doctors_count = base_queryset.filter(is_available=True).count()
+		unavailable_doctors_count = base_queryset.filter(is_available=False).count()
+
+		context['total_doctors_count'] = total_doctors_count
+		context['available_doctors_count'] = available_doctors_count
+		context['unavailable_doctors_count'] = unavailable_doctors_count
+		context['analytics_cards'] = [
+			{'label': 'Total Doctors', 'value': total_doctors_count,  'icon': 'medical_services'},
+			{'label': 'Available Doctors', 'value': available_doctors_count,  'icon': 'check_circle'},
+			{'label': 'Unavailable Doctors', 'value': unavailable_doctors_count,  'icon': 'cancel'},
+		]
 		return context
 
 

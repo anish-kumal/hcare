@@ -114,6 +114,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'axes.middleware.AxesMiddleware',
     'apps.base.middleware.AdminHospitalContextMiddleware',
+    'apps.base.middleware.AdminKhaltiSetupRequiredMiddleware',
     'auditlog.middleware.AuditlogMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -314,9 +315,6 @@ AXES_COOLOFF_TIME = 1
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'locked.html'
 AXES_USERNAME_CALLABLE = 'apps.users.axes.get_axes_username'
-
-# Username-only lockout is intentional, so suppress Axes warning about ip_address.
-SILENCED_SYSTEM_CHECKS = ['axes.W006']
 
 # Khalti Payment Gateway Configuration
 SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')

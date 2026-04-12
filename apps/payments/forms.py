@@ -6,11 +6,14 @@ from .models import AppointmentPayment
 class AppointmentPaymentForm(forms.ModelForm):
     class Meta:
         model = AppointmentPayment
-        fields = ['amount', 'payment_method', 'transaction_reference', 'notes']
+        fields = ['amount', 'status', 'payment_method', 'transaction_reference', 'notes']
         widgets = {
             'amount': forms.NumberInput(attrs={
                 'step': '0.01',
                 'min': '0',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+            }),
+            'status': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
             }),
             'payment_method': forms.Select(attrs={

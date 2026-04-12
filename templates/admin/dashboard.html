@@ -3,6 +3,7 @@
 {% block title %}Hospital Admin - Health Care{% endblock title %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <!-- Mobile menu button (visible only on small screens) -->
   <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
@@ -46,7 +47,9 @@
         <!-- Headline & Actions -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
 
+
             <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Hospital Admin Dashboard</h1>
+
 
           <div class="flex gap-3 flex-wrap">
 
@@ -57,27 +60,14 @@
           </div>
         </div>
 
-        <!-- Stats Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Staff Members -->
-          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Staff Members</p>
-                <h3 class="text-3xl font-bold text-[#131616]">24</h3>
-              </div>
-              <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined">group</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Hospital Info -->
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-gray-500 text-sm font-medium mb-1">Hospital Status</p>
-                <h3 class="text-3xl font-bold text-[#131616]">Active</h3>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ hospital_is_active|yesno:"Active,Inactive" }}</h3>
               </div>
               <div class="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <span class="material-symbols-outlined">apartment</span>
@@ -85,19 +75,125 @@
             </div>
           </div>
 
-          <!-- Departments -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Total Income (NRs)</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ total_income_display }}</h3>
+              </div>
+              <div class="size-10 rounded-lg bg-green-100 flex items-center justify-center text-green-700 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">payments</span>
+              </div>
+            </div>
+          </div>
+
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-gray-500 text-sm font-medium mb-1">Departments</p>
-                <h3 class="text-3xl font-bold text-[#131616]">8</h3>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ doctor_count }}</h3>
               </div>
               <div class="size-10 rounded-lg bg-accent flex items-center justify-center text-primary group-hover:bg-[#d4e890] transition-colors">
-                <span class="material-symbols-outlined">domain</span>
+                <span class="material-symbols-outlined">stethoscope</span>
               </div>
             </div>
           </div>
+
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Staff Members</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ staff_count }}</h3>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">group</span>
+              </div>
+            </div>
+          </div>
+
+        
         </div>
+
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-[#131616]">Activity Snapshot</h2>
+              <p class="text-sm text-gray-500 mt-1">Filter dashboard metrics by time period.</p>
+            </div>
+
+            <form method="get" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Time Range</label>
+                <select name="period"
+                    class="w-full sm:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                  {% for value, label in period_choices %}
+                    <option value="{{ value }}" {% if selected_period == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button type="submit"
+                  class="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-[#1a3d42] transition-colors inline-flex items-center gap-2 justify-center">
+                <span class="material-symbols-outlined">calendar_month</span>
+                Apply
+              </button>
+            </form>
+          </div>
+
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {% for card in period_analytics_cards %}
+            <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5 hover:shadow-sm transition-shadow">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-xs tracking-wide text-gray-600">{{ card.label }}</p>
+                <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-gray-700 border border-gray-200 shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">{{ card.icon|default:'analytics' }}</span>
+                </span>
+              </div>
+              <p class="mt-3 text-2xl font-bold text-gray-900">{{ card.value }}</p>
+            </div>
+            {% endfor %}
+          </div>
+
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-[#131616]">Appointments & Income Trends</h2>
+              <p class="text-sm text-gray-500 mt-1">Appointments use a bar chart, income uses a line chart for clearer comparison.</p>
+            </div>
+          </div>
+
+          {{ dashboard_chart_data|json_script:"admin-dashboard-chart-data" }}
+          <div class="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="rounded-xl border border-gray-100 p-4 bg-gray-50">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-800">Appointments</h3>
+                  <p class="text-xs text-gray-500">{{ selected_period_label }}</p>
+                </div>
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sky-600 border border-sky-100">
+                  <span class="material-symbols-outlined text-[18px]">event_available</span>
+                </span>
+              </div>
+              <div id="appointmentsChart" class="min-h-[320px]"></div>
+            </div>
+
+            <div class="rounded-xl border border-gray-100 p-4 bg-gray-50">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-800">Paid Income</h3>
+                  <p class="text-xs text-gray-500">{{ selected_period_label }}</p>
+                </div>
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-emerald-600 border border-emerald-100">
+                  <span class="material-symbols-outlined text-[18px]">payments</span>
+                </span>
+              </div>
+              <div id="incomeChart" class="min-h-[320px]"></div>
+            </div>
+          </div>
+        </div>
+
 
         <!-- Quick Actions Section -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
@@ -136,4 +232,101 @@
     </main>
   </div>
   </div>
+
+<script>
+(function () {
+  const dataElement = document.getElementById('admin-dashboard-chart-data');
+  const appointmentsTarget = document.getElementById('appointmentsChart');
+  const incomeTarget = document.getElementById('incomeChart');
+  if (!dataElement || !appointmentsTarget || !incomeTarget || typeof ApexCharts === 'undefined') return;
+
+  const chartData = JSON.parse(dataElement.textContent);
+
+
+
+  const appointmentsChart = new ApexCharts(appointmentsTarget, {
+    chart: {
+      type: 'bar',
+      height: 320,
+      toolbar: { show: true },
+      fontFamily: 'inherit',
+    },
+    series: [{ name: 'Appointments', data: chartData.appointments }],
+    xaxis: {
+      categories: chartData.labels,
+      labels: { style: { colors: '#64748b' } },
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b' } },
+      min: 0,
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 8,
+        columnWidth: '55%',
+      },
+    },
+    colors: ['#0ea5e9'],
+    dataLabels: { enabled: false },
+    grid: { borderColor: '#e5e7eb' },
+    tooltip: { theme: 'light' },
+  });
+
+  const incomeChart = new ApexCharts(incomeTarget, {
+    chart: {
+      type: 'area',
+      height: 320,
+      zoom: {
+        enabled: false   
+      },
+      toolbar: { show: true },
+      fontFamily: 'inherit',
+    },
+    series: [{ name: 'Paid Income', data: chartData.income }],
+    xaxis: {
+      categories: chartData.labels,
+      labels: { style: { colors: '#64748b' } },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b' },
+        formatter: function (value) {
+          if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+          if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+          return `${Math.round(value)}`;
+        },
+      },
+      min: 0,
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 3,
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 0.35,
+        opacityFrom: 0.35,
+        opacityTo: 0.05,
+      },
+    },
+    colors: ['#10b981'],
+    dataLabels: { enabled: false },
+    grid: { borderColor: '#e5e7eb' },
+    tooltip: {
+      theme: 'light',
+      y: {
+        formatter: function (value) {
+          if (value >= 1000000) return `NPR ${(value / 1000000).toFixed(1)}M`;
+          if (value >= 1000) return `NPR ${(value / 1000).toFixed(1)}K`;
+          return `NPR ${Math.round(value)}`;
+        },
+      },
+    },
+  });
+
+  appointmentsChart.render();
+  incomeChart.render();
+})();
+</script>
 {% endblock content %}

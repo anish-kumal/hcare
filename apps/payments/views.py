@@ -97,6 +97,10 @@ class PaymentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, Lis
         if status:
             queryset = queryset.filter(status=status)
 
+        payment_method = self.request.GET.get('payment_method', '').strip()
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+
         search = self.request.GET.get('search', '').strip()
         if search:
             queryset = queryset.filter(
@@ -117,22 +121,28 @@ class PaymentListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, Lis
             hospital_field=self.admin_hospital_field,
         )
         context['selected_status'] = self.request.GET.get('status', '').strip()
+        context['selected_payment_method'] = self.request.GET.get('payment_method', '').strip()
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['status_choices'] = AppointmentPayment.PaymentStatus.choices
+        context['payment_method_choices'] = AppointmentPayment.PaymentMethod.choices
         context['analytics_cards'] = [
             {'label': 'Total Payments', 'value': payments.count(), 'value_class': 'text-gray-900', 'icon': 'payments'},
             {
-                'label': 'Paid',
-                'value': payments.filter(status=AppointmentPayment.PaymentStatus.PAID).count(),
-                'value_class': 'text-green-700',
-                'icon': 'check_circle',
+                'label': 'Cash Payments',
+                'value': payments.filter(status=AppointmentPayment.PaymentMethod.CASH).count(),
+                'icon': 'account_balance_wallet',
             },
             {
-                'label': 'Pending',
-                'value': payments.filter(status=AppointmentPayment.PaymentStatus.PENDING).count(),
-                'value_class': 'text-amber-700',
-                'icon': 'pending_actions',
+                'label': 'Online Payments',
+                'value': payments.filter(status=AppointmentPayment.PaymentMethod.ONLINE).count(),
+                'icon': 'language',
             },
+            {
+                'label': 'Card Payments',
+                'value': payments.filter(status=AppointmentPayment.PaymentMethod.CARD).count(),
+                'icon': 'credit_card',
+
+            }
         ]
         return context
 
@@ -176,6 +186,8 @@ class PaymentUpdateView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, U
         payment = form.save(commit=False)
         if payment.status == AppointmentPayment.PaymentStatus.PAID and not payment.paid_at:
             payment.paid_at = timezone.now()
+        elif payment.status != AppointmentPayment.PaymentStatus.PAID:
+            payment.paid_at = None
         payment.save()
         messages.success(self.request, 'Payment updated successfully.')
         return redirect(self.get_success_url())

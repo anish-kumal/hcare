@@ -35,7 +35,7 @@ class DoctorPrescriptionCreateView(DoctorAccessMixin, CreateView):
 
 	model = Prescription
 	form_class = PrescriptionForm
-	template_name = 'appointments/prescription_form.html'
+	template_name = 'prescription/prescription_form.html'
 
 	def get_appointment(self):
 		return get_object_or_404(
@@ -91,7 +91,7 @@ class DoctorPrescriptionDetailView(DoctorAccessMixin, DetailView):
 	"""View prescription details for current doctor's appointments."""
 
 	model = Prescription
-	template_name = 'appointments/prescription_detail.html'
+	template_name = 'prescription/prescription_detail.html'
 	context_object_name = 'prescription'
 
 	def get_queryset(self):
@@ -116,7 +116,7 @@ class DoctorPrescriptionUpdateView(DoctorAccessMixin, UpdateView):
 
 	model = Prescription
 	form_class = PrescriptionForm
-	template_name = 'appointments/prescription_form.html'
+	template_name = 'prescription/prescription_form.html'
 	context_object_name = 'prescription'
 
 	def get_queryset(self):
@@ -174,7 +174,7 @@ class AdminPrescriptionCreateView(AdminHospitalScopedQuerysetMixin, SuperAdminAn
 
 	model = Prescription
 	form_class = PrescriptionForm
-	template_name = 'appointments/prescription_form.html'
+	template_name = 'prescription/prescription_form.html'
 
 	def get_appointment(self):
 		queryset = PatientAppointment.objects.select_related('patient__user', 'doctor__user', 'hospital')
@@ -231,7 +231,7 @@ class AdminPrescriptionListView(AdminHospitalScopedQuerysetMixin, AdminPharmacis
 	"""List prescriptions for admin/super-admin."""
 
 	model = Prescription
-	template_name = 'appointments/prescription_list.html'
+	template_name = 'prescription/prescription_list.html'
 	context_object_name = 'prescriptions'
 	paginate_by = 10
 
@@ -257,11 +257,16 @@ class AdminPrescriptionListView(AdminHospitalScopedQuerysetMixin, AdminPharmacis
 				| Q(diagnosis__icontains=search)
 			)
 
+		created_date = self.request.GET.get('created_date', '').strip()
+		if created_date:
+			queryset = queryset.filter(created__date=created_date)
+
 		return queryset
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		context['search_query'] = self.request.GET.get('search', '').strip()
+		context['created_date_filter'] = self.request.GET.get('created_date', '').strip()
 		prescriptions = self.scope_queryset_for_admin(
 			Prescription.objects.filter(appointment__hospital__is_active=True),
 			hospital_field='appointment__hospital_id',
@@ -270,14 +275,9 @@ class AdminPrescriptionListView(AdminHospitalScopedQuerysetMixin, AdminPharmacis
 		week_start = today - timedelta(days=today.weekday())
 		week_end = week_start + timedelta(days=6)
 		context['analytics_cards'] = [
-			{'label': 'Total Prescriptions', 'value': prescriptions.count(), 'value_class': 'text-gray-900', 'icon': 'prescriptions'},
-			{'label': 'Created Today', 'value': prescriptions.filter(created__date=today).count(), 'value_class': 'text-blue-700', 'icon': 'today'},
-			{
-				'label': 'Created This Week',
-				'value': prescriptions.filter(created__date__range=(week_start, week_end)).count(),
-				'value_class': 'text-emerald-700',
-				'icon': 'date_range',
-			},
+			{'label': 'Total Prescriptions', 'value': prescriptions.count(),  'icon': 'prescriptions'},
+			{'label': 'Created Today', 'value': prescriptions.filter(created__date=today).count(), 'icon': 'today'},
+			{'label': 'Created This Week','value': prescriptions.filter(created__date__range=(week_start, week_end)).count(),'icon': 'date_range',},
 		]
 		return context
 
@@ -286,7 +286,7 @@ class AdminPrescriptionDetailView(AdminHospitalScopedQuerysetMixin, AdminPharmac
 	"""Show prescription detail for admin/super-admin."""
 
 	model = Prescription
-	template_name = 'appointments/prescription_detail.html'
+	template_name = 'prescription/prescription_detail.html'
 	context_object_name = 'prescription'
 
 	def get_queryset(self):
@@ -304,7 +304,7 @@ class AdminPrescriptionUpdateView(AdminHospitalScopedQuerysetMixin, SuperAdminAn
 
 	model = Prescription
 	form_class = PrescriptionForm
-	template_name = 'appointments/prescription_form.html'
+	template_name = 'prescription/prescription_form.html'
 	context_object_name = 'prescription'
 
 	def get_queryset(self):

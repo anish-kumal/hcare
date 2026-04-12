@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.utils.dateparse import parse_date
 from auditlog.models import LogEntry
 from apps.users.models import User
 from apps.doctors.models import Doctor
@@ -46,6 +47,7 @@ class AuditLogListView(AuditLogBaseView, ListView):
         """Apply search and action filters from query parameters."""
         search_query = (self.request.GET.get('search') or '').strip()
         action = (self.request.GET.get('action') or '').strip()
+        timestamp_date = (self.request.GET.get('timestamp_date') or '').strip()
 
         if search_query:
             queryset = queryset.filter(
@@ -58,6 +60,11 @@ class AuditLogListView(AuditLogBaseView, ListView):
 
         if action in {'0', '1', '2'}:
             queryset = queryset.filter(action=int(action))
+
+        if timestamp_date:
+            parsed_date = parse_date(timestamp_date)
+            if parsed_date:
+                queryset = queryset.filter(timestamp__date=parsed_date)
 
         return queryset
     
@@ -131,10 +138,12 @@ class AuditLogListView(AuditLogBaseView, ListView):
         # Preserve active filters in template controls
         context['search_query'] = (self.request.GET.get('search') or '').strip()
         context['action_filter'] = (self.request.GET.get('action') or '').strip()
+        context['timestamp_date_filter'] = (self.request.GET.get('timestamp_date') or '').strip()
         context['analytics_cards'] = [
-            {'label': 'Total Logs', 'value': logs.count(), 'value_class': 'text-gray-900', 'icon': 'history'},
-            {'label': 'Create Actions', 'value': logs.filter(action=0).count(), 'value_class': 'text-green-700', 'icon': 'add_circle'},
-            {'label': 'Delete Actions', 'value': logs.filter(action=2).count(), 'value_class': 'text-red-700', 'icon': 'delete'},
+            {'label': 'Total Logs', 'value': logs.count(), 'icon': 'history'},
+            {'label': 'Create Actions', 'value': logs.filter(action=0).count(), 'icon': 'add_circle'},
+            {'label': 'Update Actions', 'value': logs.filter(action=1).count(), 'icon': 'edit'},
+            {'label': 'Delete Actions', 'value': logs.filter(action=2).count(), 'icon': 'delete'},
         ]
         
         # Add info about whose logs are being viewed
