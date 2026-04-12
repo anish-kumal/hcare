@@ -1,139 +1,198 @@
 {% extends "base/base.html" %}
 {% load static %}
-{% block title %}Hospital Admin - Health Care{% endblock title %}
+{% block title %}Staff Dashboard - Health Care{% endblock title %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <!-- Mobile menu button (visible only on small screens) -->
-  <button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
-    title="Toggle menu">
-    <span class="material-symbols-outlined text-[24px]">menu</span>
-  </button>
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+	title="Toggle menu">
+	<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
 
-  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
 
+<div class="flex h-screen overflow-hidden">
+	<!-- Sidebar -->
+	{% include "partials/side_bar.html" %}
 
-  <div class="flex h-screen overflow-hidden">
-    <!-- Sidebar -->
-    {% include "partials/side_bar.html" %}
-    
-  <!-- Main Content Wrapper -->
-  <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
-    <!-- Top Header -->
-    <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
-      
-      <div class="w-full flex justify-end items-center gap-6">
+	<!-- Main Content Wrapper -->
+	<div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+		<!-- Top Header -->
+		{% include "partials/header.html" %}
 
-        <!-- Icons -->
-        <div class="flex items-center gap-3">
-          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative" title="Notifications">
-            <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
-          </button>
-          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Settings">
-            <span class="material-symbols-outlined">settings</span>
-          </button>
-          <button class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title="Help">
-            <span class="material-symbols-outlined">help</span>
-          </button>
-        </div>
-      </div>
-    </header>
+		<!-- Scrollable Main Content -->
+		<main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+			<div class="max-w-[1400px] mx-auto space-y-8">
+				<!-- Headline & Actions -->
+				<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
+					<div>
+						<h1 class="text-3xl font-bold text-[#131616] tracking-tight">Staff Dashboard</h1>
+						<p class="text-sm text-gray-500 mt-1">Hospital Front Desk Overview</p>
+					</div>
+				</div>
 
-    <!-- Scrollable Main Content -->
-    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-      <div class="max-w-[1400px] mx-auto space-y-8">
-        <!-- Headline & Actions -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
-
-            <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Hospital Admin Dashboard</h1>
-
-          <div class="flex gap-3 flex-wrap">
-
-            <a href="{% url 'users:user_create' %}" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white border border-primary rounded-lg text-sm font-semibold hover:bg-[#1a3d42] transition-colors shadow-md hover:shadow-lg">
-              <span class="material-symbols-outlined text-[20px]">add_circle</span>
-              Add Staff Member
-            </a>
-          </div>
-        </div>
-
-        <!-- Stats Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Staff Members -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Staff Members</p>
-                <h3 class="text-3xl font-bold text-[#131616]">24</h3>
-              </div>
-              <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined">group</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hospital Info -->
-          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Hospital Status</p>
-                <h3 class="text-3xl font-bold text-[#131616]">Active</h3>
-              </div>
-              <div class="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined">apartment</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Departments -->
-          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Departments</p>
-                <h3 class="text-3xl font-bold text-[#131616]">8</h3>
+                <p class="text-gray-500 text-sm font-medium mb-1">Patients</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ patient_count }}</h3>
+                <p class="text-xs text-gray-400 mt-2">Patient profiles</p>
               </div>
               <div class="size-10 rounded-lg bg-accent flex items-center justify-center text-primary group-hover:bg-[#d4e890] transition-colors">
-                <span class="material-symbols-outlined">domain</span>
+                <span class="material-symbols-outlined">personal_injury</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Doctors</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ doctor_count }}</h3>
+                <p class="text-xs text-gray-400 mt-2">Active doctors</p>
+              </div>
+              <div class="size-10 rounded-lg bg-green-100 flex items-center justify-center text-green-700 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">medical_services</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Appointments (All Time)</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ appointments_all_time }}</h3>
+                <p class="text-xs text-gray-400 mt-2">Total appointments</p>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">event</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm font-medium mb-1">Pending Payments</p>
+                <h3 class="text-3xl font-bold text-[#131616]">{{ pending_payments_count }}</h3>
+                <p class="text-xs text-gray-400 mt-2">Awaiting confirmation</p>
+              </div>
+              <div class="size-10 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-700 group-hover:bg-yellow-400 group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined">hourglass_empty</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Quick Actions Section -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <h2 class="text-lg font-bold text-[#131616] mb-6">Quick Actions</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a href="{% url 'hospitals:admin_hospital_detail' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
-              <div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-[24px]">apartment</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Hospital Details</span>
-            </a>
-            <a href="{% url 'hospitals:admin_hospital_update' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
-              <div class="size-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-[24px]">edit</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Edit Hospital</span>
-            </a>
-            <a href="{% url 'users:user_list' %}" class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
-              <div class="size-12 rounded-lg bg-accent flex items-center justify-center text-primary group-hover:bg-[#d4e890] transition-colors">
-                <span class="material-symbols-outlined text-[24px]">group</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Staff Members</span>
-            </a>
-            <button class="flex flex-col items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group">
-              <div class="size-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-[24px]">help</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">Help & Support</span>
-            </button>
+        <!-- Appointments by period -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-[#131616] mb-1">Appointments by period</h2>
+          <p class="text-sm text-gray-500 mb-5">Counts use each appointment's scheduled date.</p>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This week</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ appointments_this_week }}</p>
+            </div>
+            <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This month</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ appointments_this_month }}</p>
+            </div>
+            <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This year</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ appointments_this_year }}</p>
+            </div>
+            <div class="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">All time</p>
+              <p class="mt-2 text-2xl font-bold text-gray-900 tabular-nums">{{ appointments_all_time }}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Footer -->
-        {% include "partials/footer.html" %}
-    </main>
-  </div>
-  </div>
+
+        <!-- Appointment Trend and Next 5 Visits (side by side on large screens) -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:items-stretch">
+          <!-- Appointment Trend Chart -->
+          <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col min-h-0 h-full min-w-0">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4 shrink-0 relative">
+              <div>
+                <h2 class="text-lg font-bold text-[#131616]">Appointment trend</h2>
+                <p class="text-sm text-gray-500 mt-0.5">{{ chart_period_label }}</p>
+              </div>
+              <form method="get" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Time Range</label>
+                  <select name="chart_period"
+                          class="w-full sm:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                    {% for value, label in chart_period_choices %}
+                      <option value="{{ value }}" {% if chart_period == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button type="submit"
+                        class="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-[#1a3d42] transition-colors inline-flex items-center gap-2 justify-center">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                  Apply
+                </button>
+              </form>
+            </div>
+            {{ staff_chart_data|json_script:"staff-chart-data" }}
+            <div id="appointmentsChart" class="h-[320px] min-h-[320px] max-h-[320px] w-full shrink-0"></div>
+          </div>
+          <!-- Next 5 Visits Sidebar Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col min-h-0 h-full min-w-0">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h2 class="text-lg font-bold text-[#131616]">Next 4 visits</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Earliest upcoming on your schedule</p>
+              </div>
+              <!-- Optionally add a 'View all' link if you have a page for all appointments -->
+              <!-- <a href="#" class="text-sm font-semibold text-primary hover:underline shrink-0 pt-0.5">View all</a> -->
+            </div>
+            <ul class="divide-y divide-gray-100">
+              {% for appt in next_visits %}
+              <li class="flex items-center justify-between gap-3 py-4 px-2">
+                <div class="min-w-0 flex-1">
+                  <span class="font-semibold text-gray-900 block">{{ appt.appointment_date|date:"M d" }} &bull; {{ appt.appointment_time|time:"H:i" }}</span>
+                  <span class="text-sm text-gray-800 block truncate">{{ appt.patient.user.get_full_name }}</span>
+                  <span class="text-xs text-gray-500 block truncate">Doctor: {{ appt.doctor.user.get_full_name }}</span>
+                </div>
+                <div class="text-right shrink-0 pl-2">
+                  <span class="text-xs text-gray-400">{{ appt.status }}</span>
+                </div>
+              </li>
+              {% empty %}
+              <li class="py-10 px-4 text-center text-gray-500 text-sm">No upcoming visits.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+      
+
+				{% include "partials/footer.html" %}
+			</div>
+		</main>
+	</div>
+</div>
+
+<script>
+(function () {
+  const apptDataElement = document.getElementById('staff-chart-data');
+  const apptTarget = document.getElementById('appointmentsChart');
+  if (!apptDataElement || !apptTarget || typeof ApexCharts === 'undefined') return;
+  const apptData = JSON.parse(apptDataElement.textContent);
+  const apptChart = new ApexCharts(apptTarget, {
+    chart: { type: 'bar', height: 320, toolbar: { show: true }, fontFamily: 'inherit' },
+    series: [{ name: 'Appointments', data: apptData.appointments }],
+    xaxis: { categories: apptData.labels, labels: { style: { colors: '#64748b' } } },
+    yaxis: { labels: { style: { colors: '#64748b' } }, min: 0 },
+    plotOptions: { bar: { borderRadius: 8, columnWidth: '55%' } },
+    colors: ['#0284c7'],
+    dataLabels: { enabled: false },
+    grid: { borderColor: '#e5e7eb' },
+    tooltip: { theme: 'light' },
+  });
+  apptChart.render();
+})();
+</script>
 {% endblock content %}

@@ -26,29 +26,32 @@
                 <!-- Search and Filter -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <form method="get" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <!-- Search -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Search Doctors</label>
-                                <input
-                                    type="text"
-                                    name="search"
-                                    value="{{ search_query }}"
-                                    placeholder="Search by name or specialization..."
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Search Appointments</label>
+                                <input type="text" name="search" value="{{ search_query }}"
+                                    placeholder="Search by patient, doctor, or UUID..."
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
                             </div>
 
-                            <!-- Specialization Filter -->
+                            <!-- Status Filter -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
-                                <select
-                                    name="specialization"
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Status</label>
+                                <select name="status"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                                    <option value="">All Specializations</option>
-                                    {% for spec in specializations %}
-                                        <option value="{{ spec }}" {% if selected_specialization == spec %}selected{% endif %}>{{ spec }}</option>
+                                    <option value="">All statuses</option>
+                                    {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
                                 </select>
+                            </div>
+
+                            <!-- Date Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Date</label>
+                                <input type="date" name="appointment_date" value="{{ appointment_date_filter }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
                             </div>
 
                             <!-- Submit Button -->
@@ -117,11 +120,17 @@
                                         <td class="px-6 py-4 text-sm font-semibold text-gray-900">Rs. {{ doctor.consultation_fee }}</td>
                                         <td class="px-6 py-4 text-sm">
                                             <div class="flex gap-2">
+                                                {% if doctor.is_available %}
                                                 <a href="{% url 'appointments:appointment_doctor_schedule' doctor.pk %}"
                                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                                                     title="View Schedule">
                                                     <span class="material-symbols-outlined text-[16px]">schedule</span>
                                                 </a>
+                                                {% else %}
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-200 text-gray-500 cursor-not-allowed" title="Doctor unavailable">
+                                                    <span class="material-symbols-outlined text-[16px]">block</span>
+                                                </span>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>

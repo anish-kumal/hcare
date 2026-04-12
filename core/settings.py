@@ -309,9 +309,9 @@ OTP_VALIDITY_MINUTES = config('OTP_VALIDITY_MINUTES', cast=int)
 OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', cast=int)
 
 # django-axes lockout settings
-AXES_LOCKOUT_PARAMETERS = ["username"]
-AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = 1  # Lockout period in hours (1 hour)
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'locked.html'
 AXES_USERNAME_CALLABLE = 'apps.users.axes.get_axes_username'

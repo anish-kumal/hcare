@@ -621,9 +621,17 @@ class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnly
     template_name = 'appointments/appointment_doctor_list.html'
     context_object_name = 'doctors'
     
+
+    def get_availability_filter(self):
+        avail = self.request.GET.get('availability', '').strip()
+        if avail == 'available':
+            return True
+        elif avail == 'unavailable':
+            return False
+        return None
+
     def get_queryset(self):
         queryset = Doctor.objects.filter(
-            is_available=True,
             is_active=True,
             hospital__is_active=True,
         ).select_related('user', 'hospital', 'department')
@@ -644,6 +652,11 @@ class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnly
                 | Q(hospital__name__icontains=search_query)
             )
 
+        # Filter by doctor availability (is_available)
+        availability = self.get_availability_filter()
+        if availability is not None:
+            queryset = queryset.filter(is_available=availability)
+
         return queryset.order_by('user__first_name', 'user__last_name')
 
     def get_context_data(self, **kwargs):
@@ -651,16 +664,16 @@ class AppointmentDoctorListView(AdminHospitalScopedQuerysetMixin, AdminStaffOnly
         context['search_query'] = self.request.GET.get('search', '').strip()
         context['selected_specialization'] = self.request.GET.get('specialization', '')
         context['specializations'] = Doctor.objects.filter(
-            is_available=True,
             is_active=True,
             hospital__is_active=True,
-
             specialization__isnull=False,
         )
         context['specializations'] = self.scope_queryset_for_admin(
             context['specializations'],
             hospital_field='hospital_id',
         ).exclude(specialization='').values_list('specialization', flat=True).distinct().order_by('specialization')
+        # Add doctor availability filter context
+        context['selected_availability'] = self.request.GET.get('availability', '')
         return context
     
 class AppointmentDoctorScheduleView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, DetailView):

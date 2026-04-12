@@ -1,6 +1,6 @@
 {% load static %}
 <aside
-  class="w-64 h-screen bg-primary text-white fixed lg:static flex flex-col lg:translate-x-0 -translate-x-full transition-transform duration-300 z-40"
+class="w-64 shrink-0 h-screen  lg:h-full min-h-0 bg-primary text-white fixed lg:static flex flex-col lg:translate-x-0 -translate-x-full transition-transform duration-300 z-40"
   id="sidebar">
   <div class="h-20 flex items-center px-6 border-b border-white/10 flex-shrink-0">
     <div class="flex items-center gap-4">
@@ -29,6 +29,21 @@
 
   <nav class="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
 
+    
+      {% if request.user.is_lab_assistant  %}
+        <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'lab_assistant_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+          href="{% url 'lab_assistant_dashboard' %}">
+          <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+          <span class="font-medium text-sm">Dashboard</span>
+        </a>
+      {% endif %}
+      {% if request.user.is_pharmacist  %}
+        <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'pharmacist_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+          href="{% url 'pharmacist_dashboard' %}">
+          <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+          <span class="font-medium text-sm">Dashboard</span>
+        </a>
+      {% endif %}
     {% if request.user.is_super_admin %}
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'super_admin_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'super_admin_dashboard' %}">
@@ -171,6 +186,12 @@
       {% endif %}
 
       {% if request.user.is_staff_member %}
+      <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'staff_dashboard' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
+        href="{% url 'staff_dashboard' %}">
+        <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+        <span class="font-medium text-sm">Dashboard</span>
+      </a>
+
       <a class="group flex items-center gap-3 px-4 py-3 rounded-lg {% if request.resolver_match.url_name in 'patient_list patient_create patient_detail patient_update patient_delete' %}bg-white/10 border border-white/5 text-white shadow-sm{% else %}text-white/70 hover:bg-white/5 hover:text-white{% endif %} transition-all duration-200"
         href="{% url 'patients:patient_list' %}">
         <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">person</span>
