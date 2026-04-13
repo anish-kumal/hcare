@@ -3,7 +3,7 @@ from django.views.generic import CreateView, ListView, DetailView, UpdateView, D
 from django.views import View
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import logout, update_session_auth_hash
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy, NoReverseMatch
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.conf import settings
@@ -13,6 +13,10 @@ from django.db.models import Count, Max, Q
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from django.utils.html import strip_tags
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.contrib.sites.shortcuts import get_current_site
 from axes.models import AccessAttempt
 from axes.utils import reset as axes_reset
 from .forms import (
@@ -100,13 +104,75 @@ class UserRegisterView(CreateView):
     form_class = UserRegistrationForm
     template_name = 'patients/register.html'
     success_url = reverse_lazy('users:login')
+
     def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, 'Registration successful! Please log in with your new account.')
-        return response
+        self.object = form.save()
+        uid = urlsafe_base64_encode(force_bytes(self.object.pk))
+        token = default_token_generator.make_token(self.object)
+        try:
+            activation_path = reverse('users:activate_account', kwargs={'uidb64': uid, 'token': token})
+        except NoReverseMatch:
+            activation_path = reverse('activate_account', kwargs={'uidb64': uid, 'token': token})
+
+        activation_url = self.request.build_absolute_uri(activation_path)
+
+        context = {
+            'user_name': self.object.get_full_name() or self.object.username,
+            'activation_url': activation_url,
+            'support_email': settings.DEFAULT_FROM_EMAIL,
+        }
+
+        try:
+            html_message = render_to_string('email/account_activation_email.html', context)
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject='Activate Your Health Care Account',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[self.object.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            messages.success(
+                self.request,
+                'Registration successful. Please check your email and activate your account before login.'
+            )
+        except Exception:
+            self.object.delete()
+            messages.error(
+                self.request,
+                'Registration failed because activation email could not be sent. Please try again.'
+            )
+            return self.form_invalid(form)
+
+        return redirect(self.success_url)
+
     def form_invalid(self, form):
         messages.error(self.request, 'Registration failed.')
         return super().form_invalid(form)
+
+
+class ActivateAccountView(View):
+    """Activate a newly registered account from email verification link."""
+
+    def get(self, request, uidb64, token, *args, **kwargs):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user and default_token_generator.check_token(user, token):
+            if user.is_active:
+                messages.info(request, 'Your account is already active. You can login now.')
+            else:
+                user.is_active = True
+                user.save(update_fields=['is_active'])
+                messages.success(request, 'Your account has been activated successfully. You can now login.')
+        else:
+            messages.error(request, 'Activation link is invalid or expired. Please register again.')
+
+        return redirect('users:login')
 
 class UserLoginView(LoginView):
     """
@@ -121,10 +187,18 @@ class UserLoginView(LoginView):
     
     def form_valid(self, form):
         """
-        If the form is valid, log the user in only if they are a patient.
-        Any other role is rejected with an unauthorized message.
+        If the form is valid, log the user in only if they are a patient and active.
+        Any other role or inactive user is rejected with an error message.
         """
         user = form.get_user()
+        if not user.is_active:
+            logout(self.request)
+            messages.error(
+                self.request,
+                'Invalid email/username or password. Please try again.'
+            )
+            return redirect(reverse_lazy('users:login'))
+
         if not user.is_patient:
             logout(self.request)
             messages.error(
@@ -203,11 +277,19 @@ class AdministerLoginView(LoginView):
 
     def form_valid(self, form):
         user = form.get_user()
+        if not user.is_active:
+            logout(self.request)
+            messages.error(
+                self.request,
+                'Invalid email/username or password. Please try again.'
+            )
+            return redirect(reverse_lazy('users:administer_login'))
+
         if user.is_patient:
             logout(self.request)
             messages.error(
                 self.request,
-                'Invalid valid email/username or password. Please try again.'
+                'Invalid email/username or password. Please try again.'
             )
             return redirect(reverse_lazy('users:administer_login'))
 

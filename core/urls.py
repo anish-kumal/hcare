@@ -35,6 +35,8 @@ from apps.base.views import (
     StaffDashboardView,
     Custom404View,
     Custom500View,
+    Custom403View,
+    Custom400View,
 )
 
 
@@ -80,3 +82,5 @@ if settings.SERVE_MEDIA:
 
 handler404 = Custom404View.as_view()
 handler500 = Custom500View.as_view()
+handler403 = Custom403View.as_view()
+handler400 = Custom400View.as_view()

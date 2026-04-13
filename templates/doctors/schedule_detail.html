@@ -13,55 +13,68 @@
     {% include "partials/side_bar.html" %}
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
-      <header class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
-        <div>
-          <h1 class="text-xl font-semibold text-[#131616]">Schedule Detail</h1>
-          <p class="text-sm text-gray-500">View your availability slot details</p>
-        </div>
-        <div class="flex items-center gap-3">
-          {% if schedule %}
-            <a href="{% url 'doctors:doctor_schedule_edit' schedule.pk %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-[#1a3d42]">
-              <span class="material-symbols-outlined text-[18px]">edit</span>
-              Edit Schedule
-            </a>
-          {% endif %}
-          <a href="{% url 'doctors:doctor_schedule_list' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 hover:border-primary hover:text-primary bg-white">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back to List
-          </a>
-        </div>
-      </header>
+      {% include "partials/header.html" %}
 
       <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div class="max-w-[900px] mx-auto">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="max-w-[1000px] mx-auto space-y-8">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+            <div>
+              <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Schedule Detail</h1>
+              <p class="text-sm text-gray-500 mt-1">View your availability slot details.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              {% if schedule %}
+                <a href="{% url 'doctors:doctor_schedule_edit' schedule.pk %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-[#1a3d42] transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                  Edit Schedule
+                </a>
+              {% endif %}
+              <a href="{% url 'doctors:doctor_schedule_list' %}" class="px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back
+              </a>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {% if schedule %}
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-gray-400">Weekday</p>
-                  <p class="text-base font-semibold text-gray-700">{{ schedule.get_weekday_display }}</p>
-                </div>
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-gray-400">Time</p>
-                  <p class="text-base font-semibold text-gray-700">{{ schedule.start_time }} - {{ schedule.end_time }}</p>
-                </div>
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-gray-400">Slot Duration</p>
-                  <p class="text-base font-semibold text-gray-700">{{ schedule.slot_duration }} minutes</p>
-                </div>
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-gray-400">Max Patients</p>
-                  <p class="text-base font-semibold text-gray-700">{{ schedule.max_patients }}</p>
-                </div>
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-gray-400">Status</p>
-                  <span class="inline-flex text-xs font-semibold px-2 py-1 rounded-full {% if schedule.is_available %}bg-green-50 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
-                    {% if schedule.is_available %}Active{% else %}Inactive{% endif %}
-                  </span>
-                </div>
+              <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-[#131616]">Availability Information</h2>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {% if schedule.is_available %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                  {% if schedule.is_available %}Active{% else %}Inactive{% endif %}
+                </span>
               </div>
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-400 mb-1">Weekday</p>
+                    <p class="text-base font-semibold text-gray-700">{{ schedule.get_weekday_display }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-400 mb-1">Time</p>
+                    <p class="text-base font-semibold text-gray-700">{{ schedule.start_time }} - {{ schedule.end_time }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-400 mb-1">Slot Duration</p>
+                    <p class="text-base font-semibold text-gray-700">{{ schedule.slot_duration }} minutes</p>
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-400 mb-1">Max Patients</p>
+                    <p class="text-base font-semibold text-gray-700">{{ schedule.max_patients }}</p>
+                  </div>
+                </div>
             {% else %}
-              <p class="text-sm text-gray-500">Schedule not found.</p>
+              <div class="p-12 text-center bg-accent/30">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 border">
+                  <span class="material-symbols-outlined text-primary text-[32px]">event_busy</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Schedule Not Found</h3>
+                <p class="text-gray-600 mb-6">This schedule entry could not be found or may have been removed.</p>
+                <a href="{% url 'doctors:doctor_schedule_list' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-[#1a3d42] transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                  Go to Schedule List
+                </a>
+              </div>
             {% endif %}
           </div>
         </div>

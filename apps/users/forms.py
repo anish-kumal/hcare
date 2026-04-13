@@ -100,6 +100,7 @@ class UserRegistrationForm(UserCreationForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.user_type = User.UserType.PATIENT
+        user.is_active = False
         user.is_default_password = False
         if commit:
             user.save()

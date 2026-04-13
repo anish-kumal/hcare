@@ -1,10 +1,10 @@
 from django.urls import path
 from .views import (
-    UserRegisterView, UserLoginView, UserLogoutView, 
+    UserRegisterView, UserLoginView, UserLogoutView,
     AdministerLoginView, AdministerLogoutView,
-    UserListView, UserDetailView, 
-    UserUpdateView, UserDeleteView,UserCreateView,PasswordChangeView, UserProfileView, UserProfileUpdateView
-    ,AxesLockListView, AxesUnlockUserView
+    UserListView, UserDetailView,
+    UserUpdateView, UserDeleteView, UserCreateView, PasswordChangeView, UserProfileView, UserProfileUpdateView,
+    AxesLockListView, AxesUnlockUserView, ActivateAccountView,
 
 )
 
@@ -13,6 +13,7 @@ app_name = 'users'
 urlpatterns = [
     # Authentication URLs
     path('register/', UserRegisterView.as_view(), name='register'),
+    path('activate/<uidb64>/<token>/', ActivateAccountView.as_view(), name='activate_account'),
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('administer/login/', AdministerLoginView.as_view(), name='administer_login'),

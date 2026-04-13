@@ -1306,3 +1306,13 @@ class Custom404View(View):
 class Custom500View(View):
     def dispatch(self, request, *args, **kwargs):
         return render(request, 'custom/500.html', status=500)
+
+class Custom403View(View):
+    def dispatch(self, request, *args, **kwargs):
+        return render(request, 'custom/403.html', status=403)
+
+class Custom400View(View):
+    def dispatch(self, request, *args, **kwargs):
+        return render(request, 'custom/400.html', status=400)
+
+    

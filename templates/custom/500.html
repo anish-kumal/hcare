@@ -1,60 +1,29 @@
 {% extends "base/base.html" %}
+{% load static %}
 
-{% block title %}Server Error{% endblock title %}
+{% block title %}Page Not Found{% endblock title %}
 
 {% block content %}
-<section class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(220,238,178,0.45),_transparent_35%),linear-gradient(180deg,_#f8fbf6_0%,_#edf5ef_100%)] px-6 py-10 md:px-10 lg:px-16">
-    <div class="mx-auto flex max-w-6xl flex-col gap-8">
-        <div class="rounded-3xl bg-primary px-6 py-5 shadow-lg">
-            <div class="flex items-center justify-between gap-4">
-                <a href="{% url 'index' %}" class="text-2xl font-bold uppercase tracking-[0.2em] text-white">Health Care</a>
-                <a href="{% url 'index' %}" class="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-primary transition duration-300 hover:bg-white">Back to home</a>
-            </div>
-        </div>
-
-        <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <div class="rounded-[2rem] bg-white/90 p-8 shadow-xl ring-1 ring-primary/10 md:p-12">
-                <p class="text-sm font-semibold uppercase tracking-[0.35em] text-primary/60">Error 500</p>
-                <h1 class="mt-4 max-w-xl text-4xl font-bold leading-tight text-primary md:text-6xl">Something went wrong on our side.</h1>
-                <p class="mt-5 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                    The server hit an unexpected issue while handling your request. Please retry in a moment, or return to a stable section below.
-                </p>
-
-                <div class="mt-8 flex flex-wrap gap-4">
-                    <a href="{% url 'index' %}" class="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-primary/90">Go to homepage</a>
-                    <a href="{% url 'appointments:doctor_list' %}" class="rounded-2xl border border-primary/15 bg-accent px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-accent/80">Browse doctors</a>
-                    <a href="{% url 'users:login' %}" class="rounded-2xl border border-primary/15 px-6 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-50">Sign in</a>
-                </div>
-            </div>
-
-            <div class="rounded-[2rem] bg-primary p-8 text-white shadow-xl md:p-10">
-                <div class="flex h-full flex-col justify-between gap-8">
-                    <div>
-                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-accent">Quick recovery links</p>
-                        <div class="mt-6 space-y-4">
-                            <a href="{% url 'administer' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
-                                <span class="block text-lg font-semibold">Hospital onboarding</span>
-                                <span class="mt-1 block text-sm text-white/70">Return to the onboarding landing page.</span>
-                            </a>
-                            <a href="{% url 'appointments:doctor_list' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
-                                <span class="block text-lg font-semibold">Doctor directory</span>
-                                <span class="mt-1 block text-sm text-white/70">Continue by exploring available doctors.</span>
-                            </a>
-                            <a href="{% url 'users:register' %}" class="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition duration-300 hover:bg-white/10">
-                                <span class="block text-lg font-semibold">Create an account</span>
-                                <span class="mt-1 block text-sm text-white/70">Start a fresh session with a new registration.</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="rounded-2xl bg-white/10 p-5">
-                        <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Note</p>
-                        <p class="mt-2 text-sm leading-6 text-white/75">
-                            This custom 500 page appears when <span class="font-semibold text-white">DEBUG=False</span>. In development mode, Django shows a technical traceback screen instead.
-                        </p>
-                    </div>
-                </div>
-            </div>
+<section class="h-screen overflow-hidden bg-primary px-4 py-4 md:px-6 md:py-6">
+    <div class="mx-auto flex h-full w-full max-w-3xl items-center justify-center">
+        <div class="w-full rounded-3xl border border-[#dceeb2] bg-white px-6 py-6 text-center shadow-[0_14px_30px_rgba(38,70,75,0.12)] md:px-10 md:py-8">
+            <img
+                src="{% static 'images/robot.png' %}"
+                alt="error robot"
+                class="mx-auto h-auto w-full max-w-[320px] object-contain md:max-w-[360px] lg:max-w-[400px]"
+            >
+            <h1 class="mt-5 text-2xl font-bold leading-tight text-[#26464b] md:text-3xl">
+                Something went wrong
+            </h1>
+            <p class="mx-auto mt-3 max-w-[520px] text-sm leading-6 text-[#26464b] md:text-base">
+                Our server encountered an error. Please try again later.
+            </p>
+            <a
+                href="{% url 'index' %}"
+                class="mt-6 inline-flex items-center justify-center rounded-xl bg-[#26464b] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(38,70,75,0.28)] transition hover:bg-[#1f3a3e]"
+            >
+                Go back home
+            </a>
         </div>
     </div>
 </section>
