@@ -8,6 +8,8 @@ from apps.base.validation import (
     validate_unique_email,
     validate_unique_username,
     validate_username_format,
+    validate_nepal_phone_number,
+    validate_unique_registration_number,
 )
 from apps.users.models import User
 
@@ -147,6 +149,33 @@ class HospitalForm(forms.ModelForm):
 
     def clean_logo(self):
         return validate_image_max_size(self.cleaned_data.get('logo'))
+
+    def clean_phone_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
+
+    def clean_emergency_contact(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
+
+    def clean_registration_number(self):
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_registration_number(
+            self.cleaned_data.get('registration_number'),
+            model=Hospital,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+            error_message='This registration number is already registered.',
+        )
+
+    def clean_email(self):
+        email = validate_email_format(self.cleaned_data.get('email'))
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_email(
+            email,
+            model=Hospital,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+            error_message='This email is already registered.',
+        )
 
     def save(self, commit=True):
         hospital = super().save(commit=False)
@@ -428,6 +457,32 @@ class HospitalRegistrationForm(forms.ModelForm):
     def clean_logo(self):
         return validate_image_max_size(self.cleaned_data.get('logo'))
 
+    def clean_phone_number(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('phone_number'))
+
+    def clean_emergency_contact(self):
+        return validate_nepal_phone_number(self.cleaned_data.get('emergency_contact'))
+        
+    def clean_registration_number(self):
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_registration_number(
+            self.cleaned_data.get('registration_number'),
+            model=Hospital,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+            error_message='This registration number is already registered.',
+        )
+
+    def clean_email(self):
+        email = validate_email_format(self.cleaned_data.get('email'))
+        exclude_pk = self.instance.pk if self.instance and self.instance.pk else None
+        return validate_unique_email(
+            email,
+            model=Hospital,
+            exclude_pk=exclude_pk,
+            case_insensitive=True,
+            error_message='This email is already registered.',
+        )
 
 class KhaltiSetupForm(forms.ModelForm):
     """Form for setting up Khalti payment keys - Only khalti_secret_key and khalti_public_key"""

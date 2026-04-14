@@ -25,7 +25,7 @@ class Hospital(BaseModel):
     )
     
     phone_number = models.CharField(
-        max_length=15,
+        max_length=32,
         help_text="Hospital contact phone"
     )
     
@@ -87,7 +87,7 @@ class Hospital(BaseModel):
     )
     
     emergency_contact = models.CharField(
-        max_length=15,
+        max_length=32,
         blank=True,
         null=True,
         help_text="Emergency contact number"

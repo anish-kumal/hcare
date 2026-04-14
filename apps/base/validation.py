@@ -28,6 +28,25 @@ def validate_email_format(email):
 
     return email
 
+def validate_unique_registration_number(
+    registration_number,
+    *,
+    model,
+    exclude_pk=None,
+    case_insensitive=True,
+    error_message='This registration number is already registered.',
+):
+    registration_number = (registration_number or '').strip()
+    if not registration_number:
+        return registration_number
+    return _validate_unique_value(
+        registration_number,
+        model=model,
+        field_name='registration_number',
+        exclude_pk=exclude_pk,
+        case_insensitive=case_insensitive,
+        error_message=error_message,
+    )
 
 def _validate_unique_value(
     value,
@@ -100,7 +119,7 @@ def validate_nepal_phone_number(phone_number):
     if re.match(r'^(98|97|96)\d{8}$', phone_number_digits):
         return phone_number
 
-    if re.match(r'^\+977\d{9}$', phone_number_digits):
+    if re.match(r'^\+9779\d{9}$', phone_number_digits):
         return phone_number
 
     if re.match(r'^\+977\d{6,7}$', phone_number_digits):

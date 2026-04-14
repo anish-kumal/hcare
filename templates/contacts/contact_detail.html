@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Contact Message - Healthcare System{% endblock %}
+
+{% block content %}
+
+<!-- Mobile menu button (visible only on small screens) -->
+<button id="menuToggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
+    title="Toggle menu">
+    <span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+
+<div id="menuOverlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    {% include "partials/side_bar.html" %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
+        <!-- Top Header -->
+        {% include "partials/header.html" %}
+
+        <!-- Scrollable Main Content -->
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-[1000px] mx-auto space-y-8">
+                <!-- Headline & Actions -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <h1 class="text-2xl md:text-3xl font-bold text-[#131616] tracking-tight">Contact Message</h1>
+                    <a href="{% url 'contact_list' %}"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
+                        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                        Back to Messages
+                    </a>
+                </div>
+
+                <!-- Sender & meta -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-primary px-6 py-4 md:py-5">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2 leading-tight">
+                            <span class="material-symbols-outlined text-[20px]">contact_mail</span>
+                            Message Information
+                        </h2>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-200">
+                            <div>
+                                <h3 class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Submitted
+                                </h3>
+                                <p class="text-lg font-semibold text-gray-900">{{ contact.created|date:"F d, Y - H:i:s" }}
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Subject</h3>
+                                <p class="text-lg font-semibold text-gray-900">{{ contact.subject }}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-8">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined">person</span>
+                                    Sender
+                                </h3>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <p class="font-semibold text-gray-900 mb-3">{{ contact.full_name }}</p>
+                                    <div class="space-y-2 text-sm">
+                                        <div>
+                                            <span class="text-gray-600">Email:</span>
+                                            <p class="text-primary font-medium mt-1">{{ contact.email }}</p>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">Phone:</span>
+                                            <p class="text-gray-900 font-medium mt-1">{{ contact.phone_number }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message body -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-gray-700 px-6 py-4 md:py-5">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2 leading-tight">
+                            <span class="material-symbols-outlined text-[20px]">chat</span>
+                            Message
+                        </h2>
+                    </div>
+                    <div class="p-8">
+                        <div class="prose prose-sm max-w-none text-gray-800 whitespace-pre-wrap">{{ contact.message }}</div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</div>
+
+{% endblock %}

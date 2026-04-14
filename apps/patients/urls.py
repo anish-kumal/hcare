@@ -10,6 +10,11 @@ from .views import (
     PatientDetailView,
     PatientUpdateView,
     PatientDeleteView,
+    PatientUpcomingAppointmentsView,
+    PatientPastAppointmentsView,
+    PatientPrescriptionsView,
+    PatientMedicalReportsView,
+
 )
 
 app_name = 'patients'
@@ -25,4 +30,8 @@ urlpatterns = [
     path('<int:pk>/', PatientDetailView.as_view(), name='patient_detail'),
     path('<int:pk>/edit/', PatientUpdateView.as_view(), name='patient_update'),
     path('<int:pk>/delete/', PatientDeleteView.as_view(), name='patient_delete'),
+    path('profile/appointments/upcoming/', PatientUpcomingAppointmentsView.as_view(), name='patient_upcoming_appointments'),
+    path('profile/appointments/past/', PatientPastAppointmentsView.as_view(), name='patient_past_appointments'),
+    path('profile/prescriptions/', PatientPrescriptionsView.as_view(), name='patient_prescriptions'),
+    path('profile/medical-reports/', PatientMedicalReportsView.as_view(), name='patient_medical_reports'),
 ]

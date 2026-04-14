@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.conf import settings
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.db.models.deletion import ProtectedError
@@ -487,7 +487,36 @@ class HospitalRegistartionView(CreateView):
             self.request,
             'Registration successful! Your hospital will be reviewed and verified by our team shortly. A yearly fee of NRs 10,000 applies for listing approval.'
         )
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        hospital = self.object
+        try:
+            administer_url = self.request.build_absolute_uri(reverse('administer'))
+            context = {
+                'hospital_name': hospital.name,
+                'registration_number': hospital.registration_number,
+                'contact_email': hospital.email,
+                'administer_url': administer_url,
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+            html_message = render_to_string(
+                'email/hospital_registration_confirmation_email.html',
+                context,
+            )
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject=f'Hospital registration received – {hospital.name}',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[hospital.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception:
+            messages.warning(
+                self.request,
+                'Your registration was saved, but the confirmation email could not be sent. Please contact us if you need a copy.',
+            )
+        return response
     
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')

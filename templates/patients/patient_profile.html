@@ -29,7 +29,31 @@
 <div class="bg-gray-50">
 <div class="min-h-screen">
     <div class="max-w-7xl mx-auto px-4 md:px-8 py-12">
-        
+
+        <!-- Quick Access Links Section -->
+        <div class="flex flex-wrap gap-4 justify-center mb-8">
+            <a href="{% url 'patients:patient_upcoming_appointments' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2 shadow">
+                <span class="material-symbols-outlined text-base">event_upcoming</span>
+                Upcoming Appointments
+            </a>
+            <a href="{% url 'patients:patient_medical_reports' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2 shadow">
+                <span class="material-symbols-outlined text-base">description</span>
+                Medical Reports
+            </a>
+            <a href="{% url 'patients:patient_prescriptions' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2 shadow">
+                <span class="material-symbols-outlined text-base">prescriptions</span>
+                Prescriptions
+            </a>
+            <a href="{% url 'patients:patient_past_appointments' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2 shadow">
+                <span class="material-symbols-outlined text-base">history</span>
+                Past Appointments
+            </a>
+            <a href="{% url 'payments:patient_payment_list' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2 shadow">
+                <span class="material-symbols-outlined text-base">payment</span>
+                Payemnys
+            </a>
+        </div>
+
         <!-- Profile Info Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
             <div class="p-8">
@@ -116,8 +140,11 @@
         
         <!-- Upcoming Appointments Section -->
         <div class="mb-8">
-            <h3 class="text-2xl font-bold text-gray-900 mb-6">Upcoming Appointments</h3>
-            
+            <div class="flex items-center justify-between ">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Upcoming Appointments</h3>
+                <a href="{% url 'patients:patient_upcoming_appointments' %}">View all</a>
+            </div>
+
             {% if upcoming_appointments %}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
@@ -164,7 +191,7 @@
                     </div>
                 </div>
             {% else %}
-                <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                <div class="bg-accent/30 border border-accent text-primary px-6 py-4 rounded-lg">
                     <p class="flex items-center gap-2">
                         <span class="material-symbols-outlined">info</span>
                         No upcoming appointments. <a href="{% url 'appointments:doctor_list' %}" class="font-semibold underline ml-1">Book one now</a>
@@ -175,7 +202,10 @@
 
             <!-- Medical Reports Section -->
             <div class="mb-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">My Medical Reports</h3>
+                <div class="flex items-center justify-between ">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Medical Reports</h3>
+                    <a href="{% url 'patients:patient_medical_reports' %}">View all</a>
+                </div>
 
                 {% if medical_reports %}
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -215,7 +245,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                    <div class="bg-accent/30 border border-accent text-primary px-6 py-4 rounded-lg">
                         <p class="flex items-center gap-2">
                             <span class="material-symbols-outlined">info</span>
                             No medical reports have been shared with your account yet.
@@ -226,7 +256,10 @@
 
             <!-- Prescriptions Section -->
             <div class="mb-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">My Prescriptions</h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Prescriptions</h3>
+                    <a href="{% url 'patients:patient_prescriptions' %}">View all</a>   
+                </div>
 
                 {% if prescriptions %}
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -264,7 +297,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg">
+                    <div class="bg-accent/30 border border-accent text-primary px-6 py-4 rounded-lg">
                         <p class="flex items-center gap-2">
                             <span class="material-symbols-outlined">info</span>
                             No prescriptions are available for your account yet.
@@ -275,13 +308,17 @@
 
         <!-- Past Appointments Section -->
         {% if past_appointments %}
-            <div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Past Appointments</h3>
-                
+            <div class="mb-8">
+                <div class="flex items-center justify-between ">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Past Appointments</h3>
+                    <a href="{% url 'patients:patient_past_appointments' %}">
+                        View all
+                    </a>
+                </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-200 text-gray-900">
+                            <thead class="bg-primary text-white">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-sm font-semibold">Doctor</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold">Specialization</th>
@@ -327,4 +364,5 @@
     </div>
 </div>
 </div>
+{% include "partials/patient_footer.html" %}
 {% endblock %}

@@ -124,29 +124,133 @@ class PatientProfileView(PatientOnlyMixin, DetailView):
         context['medical_reports'] = patient.medical_reports.select_related(
             'primary_hospital',
             'uploaded_by',
-        ).order_by('-created')
+        ).order_by('-created')[:5]
 
         context['prescriptions'] = Prescription.objects.filter(
             appointment__patient=patient,
         ).select_related(
             'appointment',
             'appointment__doctor__user',
-        ).prefetch_related('medicines').order_by('-created')
+        ).prefetch_related('medicines').order_by('-created')[:5]
         
         # Get upcoming appointments
         context['upcoming_appointments'] = PatientAppointment.objects.filter(
             patient=patient,
             appointment_date__gte=timezone.now().date(),
             status__in=['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'FOLLOW_UP']
-        ).select_related('doctor', 'doctor__user').order_by('appointment_date', 'appointment_time')
-        
-        # Get past appointments
+        ).select_related('doctor', 'doctor__user').order_by('appointment_date', 'appointment_time')[:5]
+
+        # Get past appointments (only COMPLETED or CANCELLED, limit 5)
         context['past_appointments'] = PatientAppointment.objects.filter(
             patient=patient,
-            appointment_date__lt=timezone.now().date()
-        ).select_related('doctor', 'doctor__user').order_by('-appointment_date', '-appointment_time')
+            status__in=['COMPLETED', 'CANCELLED']
+        ).select_related('doctor', 'doctor__user').order_by('-appointment_date', '-appointment_time')[:5]
 
         return context
+    
+
+
+class PatientUpcomingAppointmentsView(PatientOnlyMixin, ListView):
+    """View upcoming appointments for patient profile with pagination."""
+    model = PatientAppointment
+    template_name = 'patients/patient_profile_upcoming_appointments.html'
+    context_object_name = 'appointments'
+    paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Get upcoming appointments for the current patient"""
+        patient = get_object_or_404(Patient, user=self.request.user)
+        return PatientAppointment.objects.filter(
+            patient=patient,
+            appointment_date__gte=timezone.now().date(),
+            status__in=['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'FOLLOW_UP']
+        ).select_related('doctor', 'doctor__user').order_by('appointment_date', 'appointment_time')
+    
+class PatientPastAppointmentsView(PatientOnlyMixin, ListView):
+    """View past appointments for patient profile with pagination."""
+    model = PatientAppointment
+    template_name = 'patients/patient_profile_past_appointments.html'
+    context_object_name = 'appointments'
+    paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Get past appointments for the current patient"""
+        patient = get_object_or_404(Patient, user=self.request.user)
+        return PatientAppointment.objects.filter(
+            patient=patient,
+            status__in=['COMPLETED', 'CANCELLED']
+        ).select_related('doctor', 'doctor__user').order_by('-appointment_date', '-appointment_time')
+    
+class PatientMedicalReportsView(PatientOnlyMixin, ListView):
+    """View medical reports for patient profile with pagination."""
+    model = Patient
+    template_name = 'patients/patient_profile_medical_reports.html'
+    context_object_name = 'medical_reports'
+    paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Get medical reports for the current patient"""
+        patient = get_object_or_404(Patient, user=self.request.user)
+        return patient.medical_reports.select_related(
+            'primary_hospital',
+            'uploaded_by',
+        ).order_by('-created')
+    
+class PatientPrescriptionsView(PatientOnlyMixin, ListView):
+    """View prescriptions for patient profile with pagination."""
+    model = Prescription
+    template_name = 'patients/patient_profile_prescriptions.html'
+    context_object_name = 'prescriptions'
+    paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Patient.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                'Please complete your patient profile to continue.'
+            )
+            return redirect('patients:patient_profile_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Get prescriptions for the current patient"""
+        patient = get_object_or_404(Patient, user=self.request.user)
+        return Prescription.objects.filter(
+            appointment__patient=patient,
+        ).select_related(
+            'appointment',
+            'appointment__doctor__user',
+        ).prefetch_related('medicines').order_by('-created')
+    
+
+
 
 
 class PatientProfileEditView(PatientOnlyMixin, UpdateView):

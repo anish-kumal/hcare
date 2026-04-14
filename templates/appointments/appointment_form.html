@@ -40,11 +40,14 @@
                                 <span class="text-gray-600">{{ doctor.experience_years }} years</span>
                             </p>
                             <p class="pt-2">
-                                <strong class="text-accent text-base">Consultation Fee:</strong>
-                                <span class="text-accent font-bold text-base">Ns {{ doctor.consultation_fee }}</span>
+                                <strong class="text-gray-700 ">Consultation Fee:</strong>
+                                <span class="text-gray-900">NPR {{ doctor.consultation_fee }}</span>
                             </p>
                         </div>
                     </div>
+                </div>
+                <div class="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 rounded">
+                    <strong>Notice:</strong> Kindly arrive 5 minutes early or within 5 minutes after your booking time. If you are late, your turn will be shifted to the end of the current queue.
                 </div>
 
                 <!-- Booking Form -->
@@ -105,6 +108,10 @@
                             placeholder="Any additional information you'd like to share"></textarea>
                     </div>
 
+                    <p class="mb-6 text-sm text-gray-600">
+                        After you confirm, you will be taken to your <strong class="text-gray-800">payment page</strong> for this booking. Payment method (cash or Khalti) is chosen there only.
+                    </p>
+
                     <div class="flex gap-4">
                         <a href="{% url 'appointments:doctor_detail' doctor.pk %}"
                             class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors text-center">
@@ -113,7 +120,7 @@
                         <button type="submit"
                             class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
                             <span class="inline-flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-base">check</span> Confirm Booking
+                                <span class="material-symbols-outlined text-base">check</span> Confirm booking
                             </span>
                         </button>
                     </div>

@@ -1,7 +1,9 @@
-import re
-
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from collections import defaultdict
 from django.db.models import Count, Q
 from django.shortcuts import redirect, get_object_or_404
@@ -9,7 +11,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
+from apps.base.mixin import AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
 from apps.doctors.models import Doctor
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
@@ -362,9 +364,51 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
                 'payment_method': AppointmentPayment.PaymentMethod.CASH,
             },
         )
-        
+
+        patient_user = patient.user
+        if patient_user.email:
+            appointment_detail_url = self.request.build_absolute_uri(
+                reverse('appointments:appointment_detail', kwargs={'pk': appointment.pk})
+            )
+            site_url = self.request.build_absolute_uri('/')
+            doctor_display = doctor.user.get_full_name() or doctor.user.username
+            email_context = {
+                'user_name': patient_user.get_full_name() or patient_user.username,
+                'doctor_full_name': f'Dr. {doctor_display}',
+                'hospital_name': doctor.hospital.name,
+                'appointment_date': appointment_date.strftime('%B %d, %Y'),
+                'appointment_time': appointment_time.strftime('%I:%M %p').lstrip('0'),
+                'status_label': appointment.get_status_display(),
+                'consultation_fee': appointment_fee,
+                'appointment_detail_url': appointment_detail_url,
+                'site_url': site_url,
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+            try:
+                html_message = render_to_string(
+                    'email/appointment_booking_confirmation_email.html',
+                    email_context,
+                )
+                plain_message = strip_tags(html_message)
+                send_mail(
+                    subject='Your appointment is confirmed — Health Care System',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[patient_user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except Exception:
+                messages.warning(
+                    self.request,
+                    'Appointment booked successfully, but the confirmation email could not be sent.',
+                )
+
         messages.success(self.request, 'Appointment booked successfully! Please choose your payment method.')
-        return redirect('payments:patient_payment_list')
+        return redirect(
+            'payments:patient_payment_list_for_appointment',
+            appointment_id=appointment.pk,
+        )
     
     def form_invalid(self, form):
         """Handle invalid form"""
@@ -436,12 +480,20 @@ class AppointmentDetailView(PatientAccessMixin, DetailView):
             context['doctor_full_name'] = f"Dr. {appointment.doctor.user.get_full_name()}"
         else:
             context['doctor_full_name'] = "Doctor"
-        
+
         context['payment'] = payment
         context['show_khalti_pay_button'] = bool(
             payment and payment.status != AppointmentPayment.PaymentStatus.PAID
         )
         context['can_edit_appointment'] = appointment.status not in ['COMPLETED', 'CANCELLED']
+
+        # Add prescription details link if prescription exists
+        prescription = Prescription.objects.filter(appointment=appointment).first()
+        if prescription:
+            context['prescription_detail_url'] = reverse('prescription:patient_prescription_detail', kwargs={'pk': prescription.pk})
+        else:
+            context['prescription_detail_url'] = None
+
         return context
 
 

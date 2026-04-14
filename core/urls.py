@@ -41,6 +41,8 @@ from apps.base.views import (
     HowItWorksView,
     AdministerContactView,
     AdministerPricingView,
+    ContactListView,
+    ContactDetailsView,
 )
 
 
@@ -64,6 +66,8 @@ urlpatterns = [
     path('payments/', include('apps.payments.urls')),
     path('medical-reports/', include('apps.medical_report.urls')),
     path('logs/', include('apps.logs.urls')),
+    path('contacts/', ContactListView.as_view(), name='contact_list'),
+    path('contacts/<int:pk>/', ContactDetailsView.as_view(), name='contact_detail'),
     path('prescriptions/', include('apps.prescription.urls', 'prescription')),
 
     # Dashboard routes based on role

@@ -23,62 +23,55 @@
     <div class="max-w-6xl mx-auto px-4 md:px-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Register Your Hospital</h2>
-            {% if messages %}
-                {% for msg in messages %}
-                    <div class="mb-4 px-4 py-3 rounded-lg border {{ msg.tags }} {% if msg.level_tag == 'success' %}border-green-300 bg-green-50 text-green-700{% elif msg.level_tag == 'error' %}border-red-300 bg-red-50 text-red-700{% else %}border-blue-300 bg-blue-50 text-blue-700{% endif %}">
-                        {{ msg }}
-                    </div>
-                {% endfor %}
-            {% endif %}
 
             <form method="post" enctype="multipart/form-data" class="space-y-8">
                 {% csrf_token %}
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Hospital Name *</label>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Hospital Name  <span class="text-red-600">*</span></label>
                         {{ form.name }}
                         {% if form.name.errors %}<p class="text-sm text-red-600 mt-1">{{ form.name.errors.0 }}</p>{% endif %}
                     </div>
 
                     <div>
-                        <label for="{{ form.registration_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Registration Number *</label>
+                        <label for="{{ form.registration_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Registration Number  <span class="text-red-600">*</span></label>
                         {{ form.registration_number }}
                         {% if form.registration_number.errors %}<p class="text-sm text-red-600 mt-1">{{ form.registration_number.errors.0 }}</p>{% endif %}
                     </div>
 
                     <div>
-                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Contact Email *</label>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Contact Email  <span class="text-red-600">*</span></label>
                         {{ form.email }}
                         {% if form.email.errors %}<p class="text-sm text-red-600 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
                     </div>
 
                     <div>
-                        <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                        <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Phone Number  <span class="text-red-600">*</span></label>
                         {{ form.phone_number }}
                         {% if form.phone_number.errors %}<p class="text-sm text-red-600 mt-1">{{ form.phone_number.errors.0 }}</p>{% endif %}
                     </div>
                 </div>
 
                 <div>
-                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Address *</label>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Address  <span class="text-red-600">*</span></label>
                     {{ form.address }}
                     {% if form.address.errors %}<p class="text-sm text-red-600 mt-1">{{ form.address.errors.0 }}</p>{% endif %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
-                        <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">City *</label>
+                        <label for="{{ form.city.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">City  <span class="text-red-600">*</span></label>
                         {{ form.city }}
                         {% if form.city.errors %}<p class="text-sm text-red-600 mt-1">{{ form.city.errors.0 }}</p>{% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.state.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">State *</label>
+                        <label for="{{ form.state.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">State  <span class="text-red-600">*</span></label>
                         {{ form.state }}
                         {% if form.state.errors %}<p class="text-sm text-red-600 mt-1">{{ form.state.errors.0 }}</p>{% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.country.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Country *</label>
+                        <label for="{{ form.country.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Country  <span class="text-red-600">*</span></label>
                         {{ form.country }}
                         {% if form.country.errors %}<p class="text-sm text-red-600 mt-1">{{ form.country.errors.0 }}</p>{% endif %}
                     </div>
@@ -137,4 +130,5 @@
         </div>
     </div>
 </section>
+{% include "partials/footer_administer.html" %}
 {% endblock content %}

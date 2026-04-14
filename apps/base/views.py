@@ -1,5 +1,5 @@
 from django.views import View
-from django.views.generic import TemplateView, FormView
+from django.views.generic import DetailView, ListView, TemplateView, FormView
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -16,12 +16,14 @@ from datetime import date, datetime, timedelta
 from django.db.models.functions import TruncDate, TruncMonth
 
 from apps.appointments.models import Prescription
+from apps.base.mixin import SuperAdminOnlyMixin
 from apps.doctors.models import Doctor
 from apps.hospitals.models import Hospital, HospitalAdmin, HospitalStaff
 from apps.medical_report.models import MedicalReport
 from apps.patients.models import Patient, PatientAppointment
 from apps.payments.models import AppointmentPayment
 from .forms import ContactMessageForm
+from .models import ContactMessage
 
 
 def _audit_chart_scope_from_request(request):
@@ -1338,4 +1340,42 @@ class Custom400View(View):
     def dispatch(self, request, *args, **kwargs):
         return render(request, 'custom/400.html', status=400)
 
-    
+class ContactListView(SuperAdminOnlyMixin, LoginRequiredMixin, ListView):
+    """List contact form submissions (super admin)."""
+    template_name = 'contacts/contact_list.html'
+    context_object_name = 'contacts'
+    login_url = 'users:login'
+    paginate_by = 25
+
+    def get_queryset(self):
+        queryset = ContactMessage.objects.all()
+        search_query = (self.request.GET.get('search') or '').strip()
+        submitted_date = (self.request.GET.get('submitted_date') or '').strip()
+
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(phone_number__icontains=search_query)
+            )
+
+        if submitted_date:
+            queryset = queryset.filter(created__date=submitted_date)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = (self.request.GET.get('search') or '').strip()
+        context['submitted_date_filter'] = (self.request.GET.get('submitted_date') or '').strip()
+        return context
+
+class ContactDetailsView(SuperAdminOnlyMixin, LoginRequiredMixin, DetailView):
+    """Detail view for a contact message (super admin)."""
+    template_name = 'contacts/contact_detail.html'
+    context_object_name = 'contact'
+    login_url = 'users:login'
+    model = ContactMessage
+
+    def get_queryset(self):
+        return ContactMessage.objects.all()

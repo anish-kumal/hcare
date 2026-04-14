@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Payments - Patient Dashboard{% endblock %}
+
+{% block content %}
+<!-- Hero Banner Section -->
+<section class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] overflow-hidden flex flex-col pt-6 pb-20 md:pb-0">
+  <div class="absolute inset-0">
+    <img src="{% static 'images/background.png' %}" alt="" class="h-full w-full object-cover">
+    <div class="absolute inset-0 bg-[#245258]/70"></div>
+  </div>
+  <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+    {% include "partials/navbar.html" %}
+    <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
+      <div class="w-full lg:w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
+        <h1 class="text-xl md:text-5xl font-bold leading-tight mb-4">
+          <span class="block">My Payments</span>
+        </h1>
+        <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-lg mx-auto">
+          Review your appointment payments and complete pending transactions
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Content Section -->
+<div class="bg-gray-50">
+  <div class="min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 py-12">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Payment History</h2>
+            <a href="{% url 'patients:patient_profile' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors">
+              <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+              Back to Profile
+            </a>
+
+          </div>
+
+          {% if payments %}
+          <ul class="space-y-3">
+            {% for p in payments %}
+            <li>
+              <a href="{% url 'payments:patient_payment_list_for_appointment' appointment_id=p.appointment_id %}"
+                class="block rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/30 hover:shadow-sm transition-all px-5 py-4 group">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p class="font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                      {{ p.appointment.appointment_date|date:"M j, Y" }}
+                      <span class="text-gray-400 font-normal">·</span>
+                      {{ p.appointment.appointment_time|time:"g:i A" }}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">
+                      {% if p.appointment.doctor %}Dr. {{ p.appointment.doctor.user.get_full_name }}{% else %}—{% endif %}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-lg font-bold text-gray-900">NPR {{ p.amount }}</p>
+                    {% if p.status == 'PAID' %}
+                    <span class="inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Paid</span>
+                    {% elif p.status == 'FAILED' %}
+                    <span class="inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
+                    {% elif p.status == 'REFUNDED' %}
+                    <span class="inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">Refunded</span>
+                    {% else %}
+                    <span class="inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <p class="text-xs text-primary font-medium mt-3 inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                  View or pay
+                </p>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-8 rounded-lg text-center">
+            <span class="material-symbols-outlined text-5xl text-blue-300 mb-3 block">receipt_long</span>
+            <p class="font-semibold">No payments yet</p>
+            <p class="text-sm mt-1">Book an appointment to see payments here.</p>
+          </div>
+          {% endif %}
+
+          {% include "partials/pagination.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include "partials/patient_footer.html" %}
+{% endblock %}

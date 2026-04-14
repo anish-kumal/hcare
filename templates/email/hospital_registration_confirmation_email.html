@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 580px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #26464b;
+            text-align: center;
+            padding: 32px 24px;
+        }
+        .header h1 {
+            color: #dceeb2;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .content {
+            padding: 40px 32px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #333;
+            margin: 0 0 24px 0;
+        }
+        .intro-text {
+            color: #666;
+            font-size: 15px;
+            margin: 0 0 24px 0;
+        }
+        .credential-box {
+            background-color: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 2px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .credential-row {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .credential-label {
+            font-weight: 600;
+            color: #26464b;
+            margin-right: 8px;
+        }
+        .credential-value {
+            font-size: 15px;
+            color: #26464b;
+            word-break: break-all;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 16px;
+            margin: 24px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .warning strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 16px 0;
+        }
+        .info-text a {
+            color: #26464b;
+            text-decoration: none;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            text-align: center;
+            padding: 24px;
+            font-size: 12px;
+            color: #999;
+        }
+        .footer p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Health Care System</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello,</p>
+
+            <p class="intro-text">
+                Thank you for registering <strong>{{ hospital_name }}</strong> on our platform. We have received your application and our team will review it shortly.
+            </p>
+
+            <div class="credential-box">
+                <p class="credential-row">
+                    <span class="credential-label">Hospital:</span>
+                    <span class="credential-value">{{ hospital_name }}</span>
+                </p>
+                <p class="credential-row">
+                    <span class="credential-label">Registration number:</span>
+                    <span class="credential-value">{{ registration_number }}</span>
+                </p>
+                <p class="credential-row">
+                    <span class="credential-label">Hospital email:</span>
+                    <span class="credential-value">{{ contact_email }}</span>
+                </p>
+            </div>
+
+
+            <p class="info-text">
+                Visit the platform: <a href="{{ administer_url }}">{{ administer_url }}</a>
+            </p>
+
+            <p class="info-text">
+                Need help? Contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Healthcare System. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>

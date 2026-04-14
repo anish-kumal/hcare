@@ -1,78 +1,100 @@
 {% extends 'base/base.html' %}
+{% load static %}
 
 {% block title %}Payment Status{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-6">
-  <h1 class="text-2xl font-bold mb-4">Payment Status</h1>
-
-  {% if messages %}
-    <div class="space-y-2 mb-4">
-      {% for message in messages %}
-        <div class="p-3 rounded border {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-green-300 bg-green-50 text-green-700{% elif message.tags == 'info' %}border-blue-300 bg-blue-50 text-blue-700{% else %}border-gray-300 bg-gray-50 text-gray-700{% endif %}">
-          {{ message }}
+<div class="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
+  <div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-primary text-white px-6 py-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold">Payment status</h1>
+          <p class="text-white/90 text-sm mt-1">Appointment #{{ payment.appointment.id }}</p>
         </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+        <div class="self-center">
+          {% if payment.status == 'PAID' %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white">
+              <span class="material-symbols-outlined text-base">check_circle</span>
+              Paid
+            </span>
+          {% elif payment.status == 'FAILED' %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white">
+              <span class="material-symbols-outlined text-base">error</span>
+              Failed
+            </span>
+          {% elif payment.status == 'REFUNDED' %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white">
+              <span class="material-symbols-outlined text-base">undo</span>
+              Refunded
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white">
+              <span class="material-symbols-outlined text-base">schedule</span>
+              Pending
+            </span>
+          {% endif %}
+        </div>
+      </div>
 
-  <div class="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-      <div class="text-sm text-gray-500">Appointment #{{ payment.appointment.id }}</div>
-      <div>
-        {% if payment.status == 'PAID' %}
-          <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Paid</span>
-        {% elif payment.status == 'FAILED' %}
-          <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Failed</span>
-        {% else %}
-          <span class="px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">Pending</span>
+      <div class="p-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 pb-8 border-b border-gray-200 text-sm">
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Doctor</p>
+            <p class="font-medium text-gray-900">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Hospital</p>
+            <p class="font-medium text-gray-900">{{ payment.appointment.doctor.hospital.name }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Date &amp; time</p>
+            <p class="font-medium text-gray-900">{{ payment.appointment.appointment_date|date:"M j, Y" }} · {{ payment.appointment.appointment_time|time:"g:i A" }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Amount</p>
+            <p class="text-lg font-bold text-gray-900">NPR {{ payment.amount }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment method</p>
+            <p class="font-medium text-gray-900">{{ payment.get_payment_method_display }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment time</p>
+            <p class="font-medium text-gray-900">{% if payment.paid_at %}{{ payment.paid_at|date:"M j, Y g:i A" }}{% else %}Not paid yet{% endif %}</p>
+          </div>
+        </div>
+
+        {% if payment.payment_method == 'CASH' and payment.status != 'PAID' %}
+          <div class="mb-6 p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 rounded text-sm">
+            <strong>Notice:</strong> Pay at Hospital is selected. Please complete payment at the hospital counter when you arrive for your appointment.
+          </div>
         {% endif %}
-      </div>
-    </div>
 
-    <div class="grid sm:grid-cols-2 gap-4 text-sm">
-      <div>
-        <p class="text-gray-500">Doctor</p>
-        <p class="font-medium">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-4">
+          <a href="{% url 'patient_dashboard' %}"
+            class="flex-1 min-w-[140px] px-4 py-2.5 rounded-lg bg-gray-500 text-white font-semibold hover:bg-gray-600 transition-colors text-center inline-flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-base">dashboard</span>
+            Dashboard
+          </a>
+          <a href="{% url 'payments:patient_payment_list_for_appointment' appointment_id=payment.appointment_id %}"
+            class="flex-1 min-w-[140px] px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-semibold hover:bg-gray-50 transition-colors text-center inline-flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-base">receipt_long</span>
+            Pay / details
+          </a>
+          {% if payment.status != 'PAID' %}
+            <form method="post" action="{% url 'payments:patient_payment_process' %}" class="flex-1 min-w-[140px]">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" value="{{ payment.appointment.id }}">
+              <button type="submit" name="payment_method" value="KHALTI"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-[#E31E24] bg-white font-semibold text-[#E31E24] hover:bg-red-50 transition-colors">
+                <img src="{% static 'images/khalti.png' %}" alt="" class="h-7 w-auto" loading="lazy">
+                Pay with Khalti
+              </button>
+            </form>
+          {% endif %}
+        </div>
       </div>
-      <div>
-        <p class="text-gray-500">Hospital</p>
-        <p class="font-medium">{{ payment.appointment.doctor.hospital.name }}</p>
-      </div>
-      <div>
-        <p class="text-gray-500">Appointment Date/Time</p>
-        <p class="font-medium">{{ payment.appointment.appointment_date }} {{ payment.appointment.appointment_time|time:'H:i' }}</p>
-      </div>
-      <div>
-        <p class="text-gray-500">Amount</p>
-        <p class="font-medium">NPR {{ payment.amount }}</p>
-      </div>
-      <div>
-        <p class="text-gray-500">Payment Method</p>
-        <p class="font-medium">{{ payment.get_payment_method_display }}</p>
-      </div>
-      <div>
-        <p class="text-gray-500">Payment Time</p>
-        <p class="font-medium">{% if payment.paid_at %}{{ payment.paid_at|date:'Y-m-d H:i' }}{% else %}Not paid yet{% endif %}</p>
-      </div>
-    </div>
-
-    {% if payment.payment_method == 'CASH' and payment.status != 'PAID' %}
-      <div class="p-3 rounded border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-        Payment option selected: Pay at Hospital. Please complete payment at the hospital counter at your appointment time.
-      </div>
-    {% endif %}
-
-    <div class="pt-2 flex flex-wrap gap-2">
-      <a href="{% url 'patient_dashboard' %}" class="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900">Back to Dashboard</a>
-      <a href="{% url 'payments:patient_payment_list' %}" class="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200">View Payment List</a>
-      {% if payment.status != 'PAID' %}
-        <form method="post" action="{% url 'payments:patient_payment_process' %}">
-          {% csrf_token %}
-          <input type="hidden" name="appointment_id" value="{{ payment.appointment.id }}">
-          <button type="submit" name="payment_method" value="KHALTI" class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">Pay with Khalti</button>
-        </form>
-      {% endif %}
     </div>
   </div>
 </div>

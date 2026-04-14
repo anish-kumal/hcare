@@ -7,9 +7,9 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
-from django.views.generic import UpdateView, ListView, DetailView, View
+from django.views.generic import UpdateView, ListView, DetailView, View, TemplateView
 
-from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
+from apps.base.mixin import AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin
 from apps.hospitals.crypto import decrypt_khalti_key
 from apps.patients.models import PatientAppointment
 
@@ -193,11 +193,12 @@ class PaymentUpdateView(AdminHospitalScopedQuerysetMixin, AdminStaffOnlyMixin, U
         return redirect(self.get_success_url())
 
 
-class PatientPaymentListView(LoginRequiredMixin, ListView):
-    """List patient payments available for payment."""
+class PatientPaymentIndexView(LoginRequiredMixin, ListView):
+    """Short list of payments; open one appointment to pay on PatientPaymentView."""
     model = AppointmentPayment
-    template_name = 'payments/patient_payment_list.html'
+    template_name = 'payments/patient_payment_index.html'
     context_object_name = 'payments'
+    paginate_by = 10
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_patient:
@@ -213,8 +214,34 @@ class PatientPaymentListView(LoginRequiredMixin, ListView):
             appointment__patient__user=self.request.user,
         ).order_by('-created')
 
+
+class PatientPaymentView(LoginRequiredMixin, TemplateView):
+    """Single appointment payment screen (cash / Khalti)."""
+    template_name = 'payments/patient_payment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_patient:
+            raise PermissionDenied("Only patients can access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_payment(self):
+        appointment_id = self.kwargs['appointment_id']
+        return get_object_or_404(
+            AppointmentPayment.objects.select_related(
+                'appointment__patient__user',
+                'appointment__doctor__user',
+                'appointment__doctor__hospital',
+            ),
+            appointment_id=appointment_id,
+            appointment__patient__user=self.request.user,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['payment'] = self.get_payment()
+        return context
+
     def get(self, request, *args, **kwargs):
-        # Khalti may return the payment identifier in different query keys.
         pidx = (
             request.GET.get('pidx', '')
             or request.GET.get('transaction_id', '')
@@ -336,8 +363,13 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
                 messages.error(request, 'Khalti secret key is not configured for this hospital.')
                 return redirect(reverse('payments:patient_payment_list'))
 
-            # Keep callback URL canonical and explicit to avoid provider slash normalization issues.
-            return_url = request.build_absolute_uri('/payments/patient/')
+            # Return to patient list scoped to this appointment; Khalti appends pidx/status query params.
+            return_url = request.build_absolute_uri(
+                reverse(
+                    'payments:patient_payment_list_for_appointment',
+                    kwargs={'appointment_id': appointment.id},
+                )
+            )
             website_url = request.build_absolute_uri('/')
 
             amount_paisa = int(payment.amount * 100)
