@@ -57,10 +57,14 @@ class User(AbstractUser, BaseModel):
         help_text="Residential address"
     )
 
-
     is_default_password = models.BooleanField(
         default=True,
         help_text="Indicates whether the user is still using the default password"
+    )
+
+    is_verified = models.BooleanField(
+        default=True,
+        help_text="Indicates whether the user has verified their email address"
     )
 
 

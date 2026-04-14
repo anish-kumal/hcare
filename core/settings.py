@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config
-import importlib.util
 import base64
 import hashlib
 import cloudinary
@@ -104,8 +103,6 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = PRELOAD_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-HAS_WHITENOISE = importlib.util.find_spec('whitenoise') is not None
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -121,11 +118,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-if HAS_WHITENOISE:
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
 if DEBUG and 'debug_toolbar' in INSTALLED_APPS:
-    MIDDLEWARE.insert(3 if HAS_WHITENOISE else 2, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    MIDDLEWARE.insert(2, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'core.urls'
 
@@ -213,6 +207,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 
 STORAGES = {
@@ -220,17 +215,14 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': (
-            'whitenoise.storage.CompressedManifestStaticFilesStorage'
-            if HAS_WHITENOISE
-            else 'django.contrib.staticfiles.storage.StaticFilesStorage'
-        ),
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 SERVE_MEDIA = config('SERVE_MEDIA', default=True, cast=bool)
+PDF2IMAGE_POPPLER_PATH = config('PDF2IMAGE_POPPLER_PATH', default='')
 
 
 CLOUDINARY_STORAGE = {
@@ -310,12 +302,14 @@ OTP_VALIDITY_MINUTES = config('OTP_VALIDITY_MINUTES', cast=int)
 OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', cast=int)
 
 # django-axes lockout settings
-AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
+AXES_LOCKOUT_PARAMETERS = ['username']
 AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = 1  # Lockout period in hours (1 hour)
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'locked.html'
 AXES_USERNAME_CALLABLE = 'apps.users.axes.get_axes_username'
+
+SILENCED_SYSTEM_CHECKS = ['axes.W006']
 
 # Khalti Payment Gateway Configuration
 SANDBOX_KHALTI_URL = config('SANDBOX_KHALTI_URL', default='https://dev.khalti.com/api/v2/')

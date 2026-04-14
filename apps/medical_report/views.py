@@ -1,22 +1,37 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.views import View
-from django.http import Http404, FileResponse
+from django.http import Http404
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from pathlib import Path
-from django.utils.text import slugify
 from django.utils.dateparse import parse_date
-from django.conf import settings
-from django.core.files.base import File
-from django.core.files.storage import default_storage
 from apps.medical_report.models import MedicalReport
-from apps.medical_report.forms import AdminMedicalReportForm, PatientMedicalReportShareForm
+from apps.medical_report.forms import (
+    AdminMedicalReportForm,
+    PatientMedicalReportShareForm,
+)
 from apps.base.mixin import SuperAdminAndAdminOnlyMixin, AdminHospitalScopedQuerysetMixin, AdminLabAssistantOnlyMixin
 from apps.appointments.views import PatientAccessMixin
 from apps.patients.models import PatientAppointment
 from django.urls import reverse_lazy
 from django.shortcuts import redirect
+
+
+class MedicalReportPreviewContextMixin:
+    """Provide preview context for report image."""
+
+    def build_preview_context(self, report):
+        preview_image_url = report.get_report_file_url() if report.report_file else ''
+
+        return {
+            'preview_image_url': preview_image_url,
+            'preview_total_pages': 1 if preview_image_url else 0,
+            'preview_current_page': 1,
+            'preview_has_previous': False,
+            'preview_has_next': False,
+            'preview_previous_page_number': None,
+            'preview_next_page_number': None,
+        }
 
 
 class DoctorOnlyMixin(LoginRequiredMixin):
@@ -98,7 +113,7 @@ class DoctorMedicalReportListView(DoctorPatientScopedReportMixin, ListView):
         return context
 
 
-class DoctorMedicalReportDetailView(DoctorPatientScopedReportMixin, DetailView):
+class DoctorMedicalReportDetailView(MedicalReportPreviewContextMixin, DoctorPatientScopedReportMixin, DetailView):
     """Doctor view for report detail limited by doctor-patient ownership."""
     model = MedicalReport
     template_name = 'doctors/medical_report_detail.html'
@@ -114,6 +129,7 @@ class DoctorMedicalReportDetailView(DoctorPatientScopedReportMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_edit'] = self.object.uploaded_by_id == self.request.user.id
+        context.update(self.build_preview_context(self.object))
         return context
 
 
@@ -203,7 +219,6 @@ class AdminMedicalReportCreateView(AdminHospitalScopedQuerysetMixin, AdminLabAss
 
 
     def form_valid(self, form):
-        """Show success message when report is created"""
         messages.success(self.request, 'Medical report created successfully!')
         return super().form_valid(form)
 
@@ -265,7 +280,7 @@ class AdminMedicalReportListView(AdminHospitalScopedQuerysetMixin, AdminLabAssis
         return context
 
 
-class AdminMedicalReportDetailView(AdminHospitalScopedQuerysetMixin, AdminLabAssistantOnlyMixin, DetailView):
+class AdminMedicalReportDetailView(MedicalReportPreviewContextMixin, AdminHospitalScopedQuerysetMixin, AdminLabAssistantOnlyMixin, DetailView):
     """
     Admin view to show medical report details
     """
@@ -276,6 +291,11 @@ class AdminMedicalReportDetailView(AdminHospitalScopedQuerysetMixin, AdminLabAss
     def get_queryset(self):
         queryset = MedicalReport.objects.select_related('patient', 'primary_hospital', 'uploaded_by').all()
         return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.build_preview_context(self.object))
+        return context
 
 
 class AdminMedicalReportUpdateView(AdminHospitalScopedQuerysetMixin, AdminLabAssistantOnlyMixin, UpdateView):
@@ -297,7 +317,6 @@ class AdminMedicalReportUpdateView(AdminHospitalScopedQuerysetMixin, AdminLabAss
         return self.scope_queryset_for_admin(queryset, hospital_field='primary_hospital_id')
 
     def form_valid(self, form):
-        """Show success message when report is updated"""
         messages.success(self.request, 'Medical report updated successfully!')
         return super().form_valid(form)
 
@@ -328,7 +347,7 @@ class AdminMedicalReportDeleteView(AdminHospitalScopedQuerysetMixin, AdminLabAss
         return response
 
 
-class PatientMedicalReportDetailView(PatientAccessMixin, DetailView):
+class PatientMedicalReportDetailView(MedicalReportPreviewContextMixin, PatientAccessMixin, DetailView):
     """Patient-facing medical report details for the report owner only."""
     model = MedicalReport
     template_name = 'patients/medical_report_detail.html'
@@ -342,6 +361,11 @@ class PatientMedicalReportDetailView(PatientAccessMixin, DetailView):
             'primary_hospital',
             'uploaded_by',
         ).prefetch_related('shared_with')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.build_preview_context(self.object))
+        return context
 
 
 class PatientMedicalReportUpdateView(PatientAccessMixin, UpdateView):
@@ -374,69 +398,20 @@ class PatientMedicalReportUpdateView(PatientAccessMixin, UpdateView):
 
 
 class MedicalReportDownloadMixin:
-    """Stream report files as forced-download attachments."""
+    """Redirect report requests to storage-backed URLs."""
 
-    def _build_download_filename(self, report):
-        original_name = Path(getattr(report.report_file, 'name', '')).name
-        extension = Path(original_name).suffix
-        if not extension:
-            extension = '.pdf'
-        safe_base = slugify(report.report_name) or f'medical-report-{report.pk}'
-        return f'{safe_base}{extension}'
-
-    def _legacy_candidates(self, report):
-        report_name = Path(getattr(report.report_file, 'name', '')).name
-        if not report_name:
-            return []
-        return [
-            Path(settings.BASE_DIR) / report.report_file.name,
-            Path(settings.BASE_DIR) / 'medical_reports' / report_name,
-            Path(settings.MEDIA_ROOT) / 'medical_reports' / report_name,
-        ]
-
-    def _repair_missing_file(self, report):
-        """If DB points to a missing file, try known legacy locations and restore it."""
-        file_name = getattr(report.report_file, 'name', '')
-        if not file_name:
-            return False
-
-        for candidate in self._legacy_candidates(report):
-            if candidate.exists() and candidate.is_file():
-                with candidate.open('rb') as source:
-                    default_storage.save(file_name, File(source))
-                return True
-        return False
-
-    def _open_report_file(self, report):
+    def _require_report_file(self, report):
         if not report.report_file:
             raise Http404('Report file not available.')
-
-        file_name = report.report_file.name
-        if not default_storage.exists(file_name):
-            repaired = self._repair_missing_file(report)
-            if not repaired:
-                raise Http404('Report file not available.')
-
-        try:
-            report.report_file.open('rb')
-        except Exception as exc:
-            raise Http404('Report file not available.') from exc
-        return report.report_file
-
-    def _file_response(self, report, as_attachment):
-        file_obj = self._open_report_file(report)
-
-        return FileResponse(
-            file_obj,
-            as_attachment=as_attachment,
-            filename=self._build_download_filename(report),
-        )
+        return report
 
     def _download_response(self, report):
-        return self._file_response(report, as_attachment=True)
+        report = self._require_report_file(report)
+        return redirect(report.get_report_download_url())
 
     def _view_response(self, report):
-        return self._file_response(report, as_attachment=False)
+        report = self._require_report_file(report)
+        return redirect(report.get_report_file_url())
 
 
 class PatientMedicalReportDownloadView(PatientAccessMixin, MedicalReportDownloadMixin, View):

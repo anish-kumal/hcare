@@ -20,12 +20,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 django_asgi_app = get_asgi_application()
 
-# Daphne/ASGI deployments can miss WhiteNoise static handling in some setups.
-# This wraps only HTTP requests and serves collected static assets reliably.
+# Wrap only HTTP requests to serve collected static assets reliably.
 if not settings.DEBUG:
 	django_asgi_app = ASGIStaticFilesHandler(django_asgi_app)
-
-
 
 application = ProtocolTypeRouter({
 	'http': django_asgi_app,

@@ -1,10 +1,11 @@
-from django.db import models
+from auditlog.registry import auditlog
+from cloudinary.models import CloudinaryField
 from django.conf import settings
+from django.db import models
+
 from apps import hospitals
 from apps.base.models import BaseModel
-from auditlog.registry import auditlog
 
-# Create your models here.
 class MedicalReport(BaseModel):
     """
     Model to store medical reports for patients
@@ -28,9 +29,11 @@ class MedicalReport(BaseModel):
         help_text="Name/title of the medical report"
     )
 
-    report_file = models.FileField(
-        upload_to='medical_reports/',
-        help_text='Uploaded medical report file'
+    report_file = CloudinaryField(
+        'image',
+        resource_type='image',
+        folder='health_care/medical_reports/cover/',
+        help_text='Primary medical report image'
     )
 
     description = models.TextField(
@@ -68,22 +71,12 @@ class MedicalReport(BaseModel):
         return f"Medical Report for {self.patient} at {self.primary_hospital}"
 
     def get_report_file_url(self):
-        """Return a direct URL for opening the report file."""
         if not self.report_file:
             return ''
         return getattr(self.report_file, 'url', '')
 
     def get_report_download_url(self):
-        """Return a URL used by app-level download endpoints."""
-        if not self.report_file:
-            return ''
         return self.get_report_file_url()
-    
-
 
 # Register model for audit logging
 auditlog.register(MedicalReport)
-    
-
-
-

@@ -49,8 +49,9 @@
                                     {% if form.report_name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.report_name.errors|join:', ' }}</p>{% endif %}
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="{{ form.report_file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Report File *</label>
+                                    <label for="{{ form.report_file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Report Image *</label>
                                     {{ form.report_file }}
+                                    <p class="mt-1 text-xs text-gray-500">Optional cover image.</p>
                                     {% if form.report_file.errors %}<p class="mt-1 text-sm text-red-600">{{ form.report_file.errors|join:', ' }}</p>{% endif %}
                                 </div>
                                 <div class="md:col-span-2">

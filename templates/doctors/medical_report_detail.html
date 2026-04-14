@@ -65,18 +65,13 @@
                 {% endif %}
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report File</h2>
-                    {% if medical_report.get_report_file_url %}
-                        <a href="{% url 'medical_report:doctor_medical_report_download' medical_report.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-                            <span class="material-symbols-outlined text-[20px]">download</span>
-                            Download Report
-                        </a>
-                        <a href="{% url 'medical_report:doctor_medical_report_view' medical_report.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors ml-2" target="_blank">
-                            <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-                            Open File
-                        </a>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Report Preview</h2>
+                    {% if preview_image_url %}
+                        <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-100">
+                            <img src="{{ preview_image_url }}" alt="Medical report image" class="w-full h-auto object-contain">
+                        </div>
                     {% else %}
-                        <p class="text-gray-500">No report file attached.</p>
+                        <p class="text-gray-500">Preview not available yet.</p>
                     {% endif %}
                 </div>
             </div>

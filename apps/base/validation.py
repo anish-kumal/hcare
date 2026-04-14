@@ -168,17 +168,24 @@ def validate_strong_password(password, user=None):
     if len(password) < 8:
         raise forms.ValidationError('Password must be at least 8 characters long.')
 
+    errors = []
+
     if not re.search(r'[A-Z]', password):
-        raise forms.ValidationError('Password must contain at least one uppercase letter.')
+        errors.append('at least one uppercase letter')
 
     if not re.search(r'[a-z]', password):
-        raise forms.ValidationError('Password must contain at least one lowercase letter.')
+        errors.append('at least one lowercase letter')
 
     if not re.search(r'\d', password):
-        raise forms.ValidationError('Password must contain at least one number.')
+        errors.append('at least one number')
 
     if not re.search(r'[^A-Za-z0-9]', password):
-        raise forms.ValidationError('Password must contain at least one special character.')
+        errors.append('at least one special character')
+
+    if errors:
+        raise forms.ValidationError(
+            'Password must contain ' + ', '.join(errors) + '.'
+    )
 
     try:
         validate_password(password, user=user)

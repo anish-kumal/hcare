@@ -6,7 +6,7 @@
 {% block content %}
 <section class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] overflow-hidden flex flex-col pt-6 pb-20 md:pb-0">
     <div class="absolute inset-0">
-        <img src="{% static 'images/background.png' %}" alt="" class="h-full w-full object-cover">
+        <img src="https://anish-kumal.github.io/fyp/background.png" alt="" class="h-full w-full object-cover">
         <div class="absolute inset-0 bg-[#245258]/70"></div>
     </div>
     <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
@@ -72,18 +72,13 @@
         {% endif %}
 
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-3">Report File</h3>
-            {% if medical_report.get_report_file_url %}
-                <a href="{% url 'medical_report:patient_medical_report_download' medical_report.pk %}" class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-[#1a3d42] transition-colors">
-                    <span class="material-symbols-outlined text-[20px]">download</span>
-                    Download Report
-                </a>
-                    <a href="{% url 'medical_report:patient_medical_report_view' medical_report.pk %}" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 ml-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
-                    <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-                    Open File
-                </a>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Report Preview</h3>
+            {% if preview_image_url %}
+                <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-100">
+                    <img src="{{ preview_image_url }}" alt="Medical report image" class="w-full h-auto object-contain">
+                </div>
             {% else %}
-                <p class="text-sm text-gray-500">No file attached for this report.</p>
+                <p class="text-sm text-gray-500">Preview not available yet.</p>
             {% endif %}
         </div>
 

@@ -16,7 +16,6 @@ from django.utils.html import strip_tags
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.contrib.sites.shortcuts import get_current_site
 from axes.models import AccessAttempt
 from axes.utils import reset as axes_reset
 from .forms import (
@@ -126,7 +125,7 @@ class UserRegisterView(CreateView):
             html_message = render_to_string('email/account_activation_email.html', context)
             plain_message = strip_tags(html_message)
             send_mail(
-                subject='Activate Your Health Care Account',
+                subject='Verify Your Health Care Account',
                 message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[self.object.email],
@@ -135,13 +134,13 @@ class UserRegisterView(CreateView):
             )
             messages.success(
                 self.request,
-                'Registration successful. Please check your email and activate your account before login.'
+                'Registration successful. Please check your email and verify your account before login.'
             )
         except Exception:
             self.object.delete()
             messages.error(
                 self.request,
-                'Registration failed because activation email could not be sent. Please try again.'
+                'Registration failed because verification email could not be sent. Please try again.'
             )
             return self.form_invalid(form)
 
@@ -163,14 +162,14 @@ class ActivateAccountView(View):
             user = None
 
         if user and default_token_generator.check_token(user, token):
-            if user.is_active:
-                messages.info(request, 'Your account is already active. You can login now.')
+            if user.is_verified:
+                messages.info(request, 'Your account is already verified. You can login now.')
             else:
-                user.is_active = True
-                user.save(update_fields=['is_active'])
-                messages.success(request, 'Your account has been activated successfully. You can now login.')
+                user.is_verified = True
+                user.save(update_fields=['is_verified'])
+                messages.success(request, 'Your account has been verified successfully. You can now login.')
         else:
-            messages.error(request, 'Activation link is invalid or expired. Please register again.')
+            messages.error(request, 'Verification link is invalid or expired. Please register again.')
 
         return redirect('users:login')
 
@@ -191,11 +190,11 @@ class UserLoginView(LoginView):
         Any other role or inactive user is rejected with an error message.
         """
         user = form.get_user()
-        if not user.is_active:
+        if not user.is_verified:
             logout(self.request)
             messages.error(
                 self.request,
-                'Invalid email/username or password. Please try again.'
+                'Account with this email/username exists but is not verified. Please check your email for verification instructions or contact support.'
             )
             return redirect(reverse_lazy('users:login'))
 
@@ -226,7 +225,7 @@ class UserLoginView(LoginView):
         """
         messages.error(
             self.request,
-            'Invalid email/username or password. Please try again.'
+            'Invalid email/username or password. Please try again.as'
         )
         return super().form_invalid(form)
 

@@ -5,13 +5,31 @@ from apps.patients.models import Patient
 from apps.hospitals.models import Hospital
 from .models import MedicalReport
 
+ALLOWED_EXTENSIONS = ('jpg', 'jpeg', 'png', 'webp')
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def validate_report_image(uploaded_file, field_name):
+    """Validate file size and extension for report images."""
+    if not uploaded_file:
+        return
+
+    if hasattr(uploaded_file, 'size') and uploaded_file.size > MAX_FILE_SIZE:
+        raise ValidationError({
+            field_name: f'File size must not exceed 10MB. Current size: {uploaded_file.size / (1024*1024):.2f}MB'
+        })
+
+    file_ext = uploaded_file.name.split('.')[-1].lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise ValidationError({
+            field_name: f'Invalid file format. Allowed: {", ".join(ALLOWED_EXTENSIONS)}'
+        })
 
 
 class AdminMedicalReportForm(forms.ModelForm):
     """
     Admin form for managing medical reports with additional fields
     """
-    
     class Meta:
         model = MedicalReport
         fields = ['patient', 'primary_hospital', 'report_name', 'report_file', 'description', 'shared_with']
@@ -30,7 +48,7 @@ class AdminMedicalReportForm(forms.ModelForm):
             }),
             'report_file': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
-                'accept': '.pdf,.jpg,.jpeg,.png,.doc,.docx'
+                'accept': '.jpg,.jpeg,.png,.webp'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
@@ -85,28 +103,10 @@ class AdminMedicalReportForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         report_file = cleaned_data.get('report_file')
-        
-        # Validate file is provided on create
         if not self.instance.pk and not report_file:
-            raise ValidationError({'report_file': 'Report file is required.'})
-        
-        # Validate file size (max 10MB)
-        if report_file and hasattr(report_file, 'size'):
-            max_size = 10 * 1024 * 1024  # 10MB
-            if report_file.size > max_size:
-                raise ValidationError({
-                    'report_file': f'File size must not exceed 10MB. Current size: {report_file.size / (1024*1024):.2f}MB'
-                })
-        
-        # Validate file extension
-        if report_file:
-            allowed_extensions = ('pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx')
-            file_ext = report_file.name.split('.')[-1].lower()
-            if file_ext not in allowed_extensions:
-                raise ValidationError({
-                    'report_file': f'Invalid file format. Allowed: {", ".join(allowed_extensions)}'
-                })
-        
+            raise ValidationError({'report_file': 'Report image is required.'})
+        validate_report_image(report_file, 'report_file')
+
         return cleaned_data
 
     def save(self, commit=True):
