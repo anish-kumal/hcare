@@ -1,5 +1,5 @@
 {% load static %}
-<nav class="bg-primary px-4 md:px-6 py-1 md:py-2 rounded-2xl flex justify-between items-center shadow-lg relative z-20" style="max-height:4.5rem; min-height:2.5rem;">
+<nav class="bg-primary px-4 md:px-6 py-1 md:py-2 rounded-3xl flex justify-between items-center shadow-lg  top-4 left-2 right-2 md:top-6 md:left-40 md:right-40 z-50 w-auto" style="max-height:4.5rem; min-height:2.5rem;">
     <div class="flex items-center text-white font-bold text-lg md:text-xl uppercase tracking-wider">
         <img src="{% static 'images/logo.png' %}" />
         <span>Health Care</span>
@@ -11,20 +11,20 @@
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Home</a>
         </li>
         <li>
-            <a href="#"
+            <a href="{% url 'how_it_works' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">How It Works</a>
         </li>
         <li>
-            <a href="#"
+            <a href="{% url 'pricing_administer' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Pricing</a>
         </li>
         <li>
-            <a href="#"
+            <a href="{% url 'about_administer' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">About
                 Us</a>
         </li>
         <li>
-            <a href="#"
+            <a href="{% url 'contact_administer' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Contact
                 Us</a>
         </li>
@@ -60,36 +60,38 @@
 
 <div id="mobile-menu" class="xl:hidden hidden mt-3 bg-primary rounded-2xl shadow-lg p-5 relative z-20">
     <ul class="flex flex-col gap-4 list-none">
-        <li>
-            <a href="{% url 'index' %}"
+       <li>
+            <a href="{% url 'administer' %}"
                 class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Home</a>
         </li>
         <li>
-            <a href="{% url 'appointments:doctor_list' %}"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Doctor</a>
+            <a href="{% url 'how_it_works' %}"
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">How It Works</a>
         </li>
         <li>
-            <a href="#"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Services</a>
+            <a href="{% url 'pricing_administer' %}"
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Pricing</a>
         </li>
         <li>
-            <a href="#"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">About Us</a>
+            <a href="{% url 'about_administer' %}"
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">About
+                Us</a>
         </li>
         <li>
-            <a href="#"
-                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Contact Us</a>
+            <a href="{% url 'contact_administer' %}"
+                class="text-white text-sm font-medium uppercase tracking-wide hover:text-accent transition duration-300">Contact
+                Us</a>
         </li>
     </ul>
 
     <div class="mt-5 pt-4 border-t border-white/20 flex flex-wrap gap-3">
-        <a href="{% url 'users:login' %}"
+        <a href="{% url 'users:administer_login' %}"
             class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
             Log in
         </a>
-        <a href="{% url 'users:register' %}"
-            class="px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
-            Sign up
+        <a href="{% url 'hospitals:hospital_registration' %}"
+            class="hidden md:block px-4 py-2 bg-accent text-primary rounded-lg text-sm font-semibold hover:bg-white transition duration-300">
+            Join us
         </a>
     </div>
 </div>

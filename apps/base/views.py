@@ -371,6 +371,13 @@ class AboutView(TemplateView):
     """Render the public About page"""
     template_name = 'base/about.html'
 
+class AdministerAboutView(TemplateView):
+    """Render the public About page for hospital onboarding"""
+    template_name = 'base/about_administer.html'
+
+class HowItWorksView(TemplateView):
+    """Render the public How It Works page for hospital onboarding"""
+    template_name = 'base/How_it_works.html'
 
 class TermsView(TemplateView):
     """Render the public Terms page"""
@@ -398,6 +405,22 @@ class ContactView(FormView):
         messages.success(self.request, "Your message has been sent successfully.")
         return super().form_valid(form)
 
+
+class AdministerContactView(FormView):
+    """Render the public Contact page for hospital onboarding"""
+    template_name = 'base/contact_administer.html'  
+    form_class = ContactMessageForm
+    success_url = reverse_lazy('contact')
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, "Your message has been sent successfully.")
+        return super().form_valid(form)
+
+class AdministerPricingView(TemplateView):
+    """Render the public Pricing page for hospital onboarding"""
+    template_name = 'base/pricing.html'
+    
 
 class SuperAdminDashboardView(LoginRequiredMixin, TemplateView):
     """Platform overview: users, hospitals, patients, appointments by period, chart, top hospitals."""

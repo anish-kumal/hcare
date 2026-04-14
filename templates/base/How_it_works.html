@@ -1,0 +1,98 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}About - Health Care{% endblock title %}
+
+{% block content %}
+<section
+    class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
+    style="
+        background-image: linear-gradient(
+            rgba(36, 82, 88, 0.72),
+            rgba(36, 82, 88, 0.72)
+        ), url('{% static "images/background.png" %}');">
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+        {% include "partials/navbar_administer.html" %}
+
+        <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
+            <div class="w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
+                <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">
+                    <span class="block">How It Works</span>
+                </h1>
+                <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    A simple 4-step process to get your hospital onboard and start receiving patient bookings.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 md:py-20 bg-white">
+    <div class="max-w-[1300px] mx-auto px-6 md:px-10">
+        <div>
+            <div class="w-full text-center md:text-left">
+                <span
+                    class="inline-block bg-primary text-white text-sm font-semibold px-4 py-2 rounded-full mb-6 tracking-wide">
+                    How It Works
+                </span>
+
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-900 leading-tight mb-6">
+                Simple Onboarding for Every Hospital.
+                </h2>
+
+                
+                <div class="relative mt-8">
+                    <div class="hidden md:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[2px] bg-primary/30"></div>
+
+                    <div class="space-y-6">
+                        <div class="relative md:grid md:grid-cols-2 md:gap-10 items-center">
+                            <div class="hidden md:block"></div>
+                            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm text-left">
+                                <p class="text-accent font-black text-sm mb-1">01</p>
+                                <p class="text-gray-800 font-semibold"> Register Hospital</p>
+                                <p class="text-gray-500 text-sm mt-2">Create your hospital profile and provide necessary information.</p>
+                            </div>
+                            <span class="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-white shadow"></span>
+                        </div>
+
+                        <div class="relative md:grid md:grid-cols-2 md:gap-10 items-center">
+                            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm text-left md:text-right">
+                                <p class="text-accent font-black text-sm mb-1">02</p>
+                                <p class="text-gray-800 font-semibold">Verify Credentials</p>
+                                <p class="text-gray-500 text-sm mt-2">Verify your identity and hospital credentials.</p>
+
+                            </div>
+                            <div class="hidden md:block"></div>
+                            <span class="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-white shadow"></span>
+                        </div>
+
+                        <div class="relative md:grid md:grid-cols-2 md:gap-10 items-center">
+                            <div class="hidden md:block"></div>
+                            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm text-left">
+                                <p class="text-accent font-black text-sm mb-1">03</p>
+                                <p class="text-gray-800 font-semibold">Set Availability</p>
+                                <p class="text-gray-500 text-sm mt-2">Set your hospital's availability and operating hours.</p>     
+                            </div>
+                            <span class="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-white shadow"></span>
+                        </div>
+
+                        <div class="relative md:grid md:grid-cols-2 md:gap-10 items-center">
+                            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm text-left md:text-right">
+                                <p class="text-accent font-black text-sm mb-1">04</p>
+                                <p class="text-gray-800 font-semibold">Receive Bookings</p>
+                                <p class="text-gray-500 text-sm mt-2">Start receiving patient bookings and manage appointments.</p>
+                            </div>
+                            <div class="hidden md:block"></div>
+                            <span class="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-white shadow"></span>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include "partials/footer_adminster.html" %}
+{% endblock content %}

@@ -128,16 +128,13 @@
                                         {% if form.instance.pk %}New Password{% else %}Password *{% endif %}
                                     </label>
                                     <div class="space-y-2">
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex-1">
+                                        
+                                            <div class="relative flex-1 w-full">
                                                 {{ form.password }}
+                                                <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700" aria-label="Show password">
+                                                    <span id="togglePasswordIcon" class="material-symbols-outlined text-[20px]">visibility</span>
+                                                </button>
                                             </div>
-                                            <button type="button" id="togglePasswordBtn"
-                                                class="inline-flex items-center justify-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                                                title="Show/Hide Password" aria-label="Show/Hide Password">
-                                                <span id="togglePasswordIcon" class="material-symbols-outlined text-[18px]">visibility</span>
-                                            </button>
-                                        </div>
                                         {% if not form.instance.pk %}
                                             <button type="button" id="generatePasswordBtn"
                                                 class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
@@ -157,7 +154,7 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex gap-3 justify-end pt-6 border-t border-gray-200">
+                        <div class="flex gap-3 justify-end border-gray-200">
                             <a href="javascript:history.back()"
                                 class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
                                 Cancel
@@ -176,62 +173,7 @@
 
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var generateBtn = document.getElementById('generatePasswordBtn');
-        var toggleBtn = document.getElementById('togglePasswordBtn');
-        var toggleIcon = document.getElementById('togglePasswordIcon');
-        var passwordInput = document.getElementById('{{ form.password.id_for_label }}');
 
-        if (!passwordInput) {
-            return;
-        }
-
-        function generatePassword(length) {
-            var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-            var lower = 'abcdefghijkmnpqrstuvwxyz';
-            var numbers = '23456789';
-            var symbols = '!@#$%^&*()_+-=[]{}';
-            var allChars = upper + lower + numbers + symbols;
-
-            var result = [
-                upper[Math.floor(Math.random() * upper.length)],
-                lower[Math.floor(Math.random() * lower.length)],
-                numbers[Math.floor(Math.random() * numbers.length)],
-                symbols[Math.floor(Math.random() * symbols.length)],
-            ];
-
-            for (var i = result.length; i < length; i++) {
-                result.push(allChars[Math.floor(Math.random() * allChars.length)]);
-            }
-
-            for (var j = result.length - 1; j > 0; j--) {
-                var k = Math.floor(Math.random() * (j + 1));
-                var temp = result[j];
-                result[j] = result[k];
-                result[k] = temp;
-            }
-
-            return result.join('');
-        }
-
-        if (generateBtn) {
-            generateBtn.addEventListener('click', function () {
-                passwordInput.value = generatePassword(12);
-                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
-                passwordInput.focus();
-            });
-        }
-
-        if (toggleBtn && toggleIcon) {
-            toggleBtn.addEventListener('click', function () {
-                var isPassword = passwordInput.type === 'password';
-                passwordInput.type = isPassword ? 'text' : 'password';
-                toggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
-            });
-        }
-    });
-</script>
 
 
 {% endblock content %}

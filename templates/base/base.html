@@ -119,7 +119,90 @@
                     });
                 });
             });
-        </script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const targetId = btn.getAttribute('data-target');
+                let input = targetId ? document.getElementById(targetId) : null;
+
+                if (!input) {
+                input = btn.closest('.relative')?.querySelector('input');
+                }
+
+                if (!input) {
+                return;
+                }
+
+                const icon = btn.querySelector('.material-symbols-outlined');
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+
+                if (icon) {
+                icon.textContent = show ? 'visibility_off' : 'visibility';
+                }
+
+                btn.setAttribute('aria-label', show ? 'Hide key' : 'Show key');
+            });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+        var generateBtn = document.getElementById('generatePasswordBtn');
+        var toggleBtn = document.getElementById('togglePasswordBtn');
+        var toggleIcon = document.getElementById('togglePasswordIcon');
+        var passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+
+        if (!passwordInput) {
+            return;
+        }
+
+        function generatePassword(length) {
+            var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            var lower = 'abcdefghijkmnpqrstuvwxyz';
+            var numbers = '23456789';
+            var symbols = '!@#$%^&*()_+-=[]{}';
+            var allChars = upper + lower + numbers + symbols;
+
+            var result = [
+                upper[Math.floor(Math.random() * upper.length)],
+                lower[Math.floor(Math.random() * lower.length)],
+                numbers[Math.floor(Math.random() * numbers.length)],
+                symbols[Math.floor(Math.random() * symbols.length)],
+            ];
+
+            for (var i = result.length; i < length; i++) {
+                result.push(allChars[Math.floor(Math.random() * allChars.length)]);
+            }
+
+            for (var j = result.length - 1; j > 0; j--) {
+                var k = Math.floor(Math.random() * (j + 1));
+                var temp = result[j];
+                result[j] = result[k];
+                result[k] = temp;
+            }
+
+            return result.join('');
+        }
+
+        if (generateBtn) {
+            generateBtn.addEventListener('click', function () {
+                passwordInput.value = generatePassword(12);
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.focus();
+            });
+        }
+
+        if (toggleBtn && toggleIcon) {
+            toggleBtn.addEventListener('click', function () {
+                var isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+            });
+        }
+    });
+
+</script>
 
     {% endblock javascript %}
 </body>

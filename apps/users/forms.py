@@ -184,7 +184,7 @@ class UserManagementForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition',
-            'placeholder': '+1 (555) 123-4567'
+            'placeholder': '+977-98XXXXXXXX'
         })
     )
     

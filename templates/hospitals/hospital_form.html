@@ -283,7 +283,7 @@
                       {{ form.khalti_public_key }}
                       <button
                         type="button"
-                        class="password-toggle absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700"
+                        class=" absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700"  
                         data-target="{{ form.khalti_public_key.id_for_label }}"
                         aria-label="Show Khalti public key"
                         title="Show/Hide key"
@@ -374,34 +374,7 @@
 </div>
 
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.password-toggle').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const targetId = btn.getAttribute('data-target');
-        let input = targetId ? document.getElementById(targetId) : null;
 
-        if (!input) {
-          input = btn.closest('.relative')?.querySelector('input');
-        }
-
-        if (!input) {
-          return;
-        }
-
-        const icon = btn.querySelector('.material-symbols-outlined');
-        const show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-
-        if (icon) {
-          icon.textContent = show ? 'visibility_off' : 'visibility';
-        }
-
-        btn.setAttribute('aria-label', show ? 'Hide key' : 'Show key');
-      });
-    });
-  });
-</script>
 
 
 {% endblock content %}

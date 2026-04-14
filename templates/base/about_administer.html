@@ -12,7 +12,7 @@
             rgba(36, 82, 88, 0.72)
         ), url('{% static "images/background.png" %}');">
     <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
-        {% include "partials/navbar.html" %}
+        {% include "partials/navbar_administer.html" %}
 
         <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
             <div class="w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
@@ -42,7 +42,42 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-           <div
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <span class="material-symbols-outlined text-[28px]">calendar_month</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Department-Wise Scheduling</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Coordinate doctors, shifts, and service windows across all specialties from one dashboard
+                </p>
+            </div>
+
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <span class="material-symbols-outlined text-[28px]">schedule</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Smart Patient Flow</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Reduce manual workload by automating bookings, reminders, and visit planning.
+                </p>
+            </div>
+            <div
+                class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
+                <div
+                    class="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <span class="material-symbols-outlined text-[28px]">analytics</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Data-Driven Visibility</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Improve discoverability and trust with a consistent, professional digital profile.
+                </p>
+            </div>
+
+            <div
                 class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center group">
                 <div
                     class="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -112,9 +147,10 @@
                     Build long-term confidence through transparent services and dependable support for every patient.
                 </p>
             </div>
+
         </div>
     </div>
 </section>
 
-{% include "partials/patient_footer.html" %}
+{% include "partials/footer_adminster.html" %}
 {% endblock content %}

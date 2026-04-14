@@ -37,18 +37,23 @@ from apps.base.views import (
     Custom500View,
     Custom403View,
     Custom400View,
+    AdministerAboutView,
+    HowItWorksView,
+    AdministerContactView,
+    AdministerPricingView,
 )
 
 
 urlpatterns = [
+    # Public routes
     path('', IndexView.as_view(), name='index'),
     path('about/', AboutView.as_view(), name='about'),
     path('services/', ServicesView.as_view(), name='services'),
     path('contact/', ContactView.as_view(), name='contact'),
     path('terms/', TermsView.as_view(), name='terms'),
     path('privacy-policy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
-    path('administer/', AdministrView.as_view(), name='administer'),
-    path('admin/', admin.site.urls),
+    
+    # App-specific routes
     path('auth/', include('apps.users.urls')),
     path('social-auth/', include('allauth.urls')),
     path('otp/', include('apps.otp.urls')),
@@ -60,6 +65,7 @@ urlpatterns = [
     path('medical-reports/', include('apps.medical_report.urls')),
     path('logs/', include('apps.logs.urls')),
     path('prescriptions/', include('apps.prescription.urls', 'prescription')),
+
     # Dashboard routes based on role
     path('dashboard/super-admin/', SuperAdminDashboardView.as_view(), name='super_admin_dashboard'),
     path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),
@@ -68,6 +74,14 @@ urlpatterns = [
     path('dashboard/lab-assistant/', LabAssistantDashboardView.as_view(), name='lab_assistant_dashboard'),
     path('dashboard/pharmacist/', PharmacistDashboardView.as_view(), name='pharmacist_dashboard'),
     path('dashboard/staff/', StaffDashboardView.as_view(), name='staff_dashboard'),
+
+    # Administer onboarding pages
+    path('admin/', admin.site.urls),
+    path('administer/', AdministrView.as_view(), name='administer'),
+    path('about_administer/', AdministerAboutView.as_view(), name='about_administer'),
+    path('how-it-works/', HowItWorksView.as_view(), name='how_it_works'),
+    path('contact_administer/', AdministerContactView.as_view(), name='contact_administer'),
+    path('pricing/', AdministerPricingView.as_view(), name='pricing_administer'),
 
 ]
 

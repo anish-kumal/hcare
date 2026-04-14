@@ -19,33 +19,7 @@
     <!-- Main Content Wrapper -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
         <!-- Top Header -->
-        <header
-            class="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-10 sticky top-0 shadow-sm">
-
-            <div class="w-full flex justify-end items-center gap-6">
-
-                <!-- Icons -->
-                <div class="flex items-center gap-3">
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors relative"
-                        title="Notifications">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span
-                            class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border-2 border-white"></span>
-                    </button>
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                        title="Settings">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    <button
-                        class="size-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                        title="Help">
-                        <span class="material-symbols-outlined">help</span>
-                    </button>
-                </div>
-            </div>
-        </header>
+        {% include "partials/header.html" %}
 
         <!-- Scrollable Main Content -->
         <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -84,7 +58,7 @@
                                 <div>
                                     <label for="{{ form.username.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Username *
+                                        Username <span class="text-red-600 font-bold">*</span>
                                     </label>
                                     {{ form.username }}
                                     {% if form.username.errors %}
@@ -96,7 +70,7 @@
                                 <div>
                                     <label for="{{ form.email.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Email *
+                                        Email <span class="text-red-600 font-bold">*</span>
                                     </label>
                                     {{ form.email }}
                                     {% if form.email.errors %}
@@ -108,7 +82,7 @@
                                 <div>
                                     <label for="{{ form.first_name.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        First Name *
+                                        First Name <span class="text-red-600 font-bold">*</span>
                                     </label>
                                     {{ form.first_name }}
                                     {% if form.first_name.errors %}
@@ -120,7 +94,7 @@
                                 <div>
                                     <label for="{{ form.last_name.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Last Name *
+                                        Last Name <span class="text-red-600 font-bold">*</span>
                                     </label>
                                     {{ form.last_name }}
                                     {% if form.last_name.errors %}
@@ -132,7 +106,7 @@
                                 <div>
                                     <label for="{{ form.user_type.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        User Type *
+                                        User Type <span class="text-red-600 font-bold">*</span>
                                     </label>
                                     {{ form.user_type }}
                                     {% if form.user_type.errors %}
@@ -147,9 +121,22 @@
                                 <div>
                                     <label for="{{ form.password.id_for_label }}"
                                         class="block text-sm font-medium text-gray-700 mb-2">
-                                        Password {% if action == 'create' %}*{% else %}(Leave blank to keep current){% endif %}
+                                        Password {% if action == 'update' %}(Leave blank to keep current){% else %}<span class="text-red-600 font-bold">*</span>{% endif %}
                                     </label>
-                                    {{ form.password }}
+                                    <div class="relative">
+                                        {{ form.password }}
+                                        <button type="button" class="password-toggle absolute inset-y-0 right-3 z-10 flex items-center text-gray-500 hover:text-gray-700 transition">
+                                            <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" id="generatePasswordBtn"
+                                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[16px]">password</span>
+                                            Generate Random Password
+                                        </button>
+                                    </div>
+
                                     {% if form.password.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
                                     {% endif %}
@@ -214,6 +201,7 @@
                         </div>
                     </form>
                 </div>
+                {% include "partials/footer.html" %}
             </div>
         </main>
     </div>

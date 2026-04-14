@@ -21,7 +21,7 @@
                     <h1 class="text-3xl font-bold text-[#131616] tracking-tight">Create New Patient</h1>
 
                     <div class="flex gap-3 flex-wrap">
-                        <a href="javascript:history.back()"
+                        <a href="{% url 'patients:patient_list' %}"
                             class="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors shadow-md">
                             <span class="material-symbols-outlined text-[20px]">arrow_back</span>
                             Cancel
@@ -81,8 +81,22 @@
                                     {% if user_form.address.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.address.errors|join:', ' }}</p>{% endif %}
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="{{ user_form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
-                                    {{ user_form.password }}
+                                    <label for="{{ user_form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Password <span class="text-red-600 font-bold">*</span></label>
+                                    <div class="relative">
+                                        {{ user_form.password }}
+                                        <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-gray-700">
+                                            <span  class="material-symbols-outlined text-[20px]">visibility</span>
+                                        </button>    
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" id="generatePasswordBtnPatient"
+                                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[16px]">password</span>
+                                            Generate Random Password
+                                        </button>
+                                    </div>
+                                    
+
                                     {% if user_form.password.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.password.errors|join:', ' }}</p>{% endif %}
                                 </div>
                             </div>
@@ -192,22 +206,45 @@
     </div>
 </div>
 
-<style>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
-    }
 
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
+<script>
 
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #cbd5e1;
-        border-radius: 10px;
-    }
 
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: #94a3b8;
-    }
-</style>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('{{ user_form.password.id_for_label }}');
+
+        // Generate password
+        const generateBtn = document.getElementById('generatePasswordBtnPatient');
+        if (generateBtn && passwordInput) {
+            generateBtn.addEventListener('click', function() {
+                function generatePassword(length) {
+                    var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+                    var lower = 'abcdefghijkmnpqrstuvwxyz';
+                    var numbers = '23456789';
+                    var symbols = '!@#$%^&*()_+-=[]{}';
+                    var allChars = upper + lower + numbers + symbols;
+                    var result = [
+                        upper[Math.floor(Math.random() * upper.length)],
+                        lower[Math.floor(Math.random() * lower.length)],
+                        numbers[Math.floor(Math.random() * numbers.length)],
+                        symbols[Math.floor(Math.random() * symbols.length)],
+                    ];
+                    for (var i = result.length; i < length; i++) {
+                        result.push(allChars[Math.floor(Math.random() * allChars.length)]);
+                    }
+                    for (var j = result.length - 1; j > 0; j--) {
+                        var k = Math.floor(Math.random() * (j + 1));
+                        var temp = result[j];
+                        result[j] = result[k];
+                        result[k] = temp;
+                    }
+                    return result.join('');
+                }
+                passwordInput.value = generatePassword(12);
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.focus();
+            });
+        }
+    });
+</script>
 {% endblock content %}

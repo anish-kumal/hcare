@@ -1,0 +1,107 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}About - Health Care{% endblock title %}
+
+{% block content %}
+<section
+    class="relative min-h-[50vh] rounded-bl-[50px] md:rounded-bl-[150px] bg-cover bg-center flex flex-col pt-6 pb-20 md:pb-0"
+    style="
+        background-image: linear-gradient(
+            rgba(36, 82, 88, 0.72),
+            rgba(36, 82, 88, 0.72)
+        ), url('{% static "images/background.png" %}');">
+    <div class="w-full max-w-[1200px] mx-auto px-4 md:px-10 flex flex-col h-full flex-1">
+        {% include "partials/navbar_administer.html" %}
+
+        <div class="flex flex-col lg:flex-row items-center justify-center flex-1 relative mt-10">
+            <div class="w-full text-white z-10 text-center pt-5 pb-5 lg:pb-10">
+                <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">
+                    <span class="block">Pricing</span>
+                </h1>
+                <p class="text-base md:text-lg text-gray-200 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    Explore our transparent pricing plans designed to fit hospitals of all sizes. No hidden fees, just simple, predictable costs.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 md:py-20 bg-white">
+    <div class="max-w-[1300px] mx-auto px-6 md:px-10">
+        <div>
+            <div class="w-full text-center md:text-left">
+            
+                <!-- Yearly Pricing Plans Section -->
+                <div class="mt-2">
+                        <div class="flex flex-col md:flex-row gap-8 justify-center">
+                            <!-- 1 Year Plan -->
+                            <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 w-full max-w-xs text-center flex flex-col">
+                                <div class="mb-4">
+                                    <span class="inline-block bg-accent text-xs text-primary font-bold px-3 py-1 rounded-full">1 Year</span>
+                                </div>
+                                <div class="mb-6">
+                                    <span class="text-4xl md:text-4xl font-extrabold text-primary">Nrs 1,00,000</span>
+                                    <span class="text-gray-500 font-medium">/year</span>
+                                </div>
+                                <ul class="text-gray-700 space-y-3 mb-8 flex-1">
+                                    <li>All features included</li>
+                                    <li>Unlimited appointments</li>
+                                    <li>Unlimited doctors & staff</li>
+                                    <li>Priority support</li>
+                                    <li>Free onboarding & setup</li>
+                                </ul>
+                                <a href="{% url 'hospitals:hospital_registration' %}" class="inline-block bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 text-sm rounded-lg transition mx-auto" style="width:fit-content;min-width:0;">Get Started</a>
+                            </div>
+                            <!-- 2 Year Plan -->
+                            <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 w-full max-w-xs text-center flex flex-col">
+                                <div class="mb-4">
+                                    <span class="inline-block bg-accent text-xs text-primary font-bold px-3 py-1 rounded-full">2 Years</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-4xl md:text-4xl font-extrabold text-primary">Nrs 1,90,000</span>
+                                    <span class="text-gray-500 font-medium">/2 years</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-green-600 text-sm font-semibold">5% discount</span>
+                                </div>
+                                <ul class="text-gray-700 space-y-3 mb-8 flex-1">
+                                    <li>All features included</li>
+                                    <li>Unlimited appointments</li>
+                                    <li>Unlimited doctors & staff</li>
+                                    <li>Priority support</li>
+                                    <li>Free onboarding & setup</li>
+                                </ul>
+                                <a href="{% url 'hospitals:hospital_registration' %}" class="inline-block bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 text-sm rounded-lg transition mx-auto" style="width:fit-content;min-width:0;">Get Started</a>
+                            </div>
+                            <!-- 5 Year Plan -->
+                            <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 w-full max-w-xs text-center flex flex-col">
+                                <div class="mb-4">
+                                    <span class="inline-block bg-accent text-xs text-primary font-bold px-3 py-1 rounded-full">5 Years</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-4xl md:text-4xl font-extrabold text-primary">Nrs 4,25,000</span>
+                                    <span class="text-gray-500 font-medium">/5 years</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-green-600 text-sm font-semibold">15% discount</span>
+                                </div>
+                                <ul class="text-gray-700 space-y-3 mb-8 flex-1">
+                                    <li>All features included</li>
+                                    <li>Unlimited appointments</li>
+                                    <li>Unlimited doctors & staff</li>
+                                    <li>Priority support</li>
+                                    <li>Free onboarding & setup</li>
+                                </ul>
+                                <a href="{% url 'hospitals:hospital_registration' %}" class="inline-block bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 text-sm rounded-lg transition mx-auto" style="width:fit-content;min-width:0;">Get Started</a>
+                            </div>
+                        </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include "partials/footer_adminster.html" %}
+{% endblock content %}

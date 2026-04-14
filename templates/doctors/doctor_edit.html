@@ -109,7 +109,20 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="{{ user_form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                                    {{ user_form.password }}
+                                    <div class="relative">
+                                        {{ user_form.password }}
+                                        <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-gray-700">
+                                            <span  class="material-symbols-outlined text-[20px]">visibility</span>
+                                        </button>    
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" id="generatePasswordBtnDoctor"
+                                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[16px]">password</span>
+                                            Generate Random Password
+                                        </button>
+                                    </div>
+                                    
                                     <p class="mt-1 text-xs text-gray-500">Leave blank to keep the current password.</p>
                                     {% if user_form.password.errors %}<p class="mt-1 text-sm text-red-600">{{ user_form.password.errors|join:', ' }}</p>{% endif %}
                                 </div>
@@ -195,4 +208,45 @@
         </main>
     </div>
 </div>
+
+<script>
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('{{ user_form.password.id_for_label }}');
+
+        // Generate password
+        const generateBtn = document.getElementById('generatePasswordBtnDoctor');
+        if (generateBtn && passwordInput) {
+            generateBtn.addEventListener('click', function() {
+                function generatePassword(length) {
+                    var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+                    var lower = 'abcdefghijkmnpqrstuvwxyz';
+                    var numbers = '23456789';
+                    var symbols = '!@#$%^&*()_+-=[]{}';
+                    var allChars = upper + lower + numbers + symbols;
+                    var result = [
+                        upper[Math.floor(Math.random() * upper.length)],
+                        lower[Math.floor(Math.random() * lower.length)],
+                        numbers[Math.floor(Math.random() * numbers.length)],
+                        symbols[Math.floor(Math.random() * symbols.length)],
+                    ];
+                    for (var i = result.length; i < length; i++) {
+                        result.push(allChars[Math.floor(Math.random() * allChars.length)]);
+                    }
+                    for (var j = result.length - 1; j > 0; j--) {
+                        var k = Math.floor(Math.random() * (j + 1));
+                        var temp = result[j];
+                        result[j] = result[k];
+                        result[k] = temp;
+                    }
+                    return result.join('');
+                }
+                passwordInput.value = generatePassword(12);
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.focus();
+            });
+        }
+    });
+</script>
 {% endblock content %}
