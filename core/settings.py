@@ -50,16 +50,21 @@ FIELD_ENCRYPTION_KEY = _to_fernet_key(
 DEBUG = config("DEBUG", default=True, cast=bool)
 
 
-ALLOWED_HOSTS = [ 'hcare-ouhe.onrender.com', 
-                'localhost',
-                '127.0.0.1',
-                'wordscope.anishkumal.com.np'
-                ]
+ALLOWED_HOSTS = [
+    "hcare-ouhe.onrender.com",
+    "hcare-1-1vm4.onrender.com",
+    "localhost",
+    "127.0.0.1",
+    "wordscope.anishkumal.com.np",
+]
 
-CSRF_TRUSTED_ORIGINS = [ 'https://hcare-ouhe.onrender.com',
-                        'https://wordscope-4ux6.onrender.com',
-                        'http://localhost:8000'
-                        ]
+# Add the corresponding trusted origins used for CSRF checks
+CSRF_TRUSTED_ORIGINS = [
+    "https://hcare-ouhe.onrender.com",
+    "https://hcare-1-1vm4.onrender.com",
+    "https://wordscope-4ux6.onrender.com",
+    "http://localhost:8000",
+]
 
 INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
