@@ -51,18 +51,16 @@ DEBUG = config("DEBUG", default=True, cast=bool)
 
 
 ALLOWED_HOSTS = [
-    "hcare-ouhe.onrender.com",
+    "healthcare.anishkumal.com.np",
     "hcare-1-1vm4.onrender.com",
     "localhost",
     "127.0.0.1",
-    "wordscope.anishkumal.com.np",
 ]
 
 # Add the corresponding trusted origins used for CSRF checks
 CSRF_TRUSTED_ORIGINS = [
-    "https://hcare-ouhe.onrender.com",
+    "https://healthcare.anishkumal.com.np",
     "https://hcare-1-1vm4.onrender.com",
-    "https://wordscope-4ux6.onrender.com",
     "http://localhost:8000",
 ]
 
