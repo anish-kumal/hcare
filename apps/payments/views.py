@@ -461,7 +461,15 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             transaction_uuid = f"ESEWA-APPT-{appointment.id}-{payment.id}-{int(timezone.now().timestamp())}"
             payment.transaction_reference = transaction_uuid
 
-            product_code = f'APPT-{appointment.id}-{payment.id}'
+            # eSewa uses product_code to identify the merchant account.
+            # It must be the configured merchant/product code, not a per-order value.
+            product_code = getattr(settings, 'ESEWA_EPAY_V2_PRODUCT_CODE', '').strip()
+            if not product_code:
+                messages.error(
+                    request,
+                    'eSewa merchant product code is not configured. Please contact support.',
+                )
+                return redirect(reverse('payments:patient_payment_list'))
             secret_key = settings.ESEWA_EPAY_V2_SECRET_KEY
             signed_field_names, signature = _sign_esewa_message(
                 secret_key=secret_key,
@@ -561,7 +569,13 @@ class EsewaPaymentCallbackView(LoginRequiredMixin, View):
 
             status = payload.get('status', '').strip().upper()
             signature_ok = self._verify_esewa_payload(payload)
-            product_code_ok = payload.get('product_code', '').strip() == settings.ESEWA_EPAY_V2_PRODUCT_CODE
+            callback_product_code = payload.get('product_code', '').strip()
+            expected_product_code = f'APPT-{payment.appointment_id}-{payment.id}'
+            configured_product_code = getattr(settings, 'ESEWA_EPAY_V2_PRODUCT_CODE', '').strip()
+            product_code_ok = (
+                callback_product_code == expected_product_code
+                or (configured_product_code and callback_product_code == configured_product_code)
+            )
 
             try:
                 callback_amount = Decimal(payload.get('total_amount', '0')).quantize(Decimal('0.01'))
