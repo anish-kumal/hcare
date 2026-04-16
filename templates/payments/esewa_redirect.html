@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Redirecting to eSewa{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="max-w-md w-full bg-white border border-gray-200 rounded-xl shadow-sm p-6 text-center">
+    <h1 class="text-xl font-semibold text-gray-900 mb-2">Redirecting to eSewa</h1>
+    <p class="text-sm text-gray-600 mb-4">
+      Please wait while we transfer you to eSewa secure payment.
+    </p>
+
+    <form id="esewa-payment-form" method="post" action="{{ esewa_action_url }}">
+      {% for key, value in esewa_payload.items %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+      {% endfor %}
+      <button type="submit" class="w-full bg-primary text-white font-semibold py-2.5 rounded-lg hover:bg-[#1a3d42] transition-colors">
+        Continue to eSewa
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById('esewa-payment-form');
+    if (form) {
+      form.submit();
+    }
+  })();
+</script>
+{% endblock %}
