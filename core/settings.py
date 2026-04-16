@@ -335,6 +335,7 @@ ESEWA_EPAY_V2_STATUS_URL = config(
     'ESEWA_EPAY_V2_STATUS_URL',
     default=f"{ESEWA_EPAY_V2_BASE_URL.rstrip('/')}/transaction/status/",
 )
+ESEWA_EPAY_V2_PRODUCT_CODE = config('ESEWA_EPAY_V2_PRODUCT_CODE', default='EPAYTEST')
 ESEWA_EPAY_V2_SECRET_KEY = config('ESEWA_EPAY_V2_SECRET_KEY', default='8gBm/:&EnhH.1/q')
 
 
