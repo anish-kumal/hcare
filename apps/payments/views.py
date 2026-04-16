@@ -477,7 +477,7 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
                 'amount': total_amount,
                 'tax_amount': '0',
                 'total_amount': total_amount,
-                'transaction_uuid': transaction_uuid,0
+                'transaction_uuid': transaction_uuid,
                 'product_code': product_code,
                 'product_service_charge': '0',
                 'product_delivery_charge': '0',
