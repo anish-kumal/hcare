@@ -191,13 +191,23 @@
 
                     {% endif %}
 
-                    {% if show_khalti_pay_button %}
+                    {% if show_payment_buttons %}
                     <form method="post" action="{% url 'payments:patient_payment_process' %}">
                         {% csrf_token %}
                         <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
                         <button type="submit" name="payment_method" value="KHALTI" class="px-5 py-2.5 rounded-lg bg-red-700 text-white font-semibold hover:bg-red-800 transition-colors">
                             <span class="inline-flex items-center gap-2">
                                 Pay with Khalti
+                            </span>
+                        </button>
+                    </form>
+
+                    <form method="post" action="{% url 'payments:patient_payment_process' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                        <button type="submit" name="payment_method" value="ESEWA" class="px-5 py-2.5 rounded-lg bg-green-700 text-white font-semibold hover:bg-green-800 transition-colors">
+                            <span class="inline-flex items-center gap-2">
+                                Pay with eSewa
                             </span>
                         </button>
                     </form>
