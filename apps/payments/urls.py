@@ -9,6 +9,7 @@ from .views import (
     PatientPaymentView,
     PatientPaymentStatusView,
     PatientPaymentProcessView,
+    EsewaPaymentCallbackView,
 )
 
 app_name = 'payments'
@@ -18,7 +19,6 @@ urlpatterns = [
     path('patient/status/<int:pk>/', PatientPaymentStatusView.as_view(), name='patient_payment_status'),
     path('patient/process/', PatientPaymentProcessView.as_view(), name='patient_payment_process'),
     path('patient/esewa/callback/', EsewaPaymentCallbackView.as_view(), name='esewa_payment_callback'),
-    path('patient/process/', PatientPaymentProcessView.as_view(), name='patient_payment_process'),
     path('patient/<int:appointment_id>/', PatientPaymentView.as_view(), name='patient_payment_list_for_appointment'),
     path('patient/<int:appointment_id>', PatientPaymentView.as_view(), name='patient_payment_list_for_appointment_no_slash'),
     path('patient/', PatientPaymentIndexView.as_view(), name='patient_payment_list'),
