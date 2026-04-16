@@ -80,7 +80,7 @@
           </div>
         {% else %}
           <div class="mb-6 p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 rounded text-sm">
-            <strong>Notice:</strong> Choose cash if you will pay at the hospital counter, or Khalti for online payment.
+            <strong>Notice:</strong> Choose cash for hospital-counter payment, or use Khalti / eSewa for online payment.
           </div>
 
           <form method="post" action="{% url 'payments:patient_payment_process' %}" class="space-y-4">
@@ -98,7 +98,13 @@
                 <img src="https://anish-kumal.github.io/fyp/khalti.png" alt="" class="h-7 w-auto" loading="lazy">
                 Pay with Khalti
               </button>
+              <button type="submit" name="payment_method" value="ESEWA"
+                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-[#60BB46] bg-white font-semibold text-[#1A7A2E] hover:bg-green-50 transition-colors">
+                <span class="material-symbols-outlined text-base">account_balance</span>
+                Pay with eSewa
+              </button>
             </div>
+            <p class="text-xs text-gray-500">eSewa payment currently uses sandbox testing credentials.</p>
           </form>
         {% endif %}
       </div>
