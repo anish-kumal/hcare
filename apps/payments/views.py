@@ -1,10 +1,16 @@
+import base64
+import hashlib
+import hmac
+import json
+from decimal import Decimal, InvalidOperation
+
 import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views.generic import UpdateView, ListView, DetailView, View, TemplateView
@@ -15,6 +21,28 @@ from apps.patients.models import PatientAppointment
 
 from .forms import AppointmentPaymentForm
 from .models import AppointmentPayment
+
+
+def _build_esewa_signature(secret_key, message):
+    return base64.b64encode(
+        hmac.new(secret_key.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
+    ).decode('utf-8')
+
+
+def _sign_esewa_message(secret_key, total_amount, transaction_uuid, product_code):
+    signed_fields = "total_amount,transaction_uuid,product_code"
+    message = (
+        f"total_amount={total_amount},"
+        f"transaction_uuid={transaction_uuid},"
+        f"product_code={product_code}"
+    )
+    return signed_fields, _build_esewa_signature(secret_key=secret_key, message=message)
+
+
+def _decode_esewa_data(data):
+    padded = f"{data}{'=' * (-len(data) % 4)}"
+    decoded = base64.b64decode(padded.encode('utf-8')).decode('utf-8')
+    return json.loads(decoded)
 
 
 class AppointmentPaymentView(LoginRequiredMixin, UpdateView):
@@ -424,5 +452,154 @@ class PatientPaymentProcessView(LoginRequiredMixin, View):
             messages.error(request, f'Failed to initiate Khalti payment. {response_data}')
             return redirect(reverse('payments:patient_payment_list'))
 
+        if selected_method == 'ESEWA':
+            payment.payment_method = AppointmentPayment.PaymentMethod.ONLINE
+            if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                payment.status = AppointmentPayment.PaymentStatus.PENDING
+
+            total_amount = str(Decimal(payment.amount).quantize(Decimal('0.01')))
+            transaction_uuid = f"ESEWA-APPT-{appointment.id}-{payment.id}-{int(timezone.now().timestamp())}"
+            payment.transaction_reference = transaction_uuid
+
+            product_code = f'APPT-{appointment.id}-{payment.id}'
+            secret_key = settings.ESEWA_EPAY_V2_SECRET_KEY
+            signed_field_names, signature = _sign_esewa_message(
+                secret_key=secret_key,
+                total_amount=total_amount,
+                transaction_uuid=transaction_uuid,
+                product_code=product_code,
+            )
+
+            success_url = request.build_absolute_uri(reverse('payments:esewa_payment_callback'))
+            failure_url = request.build_absolute_uri(reverse('payments:esewa_payment_callback'))
+
+            form_payload = {
+                'amount': total_amount,
+                'tax_amount': '0',
+                'total_amount': total_amount,
+                'transaction_uuid': transaction_uuid,0
+                'product_code': product_code,
+                'product_service_charge': '0',
+                'product_delivery_charge': '0',
+                'success_url': success_url,
+                'failure_url': failure_url,
+                'signed_field_names': signed_field_names,
+                'signature': signature,
+            }
+
+            payment.save(update_fields=['payment_method', 'status', 'transaction_reference', 'modified'])
+
+            return render(
+                request,
+                'payments/esewa_redirect.html',
+                {
+                    'esewa_action_url': settings.ESEWA_EPAY_V2_INITIATE_URL,
+                    'esewa_payload': form_payload,
+                    'payment': payment,
+                },
+            )
+
         messages.error(request, 'Please choose a valid payment method.')
+        return redirect(reverse('payments:patient_payment_list'))
+
+
+class EsewaPaymentCallbackView(LoginRequiredMixin, View):
+    """Handle eSewa return callback for success/failure."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_patient:
+            raise PermissionDenied("Only patients can access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def _verify_esewa_payload(self, payload):
+        signed_field_names = payload.get('signed_field_names', '').strip()
+        response_signature = payload.get('signature', '').strip()
+
+        if not (signed_field_names and response_signature):
+            return False
+
+        fields_to_sign = [name.strip() for name in signed_field_names.split(',') if name.strip()]
+        if not fields_to_sign:
+            return False
+
+        sign_parts = []
+        for field_name in fields_to_sign:
+            field_value = payload.get(field_name)
+            if field_value is None:
+                return False
+            sign_parts.append(f"{field_name}={field_value}")
+
+        expected_signature = _build_esewa_signature(
+            secret_key=settings.ESEWA_EPAY_V2_SECRET_KEY,
+            message=",".join(sign_parts),
+        )
+        return hmac.compare_digest(expected_signature, response_signature)
+
+    def _get_payment(self, transaction_reference):
+        return AppointmentPayment.objects.select_related(
+            'appointment__patient__user',
+        ).filter(
+            transaction_reference=transaction_reference,
+            appointment__patient__user=self.request.user,
+        ).first()
+
+    def get(self, request, *args, **kwargs):
+        encoded_data = request.GET.get('data', '').strip()
+
+        if encoded_data:
+            try:
+                payload = _decode_esewa_data(encoded_data)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                messages.error(request, 'Invalid eSewa callback payload.')
+                return redirect(reverse('payments:patient_payment_list'))
+
+            transaction_uuid = payload.get('transaction_uuid', '').strip()
+            payment = self._get_payment(transaction_uuid)
+            if not payment:
+                messages.error(request, 'eSewa transaction reference not found for this account.')
+                return redirect(reverse('payments:patient_payment_list'))
+
+            status = payload.get('status', '').strip().upper()
+            signature_ok = self._verify_esewa_payload(payload)
+            product_code_ok = payload.get('product_code', '').strip() == settings.ESEWA_EPAY_V2_PRODUCT_CODE
+
+            try:
+                callback_amount = Decimal(payload.get('total_amount', '0')).quantize(Decimal('0.01'))
+            except (InvalidOperation, TypeError):
+                callback_amount = Decimal('0.00')
+
+            if (
+                status in {'COMPLETE', 'SUCCESS'}
+                and signature_ok
+                and product_code_ok
+                and callback_amount == Decimal(payment.amount).quantize(Decimal('0.01'))
+            ):
+                if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                    payment.status = AppointmentPayment.PaymentStatus.PAID
+                    payment.payment_method = AppointmentPayment.PaymentMethod.ONLINE
+                    payment.paid_at = timezone.now()
+                    payment.save(update_fields=['status', 'payment_method', 'paid_at', 'modified'])
+                messages.success(request, 'eSewa payment completed successfully.')
+                return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+            if payment.status != AppointmentPayment.PaymentStatus.PAID:
+                payment.status = AppointmentPayment.PaymentStatus.FAILED
+                payment.save(update_fields=['status', 'modified'])
+            messages.error(request, 'eSewa payment verification failed or payment was not completed.')
+            return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+        fallback_reference = (
+            request.GET.get('transaction_uuid', '')
+            or request.GET.get('transaction_code', '')
+            or request.GET.get('oid', '')
+        ).strip()
+        if fallback_reference:
+            payment = self._get_payment(fallback_reference)
+            if payment and payment.status != AppointmentPayment.PaymentStatus.PAID:
+                payment.status = AppointmentPayment.PaymentStatus.FAILED
+                payment.save(update_fields=['status', 'modified'])
+                messages.error(request, 'eSewa payment was cancelled or failed.')
+                return redirect(reverse('payments:patient_payment_status', kwargs={'pk': payment.pk}))
+
+        messages.error(request, 'Unable to resolve eSewa payment result.')
         return redirect(reverse('payments:patient_payment_list'))
