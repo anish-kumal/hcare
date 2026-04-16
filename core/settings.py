@@ -321,3 +321,20 @@ SANDBOX_KHALTI_URL = config(
     "SANDBOX_KHALTI_URL", default="https://dev.khalti.com/api/v2/"
 )
 PAYMENT_INITIATE_URL = f"{SANDBOX_KHALTI_URL.rstrip('/')}/epayment/initiate/"
+
+# eSewa ePay v2 (Sandbox) Configuration
+ESEWA_EPAY_V2_BASE_URL = config(
+    'ESEWA_EPAY_V2_BASE_URL',
+    default='https://rc-epay.esewa.com.np/api/epay/main/v2',
+)
+ESEWA_EPAY_V2_INITIATE_URL = config(
+    'ESEWA_EPAY_V2_INITIATE_URL',
+    default=f"{ESEWA_EPAY_V2_BASE_URL.rstrip('/')}/form",
+)
+ESEWA_EPAY_V2_STATUS_URL = config(
+    'ESEWA_EPAY_V2_STATUS_URL',
+    default=f"{ESEWA_EPAY_V2_BASE_URL.rstrip('/')}/transaction/status/",
+)
+ESEWA_EPAY_V2_SECRET_KEY = config('ESEWA_EPAY_V2_SECRET_KEY', default='8gBm/:&EnhH.1/q')
+
+
